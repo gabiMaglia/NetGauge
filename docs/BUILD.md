@@ -10,7 +10,7 @@ arma un exe **sin ETW** y la app queda en modo global (solo consumo total, sin
 desglose por app). Verificá antes de compilar:
 
 ```powershell
-python -c "import etw, PyQt6, psutil; print('deps OK')"
+python -c "import etw, PySide6, psutil; print('deps OK')"
 ```
 
 Si falla, instalá todo y reintentá:
@@ -42,7 +42,7 @@ pyinstaller build\network_monitor.spec --noconfirm
 Puntos clave del spec (`build/network_monitor.spec`):
 
 - `collect_submodules("etw")` — bundlea TODO pywintrace (sin esto no hay ETW).
-- `collect_submodules("PyQt6")` — incluye plugins de Qt.
+- `collect_submodules("PySide6")` — incluye plugins de Qt (incl. QtNetwork).
 - `uac_admin=True` — el exe pide elevación (necesario para ETW).
 - `console=False` — app de bandeja, sin ventana de consola.
 - `icon="..\assets\icon.ico"` — ícono de la app.
@@ -68,8 +68,11 @@ Luego, con `dist\NetworkMonitor.exe` ya compilado:
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: build\Output\NetworkMonitor-Setup-1.0.0-x64.exe
+# Resultado: build\Output\NetworkMonitor-Setup-<versión>-x64.exe
 ```
+
+> La versión sale de `#define AppVersion` en `installer.iss`. La versión de la app
+> (About y auto-update) vive en `src/version.py` — mantené ambas en sync al publicar.
 
 > La ruta de `ISCC.exe` puede ser `C:\Program Files (x86)\Inno Setup 6\ISCC.exe`
 > o `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` según cómo se haya instalado.
@@ -105,6 +108,18 @@ Firma `dist\NetworkMonitor.exe` y el instalador con SHA-256 y timestamp. Si
 `CERT_PFX` no está definido, el script no hace nada (build sin firmar, no rompe).
 Nota: un certificado **OV** reduce pero no elimina el aviso de SmartScreen hasta
 ganar reputación; un **EV** lo elimina de entrada.
+
+## 3c. Tests
+
+El dominio y la lógica de aplicación están cubiertos con pytest:
+
+```powershell
+pip install -r requirements-dev.txt
+pytest
+```
+
+Los tests de firma (índice de confianza) solo corren en Windows; el resto es
+multiplataforma.
 
 ## 4. Verificación rápida tras instalar
 

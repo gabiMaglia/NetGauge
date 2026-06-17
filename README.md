@@ -1,8 +1,10 @@
-# Network Monitor
+# trafficMe
 
 Monitor de consumo de red para Windows x64. Vive en la bandeja del sistema,
 trackea subida/bajada **por aplicación**, persiste el historial en SQLite y
 genera un informe CSV al cerrar.
+
+Repo: **https://github.com/gabiMaglia/trafficMe** · UI en **PySide6** (LGPL).
 
 ## ⚠️ El punto técnico que tenés que entender
 
@@ -22,33 +24,52 @@ Si falta cualquiera de los dos, la app cae automáticamente a un **modo global**
 ## Arquitectura (Clean Architecture)
 
 ```
-network Monitor/
+trafficMe/
 ├─ main.py                      # Composition Root: arma dependencias
-├─ requirements.txt
+├─ requirements.txt             # runtime (PySide6, psutil, pywintrace)
+├─ requirements-dev.txt         # + pytest
+├─ pytest.ini
 ├─ build/
 │  ├─ network_monitor.spec      # PyInstaller (one-file, uac_admin)
-│  └─ installer.iss             # Inno Setup (instalador x64)
+│  ├─ installer.iss             # Inno Setup (instalador x64)
+│  ├─ make_icon.py              # genera assets/icon.ico
+│  └─ sign.cmd                  # pipeline de firma de código (signtool)
+├─ tests/                       # pytest (dominio + aplicación + infra)
 └─ src/
+   ├─ version.py                # versión + coordenadas del repo (auto-update)
    ├─ domain/                   # Núcleo: NO depende de nada externo
-   │  ├─ models.py              # TrafficSample, AppUsage, UsageRecord
-   │  └─ ports.py               # CaptureService, UsageRepository, ReportGenerator
+   │  ├─ models.py              # TrafficSample, AppUsage, UsageRecord, Settings,
+   │  │                         #   QuotaStatus, TrustInfo, Connection, human_bytes
+   │  └─ ports.py               # interfaces: Capture/Repository/Reporter/Notifier/
+   │                            #   SettingsStore/TrustEvaluator/ConnectionProvider/
+   │                            #   ReputationService/GeoIpService
    ├─ application/
-   │  └─ monitor_service.py     # Caso de uso: captura→acumula→persiste→consulta
+   │  └─ monitor_service.py     # caso de uso: captura→acumula→persiste→consulta,
+   │                            #   cuotas, anomalías, retención, confianza, conexiones
    ├─ infrastructure/           # Detalles concretos (implementan ports)
    │  ├─ capture/
    │  │  ├─ etw_capture.py       # ETW por proceso
    │  │  ├─ psutil_fallback.py   # fallback global
-   │  │  └─ factory.py           # elige ETW o fallback según admin/pywintrace
-   │  ├─ persistence/sqlite_repository.py
-   │  └─ reporting/report_generator.py   # CSV
+   │  │  ├─ factory.py           # elige ETW o fallback según admin/pywintrace
+   │  │  ├─ app_names.py         # nombre amigable de la app (version.dll)
+   │  │  ├─ trust.py             # índice de confianza (firma Authenticode/ruta)
+   │  │  ├─ connections.py       # conexiones activas por proceso (psutil)
+   │  │  ├─ geoip_ipapi.py       # país/proveedor de IPs remotas (ip-api, opt-in)
+   │  │  └─ reputation_virustotal.py  # reputación por hash (VirusTotal, opt-in)
+   │  ├─ persistence/            # sqlite_repository.py (+ versión de esquema),
+   │  │                          #   settings_store.py (JSON)
+   │  ├─ reporting/report_generator.py   # CSV
+   │  └─ update/github_updater.py        # chequeo de versión vs GitHub Releases
    └─ presentation/
-      └─ qt/                    # UI PyQt6 (frameless, tema claro/oscuro)
-         ├─ app.py              # arranque: ventana + tray (QSystemTrayIcon) + notifier
-         ├─ main_window.py      # ventana principal: pestañas Global / Por aplicación
-         ├─ widgets.py          # gráficos y tarjetas custom (QPainter)
+      └─ qt/                    # UI PySide6 (frameless, tema claro/oscuro)
+         ├─ app.py              # arranque: ventana + tray + notifier + update + sparkline
+         ├─ main_window.py      # ventana: tabs Global / Por aplicación / Conexiones
+         ├─ native_window.py    # chrome nativo (resize esquinas + Aero Snap)
+         ├─ single_instance.py  # instancia única (QLocalServer)
+         ├─ widgets.py          # gráficos, tarjetas, badges, logo (QPainter)
          ├─ theme.py            # tokens de diseño + QSS (claro/oscuro)
-         ├─ quota_dialog.py     # diálogo de cuotas
-         └─ about_dialog.py     # "Acerca de" + botón de donación (Ko-fi)
+         ├─ i18n.py             # es/en/pt + formato de números por locale
+         ├─ quota_dialog.py · settings_dialog.py · about_dialog.py
 ```
 
 **Regla de dependencia:** `presentation → application → domain ← infrastructure`.
@@ -66,6 +87,13 @@ pip install -r requirements.txt
 
 # Para desglose por app, abrí PowerShell COMO ADMINISTRADOR:
 python main.py
+```
+
+### Tests
+
+```powershell
+pip install -r requirements-dev.txt
+pytest
 ```
 
 ## Generar el .exe (PyInstaller)
@@ -86,8 +114,10 @@ pyinstaller build\network_monitor.spec --noconfirm
 
 ```powershell
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: Output\NetworkMonitor-Setup-1.0.0-x64.exe
+# Resultado: build\Output\NetworkMonitor-Setup-<versión>-x64.exe
 ```
+
+> Detalle completo de firma de código y troubleshooting en [`docs/BUILD.md`](docs/BUILD.md).
 
 El instalador pide privilegios de admin, ofrece autoarranque con Windows y crea
 accesos directos.
