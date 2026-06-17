@@ -124,6 +124,12 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
 - **Mini-gráfico (sparkline) en el ícono del tray** + tooltip con velocidad y app top.
 - **Alertas de anomalías**: pico de tráfico inusual (≥3× el promedio reciente) y
   apps que empiezan a usar la red por primera vez. Configurable en Ajustes.
+- **Indicador de modo de captura** (ETW · por app / Global) en la barra de título,
+  para saber si estás viendo desglose real o el fallback global.
+- **Maximizar / restaurar** (botón + doble clic en la barra) y **persistencia** de
+  posición y tamaño de la ventana entre sesiones.
+- **Aviso de actualizaciones** vía GitHub Releases (chequeo en segundo plano; no
+  descarga nada, solo te avisa y deja el link).
 - **Retención del histórico** configurable: purga automática de datos viejos para
   que `usage.db` no crezca sin techo.
 

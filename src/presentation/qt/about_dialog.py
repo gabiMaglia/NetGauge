@@ -11,10 +11,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from ...version import APP_VERSION
 from .i18n import t
 from .widgets import BarsLogo
 
-APP_VERSION = "1.4.0"
 KOFI_URL = "https://ko-fi.com/gabrielmaglia"
 AUTHOR = "Gabriel Maglia"
 

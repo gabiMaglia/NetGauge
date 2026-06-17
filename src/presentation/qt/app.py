@@ -16,6 +16,7 @@ def _set_app_user_model_id() -> None:
     except Exception:  # noqa: BLE001 — no es Windows o falló: no es crítico
         pass
 
+import threading
 from collections import deque
 
 from PySide6.QtCore import QObject, QTimer, Signal
@@ -24,6 +25,8 @@ from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from ...application.monitor_service import MonitorService
 from ...domain.models import human_bytes
+from ...infrastructure.update.github_updater import check_latest
+from ...version import APP_VERSION, GITHUB_OWNER, GITHUB_REPO
 from .i18n import t
 from .main_window import MainWindow
 from .single_instance import SingleInstance
@@ -142,6 +145,15 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     tray_timer = QTimer(window)
     tray_timer.timeout.connect(update_tray)
     tray_timer.start(2000)
+
+    # Chequeo de actualización contra GitHub Releases (en segundo plano).
+    def check_updates() -> None:
+        found = check_latest(GITHUB_OWNER, GITHUB_REPO, APP_VERSION)
+        if found:
+            ver, url = found
+            notifier.notify(t("alert.update.title"),
+                            t("alert.update.body", v=ver, url=url))
+    threading.Thread(target=check_updates, daemon=True).start()
 
     tray.show()
     monitor.start()

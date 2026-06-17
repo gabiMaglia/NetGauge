@@ -56,11 +56,14 @@ class MainWindow(QWidget):
         self._data_ticks = 0
         self._period_chips: list[tuple[QPushButton, str]] = []
         self._legends: list[tuple[QLabel, str]] = []
+        self._maximized = False
+        self._restore_geom = None
 
         self.setWindowTitle("trafficMe")
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(786, 720)
+        self._restore_geometry()
 
         self._build_ui()
         self._apply_theme()
@@ -110,6 +113,10 @@ class MainWindow(QWidget):
         self._sub = QLabel(t("brand.sub"))
         self._sub.setObjectName("BrandSub")
         lay.addWidget(self._sub)
+
+        self._mode_badge = QLabel()
+        lay.addWidget(self._mode_badge)
+        self._style_mode_badge()
         lay.addStretch()
 
         self._speed_down = QLabel("↓ 0 B/s")
@@ -138,11 +145,14 @@ class MainWindow(QWidget):
         mini = QPushButton("—")
         mini.setObjectName("WinBtn")
         mini.clicked.connect(self.showMinimized)
+        self._max_btn = QPushButton("□")
+        self._max_btn.setObjectName("WinBtn")
+        self._max_btn.clicked.connect(self._toggle_maximize)
         close = QPushButton("✕")
         close.setObjectName("WinBtn")
         close.setProperty("class", "CloseBtn")
         close.clicked.connect(self.hide)  # cerrar -> al tray
-        for b in (theme_btn, mini, close):
+        for b in (theme_btn, mini, self._max_btn, close):
             lay.addWidget(b)
         self._titlebar = bar
         return bar
@@ -479,6 +489,7 @@ class MainWindow(QWidget):
     def _retranslate(self) -> None:
         """Re-aplica todos los textos tras un cambio de idioma."""
         self._sub.setText(t("brand.sub"))
+        self._style_mode_badge()
         self._about_btn.setToolTip(t("btn.about"))
         self._settings_btn.setToolTip(t("btn.settings"))
         self._quota_btn.setText(t("btn.quota"))
@@ -508,7 +519,58 @@ class MainWindow(QWidget):
     def _apply_theme(self) -> None:
         self.setStyleSheet(app_qss(self._theme))
 
+    # ---- gestión de ventana (maximizar / persistir geometría) ---------
+    def _style_mode_badge(self) -> None:
+        etw = self._per_process
+        self._mode_badge.setText(t("mode.etw") if etw else t("mode.global"))
+        self._mode_badge.setToolTip(t("mode.etw_tip") if etw else t("mode.global_tip"))
+        color = "#10b981" if etw else "#f59e0b"
+        self._mode_badge.setStyleSheet(
+            f"color:{color}; border:1px solid {color}; border-radius:7px;"
+            f"padding:1px 7px; font-size:11px; font-weight:700;")
+
+    def _toggle_maximize(self) -> None:
+        if self._maximized:
+            if self._restore_geom is not None:
+                self.setGeometry(self._restore_geom)
+            self._maximized = False
+            self._max_btn.setText("□")
+        else:
+            self._restore_geom = self.geometry()
+            # availableGeometry respeta la barra de tareas (no la tapa).
+            self.setGeometry(self.screen().availableGeometry())
+            self._maximized = True
+            self._max_btn.setText("❐")
+
+    def _restore_geometry(self) -> None:
+        raw = self._monitor.settings.window_geometry
+        if not raw:
+            return
+        try:
+            x, y, w, h = (int(v) for v in raw.split(","))
+        except (ValueError, AttributeError):
+            return
+        if w > 200 and h > 200:
+            self.setGeometry(x, y, w, h)
+
+    def _save_geometry(self) -> None:
+        g = self._restore_geom if self._maximized else self.geometry()
+        if g is None:
+            return
+        s = self._monitor.settings
+        s.window_geometry = f"{g.x()},{g.y()},{g.width()},{g.height()}"
+        self._monitor.update_settings(s)
+
+    def hideEvent(self, event) -> None:
+        self._save_geometry()
+        super().hideEvent(event)
+
     # ---- arrastre de ventana sin marco --------------------------------
+    def mouseDoubleClickEvent(self, event) -> None:
+        if event.position().y() <= 52:  # doble clic en la barra = maximizar
+            self._toggle_maximize()
+            event.accept()
+
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton \
                 and event.position().y() <= 70:
@@ -519,6 +581,10 @@ class MainWindow(QWidget):
     def mouseMoveEvent(self, event) -> None:
         if self._drag_pos is not None \
                 and event.buttons() & Qt.MouseButton.LeftButton:
+            if self._maximized:  # arrastrar una ventana maximizada la restaura
+                self._toggle_maximize()
+                self._drag_pos = event.globalPosition().toPoint() \
+                    - self.frameGeometry().topLeft()
             self.move(event.globalPosition().toPoint() - self._drag_pos)
             event.accept()
 

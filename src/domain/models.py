@@ -59,6 +59,7 @@ class Settings:
     virustotal_api_key: str = ""           # API key del usuario
     geoip_enabled: bool = False            # país/proveedor de IPs remotas (ip-api)
     anomaly_alerts_enabled: bool = True    # avisos de picos y apps nuevas en red
+    window_geometry: str = ""              # "x,y,w,h" para restaurar la ventana
 
     def to_dict(self) -> dict:
         return {
@@ -74,6 +75,7 @@ class Settings:
             "virustotal_api_key": self.virustotal_api_key,
             "geoip_enabled": self.geoip_enabled,
             "anomaly_alerts_enabled": self.anomaly_alerts_enabled,
+            "window_geometry": self.window_geometry,
         }
 
     @classmethod
@@ -91,6 +93,7 @@ class Settings:
             virustotal_api_key=str(data.get("virustotal_api_key", "")),
             geoip_enabled=bool(data.get("geoip_enabled", False)),
             anomaly_alerts_enabled=bool(data.get("anomaly_alerts_enabled", True)),
+            window_geometry=str(data.get("window_geometry", "")),
         )
 
 

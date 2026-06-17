@@ -86,6 +86,26 @@ Puntos clave del instalador (`build/installer.iss`):
 - El "Ejecutar ahora" post-instalación usa `shellexec` (no `CreateProcess`) para
   respetar el manifiesto `requireAdministrator` y evitar el error 740.
 
+## 3b. Firma de código (opcional pero recomendado)
+
+Sin firma, Windows **SmartScreen** avisa al descargar y el índice de confianza de
+la propia app la marcaría como "sin firma". Para firmar necesitás un certificado
+de firma de código (OV o EV) y `signtool.exe` (viene con el Windows SDK).
+
+El pipeline ya está listo en [`build/sign.cmd`](sign.cmd). Tras compilar exe e
+instalador:
+
+```cmd
+set CERT_PFX=C:\ruta\miCert.pfx
+set CERT_PASS=tu_password
+build\sign.cmd
+```
+
+Firma `dist\NetworkMonitor.exe` y el instalador con SHA-256 y timestamp. Si
+`CERT_PFX` no está definido, el script no hace nada (build sin firmar, no rompe).
+Nota: un certificado **OV** reduce pero no elimina el aviso de SmartScreen hasta
+ganar reputación; un **EV** lo elimina de entrada.
+
 ## 4. Verificación rápida tras instalar
 
 1. Reinstalá el Setup nuevo (los viejos pueden traer un exe sin ETW).
