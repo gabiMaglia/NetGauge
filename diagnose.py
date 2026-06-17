@@ -1,4 +1,4 @@
-"""Diagnóstico de ETW. Ejecutar idealmente en PowerShell COMO ADMINISTRADOR:
+r"""Diagnóstico de ETW. Ejecutar idealmente en PowerShell COMO ADMINISTRADOR:
 
     .\.venv\Scripts\Activate.ps1
     python diagnose.py
@@ -66,8 +66,10 @@ def try_session(seconds: int = 15) -> None:
             s = stats[event_id]
             s["count"] += 1
             size = _get(data, "size", "Size", "NumBytes", "TransferSize")
-            if isinstance(size, (int, float)):
-                s["bytes"] += int(size)
+            try:  # el provider entrega 'size' como string (ej. '1873')
+                s["bytes"] += int(str(size))
+            except (TypeError, ValueError):
+                pass
             if s["sample"] is None and isinstance(data, dict):
                 s["sample"] = dict(list(data.items())[:12])
 

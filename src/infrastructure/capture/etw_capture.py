@@ -25,7 +25,13 @@ class CaptureUnavailable(RuntimeError):
     """ETW no se puede inicializar en este entorno."""
 
 
-# IDs de evento del provider de kernel-network para envío/recepción.
+# IDs de evento del provider Microsoft-Windows-Kernel-Network, VALIDADOS contra
+# captura real (2026-06-17, ver diagnose.py):
+#   10/26 = TCP send IPv4/IPv6   ·   11/27 = TCP recv IPv4/IPv6 ("bytes received")
+#   42/58 = UDP send IPv4/IPv6   ·   43/59 = UDP recv IPv4/IPv6
+# Los eventos 12/28 (connect) traen size=0 y se ignoran.
+# IMPORTANTE: 18/34 ("bytes copied in protocol on behalf of user") son un SEGUNDO
+# conteo de lo ya recibido en 11/27 — se EXCLUYEN para no duplicar la bajada.
 _SENT_EVENTS = {10, 26}   # TCP send IPv4/IPv6
 _RECV_EVENTS = {11, 27}   # TCP recv IPv4/IPv6
 _UDP_SENT = {42, 58}
