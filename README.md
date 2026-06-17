@@ -1,5 +1,7 @@
 # trafficMe
 
+[![CI](https://github.com/gabiMaglia/trafficMe/actions/workflows/ci.yml/badge.svg)](https://github.com/gabiMaglia/trafficMe/actions/workflows/ci.yml)
+
 Monitor de consumo de red para Windows x64. Vive en la bandeja del sistema,
 trackea subida/bajada **por aplicación**, persiste el historial en SQLite y
 genera un informe CSV al cerrar.
