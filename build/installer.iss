@@ -1,17 +1,17 @@
-; Inno Setup script para Network Monitor (Windows x64).
+; Inno Setup script para trafficMe (Windows x64).
 ; Compilar con: ISCC.exe build\installer.iss
 ; (requiere Inno Setup 6+: https://jrsoftware.org/isdl.php)
 
-#define AppName "Network Monitor"
-#define AppVersion "1.7.0"
-#define AppExe "NetworkMonitor.exe"
+#define AppName "trafficMe"
+#define AppVersion "1.7.1"
+#define AppExe "trafficMe.exe"
 
 [Setup]
 AppName={#AppName}
 AppVersion={#AppVersion}
-DefaultDirName={autopf}\NetworkMonitor
+DefaultDirName={autopf}\trafficMe
 DefaultGroupName={#AppName}
-OutputBaseFilename=NetworkMonitor-Setup-{#AppVersion}-x64
+OutputBaseFilename=trafficMe-Setup-{#AppVersion}-x64
 Compression=lzma2
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -26,7 +26,7 @@ UninstallDisplayIcon={app}\{#AppExe}
 LicenseFile=..\LICENSE
 
 [Files]
-; Salida one-file de PyInstaller (dist\NetworkMonitor.exe):
+; Salida one-file de PyInstaller (dist\trafficMe.exe):
 Source: "..\dist\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

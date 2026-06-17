@@ -26,7 +26,7 @@ from src.presentation.qt.app import QtNotifier, run
 
 
 def _data_dir() -> Path:
-    base = Path.home() / "AppData" / "Local" / "NetworkMonitor"
+    base = Path.home() / "AppData" / "Local" / "trafficMe"
     base.mkdir(parents=True, exist_ok=True)
     return base
 

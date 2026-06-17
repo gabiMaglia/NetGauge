@@ -87,5 +87,5 @@ ETW / psutil ──TrafficSample──▶ MonitorService ──UsageRecord──
                                       └──▶ consultas por período ──▶ UI (tablas)
 ```
 
-Datos persistidos en `%LOCALAPPDATA%\NetworkMonitor\`:
+Datos persistidos en `%LOCALAPPDATA%\trafficMe\`:
 `usage.db`, `settings.json`, `monitor.log`, `reports\`.

@@ -18,13 +18,13 @@ if "%CERT_PFX%"=="" (
 )
 
 set TS=http://timestamp.digicert.com
-set EXE=dist\NetworkMonitor.exe
+set EXE=dist\trafficMe.exe
 
 echo [sign] Firmando %EXE% ...
 signtool sign /f "%CERT_PFX%" /p "%CERT_PASS%" /fd SHA256 /tr %TS% /td SHA256 "%EXE%" || exit /b 1
 
 REM El instalador toma el nombre con la versión actual (comodín).
-for %%F in (build\Output\NetworkMonitor-Setup-*-x64.exe) do (
+for %%F in (build\Output\trafficMe-Setup-*-x64.exe) do (
   echo [sign] Firmando %%F ...
   signtool sign /f "%CERT_PFX%" /p "%CERT_PASS%" /fd SHA256 /tr %TS% /td SHA256 "%%F" || exit /b 1
 )

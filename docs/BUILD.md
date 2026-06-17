@@ -36,7 +36,7 @@ python main.py
 ```powershell
 pip install pyinstaller
 pyinstaller build\network_monitor.spec --noconfirm
-# Resultado: dist\NetworkMonitor.exe (one-file, pide elevación al abrir)
+# Resultado: dist\trafficMe.exe (one-file, pide elevación al abrir)
 ```
 
 Puntos clave del spec (`build/network_monitor.spec`):
@@ -64,11 +64,11 @@ Necesitás Inno Setup 6+. Por winget:
 winget install --id JRSoftware.InnoSetup -e
 ```
 
-Luego, con `dist\NetworkMonitor.exe` ya compilado:
+Luego, con `dist\trafficMe.exe` ya compilado:
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: build\Output\NetworkMonitor-Setup-<versión>-x64.exe
+# Resultado: build\Output\trafficMe-Setup-<versión>-x64.exe
 ```
 
 > La versión sale de `#define AppVersion` en `installer.iss`. La versión de la app
@@ -104,7 +104,7 @@ set CERT_PASS=tu_password
 build\sign.cmd
 ```
 
-Firma `dist\NetworkMonitor.exe` y el instalador con SHA-256 y timestamp. Si
+Firma `dist\trafficMe.exe` y el instalador con SHA-256 y timestamp. Si
 `CERT_PFX` no está definido, el script no hace nada (build sin firmar, no rompe).
 Nota: un certificado **OV** reduce pero no elimina el aviso de SmartScreen hasta
 ganar reputación; un **EV** lo elimina de entrada.
@@ -127,6 +127,6 @@ multiplataforma.
 2. Aceptá el prompt de UAC al abrir.
 3. Generá algo de tráfico unos segundos.
 4. La pestaña **Por aplicación** debe poblarse. Si solo ves Global, revisá
-   `%LOCALAPPDATA%\NetworkMonitor\monitor.log`:
+   `%LOCALAPPDATA%\trafficMe\monitor.log`:
    - `Captura ETW por proceso activada.` → todo bien.
    - `Fallo inicializando ETW (...)` → faltó `etw` en el build o no hay admin.

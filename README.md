@@ -75,7 +75,7 @@ trafficMe/
 **Regla de dependencia:** `presentation → application → domain ← infrastructure`.
 El dominio no importa nada de afuera; la infraestructura implementa los puertos.
 
-Datos en `%LOCALAPPDATA%\NetworkMonitor\`: `usage.db`, `monitor.log`, `reports\`.
+Datos en `%LOCALAPPDATA%\trafficMe\`: `usage.db`, `monitor.log`, `reports\`.
 
 ## Ejecutar en desarrollo
 
@@ -103,18 +103,18 @@ cd "network Monitor"
 .\.venv\Scripts\Activate.ps1
 pip install pyinstaller
 pyinstaller build\network_monitor.spec --noconfirm
-# Resultado: dist\NetworkMonitor.exe  (one-file, pide elevación al abrir)
+# Resultado: dist\trafficMe.exe  (one-file, pide elevación al abrir)
 ```
 
 ## Generar el instalador (Inno Setup)
 
 1. Instalá Inno Setup 6+ (https://jrsoftware.org/isdl.php).
-2. Asegurate de tener `dist\NetworkMonitor.exe` ya compilado.
+2. Asegurate de tener `dist\trafficMe.exe` ya compilado.
 3. Compilá el instalador:
 
 ```powershell
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: build\Output\NetworkMonitor-Setup-<versión>-x64.exe
+# Resultado: build\Output\trafficMe-Setup-<versión>-x64.exe
 ```
 
 > Detalle completo de firma de código y troubleshooting en [`docs/BUILD.md`](docs/BUILD.md).
@@ -165,7 +165,7 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
 - **Retención del histórico** configurable: purga automática de datos viejos para
   que `usage.db` no crezca sin techo.
 
-Archivos en `%LOCALAPPDATA%\NetworkMonitor\`: `usage.db`, `settings.json`,
+Archivos en `%LOCALAPPDATA%\trafficMe\`: `usage.db`, `settings.json`,
 `monitor.log`, `reports\`.
 
 ## Apoyar el proyecto ☕
