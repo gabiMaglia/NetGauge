@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 from ...application.monitor_service import MonitorService
 from .about_dialog import AboutDialog
 from .i18n import fmt_number, loc_bytes, set_language, t
+from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
 from .settings_dialog import SettingsDialog
 from .theme import DARK, LIGHT, app_qss
@@ -57,15 +58,19 @@ class MainWindow(QWidget):
         self._legends: list[tuple[QLabel, str]] = []
         self._maximized = False
         self._restore_geom = None
+        self._native = False
+        self._native_applied = False
 
         self.setWindowTitle("trafficMe")
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(786, 720)
+        self.setMinimumSize(420, 360)  # límite para que el resize no rompa el layout
         self._restore_geometry()
 
         self._build_ui()
         self._apply_theme()
+        self._native = apply_native_chrome(self, caption_height=52)
 
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
@@ -239,9 +244,18 @@ class MainWindow(QWidget):
         cc.addWidget(self._chart, 1)
         lay.addWidget(chart_card, 1)
 
+        chart_card.setMinimumHeight(170)  # el gráfico no se aplasta a 0 en alto chico
+
         self._daily_lbl, self._daily_val, self._daily_bar = self._quota_row(lay)
         self._month_lbl, self._month_val, self._month_bar = self._quota_row(lay, warn=True)
-        return page
+
+        # Scrollable: si la ventana queda baja, no se corta el ancho de banda.
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(page)
+        return scroll
 
     def _legend(self, text: str, color: str) -> QWidget:
         w = QWidget()
@@ -347,7 +361,8 @@ class MainWindow(QWidget):
         self._daily_lbl.setText(t("quota.daily"))
         if d.has_limit:
             self._daily_val.setText(
-                f"{loc_bytes(d.used_bytes)} / {loc_bytes(d.limit_bytes)}")
+                f"{loc_bytes(d.used_bytes)} / {loc_bytes(d.limit_bytes)} "
+                f"({d.percent:.0f}%)")
             self._daily_bar.set_percent(d.percent)
         else:
             self._daily_val.setText(f"{loc_bytes(d.used_bytes)} · {t('quota.no_limit')}")
@@ -356,7 +371,8 @@ class MainWindow(QWidget):
         self._month_lbl.setText(t("quota.monthly"))
         if m.has_limit:
             self._month_val.setText(
-                f"{loc_bytes(m.used_bytes)} / {loc_bytes(m.limit_bytes)}")
+                f"{loc_bytes(m.used_bytes)} / {loc_bytes(m.limit_bytes)} "
+                f"({m.percent:.0f}%)")
             self._month_bar.set_percent(m.percent)
         else:
             self._month_val.setText(f"{loc_bytes(m.used_bytes)} · {t('quota.no_limit')}")
@@ -522,6 +538,9 @@ class MainWindow(QWidget):
             f"padding:1px 7px; font-size:11px; font-weight:700;")
 
     def _toggle_maximize(self) -> None:
+        if self._native:  # el SO maneja maximizar/restaurar (con animación y snap)
+            self.showNormal() if self.isMaximized() else self.showMaximized()
+            return
         if self._maximized:
             if self._restore_geom is not None:
                 self.setGeometry(self._restore_geom)
@@ -529,8 +548,7 @@ class MainWindow(QWidget):
             self._max_btn.setText("□")
         else:
             self._restore_geom = self.geometry()
-            # availableGeometry respeta la barra de tareas (no la tapa).
-            self.setGeometry(self.screen().availableGeometry())
+            self.setGeometry(self.screen().availableGeometry())  # respeta taskbar
             self._maximized = True
             self._max_btn.setText("❐")
 
@@ -546,8 +564,11 @@ class MainWindow(QWidget):
             self.setGeometry(x, y, w, h)
 
     def _save_geometry(self) -> None:
-        g = self._restore_geom if self._maximized else self.geometry()
-        if g is None:
+        if self._native:
+            g = self.normalGeometry() if self.isMaximized() else self.geometry()
+        else:
+            g = self._restore_geom if self._maximized else self.geometry()
+        if g is None or g.width() <= 0:
             return
         s = self._monitor.settings
         s.window_geometry = f"{g.x()},{g.y()},{g.width()},{g.height()}"
@@ -557,23 +578,44 @@ class MainWindow(QWidget):
         self._save_geometry()
         super().hideEvent(event)
 
-    # ---- arrastre de ventana sin marco --------------------------------
+    def showEvent(self, event) -> None:
+        # Reaplica el chrome nativo en el primer show (Qt finaliza estilos al mostrar).
+        if self._native and not self._native_applied:
+            self._native_applied = True
+            apply_native_chrome(self, caption_height=52)
+        super().showEvent(event)
+
+    def changeEvent(self, event) -> None:
+        # Mantiene el glifo del botón en sync cuando el SO maximiza/restaura.
+        from PySide6.QtCore import QEvent
+        if self._native and event.type() == QEvent.Type.WindowStateChange:
+            self._max_btn.setText("❐" if self.isMaximized() else "□")
+        super().changeEvent(event)
+
+    def nativeEvent(self, event_type, message):
+        if self._native:
+            res = handle_native_event(self, message)
+            if res is not None:
+                return res
+        return super().nativeEvent(event_type, message)
+
+    # ---- arrastre manual (solo si NO hay chrome nativo) ---------------
     def mouseDoubleClickEvent(self, event) -> None:
-        if event.position().y() <= 52:  # doble clic en la barra = maximizar
+        if not self._native and event.position().y() <= 52:
             self._toggle_maximize()
             event.accept()
 
     def mousePressEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.LeftButton \
+        if not self._native and event.button() == Qt.MouseButton.LeftButton \
                 and event.position().y() <= 70:
             self._drag_pos = event.globalPosition().toPoint() \
                 - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event) -> None:
-        if self._drag_pos is not None \
+        if not self._native and self._drag_pos is not None \
                 and event.buttons() & Qt.MouseButton.LeftButton:
-            if self._maximized:  # arrastrar una ventana maximizada la restaura
+            if self._maximized:
                 self._toggle_maximize()
                 self._drag_pos = event.globalPosition().toPoint() \
                     - self.frameGeometry().topLeft()

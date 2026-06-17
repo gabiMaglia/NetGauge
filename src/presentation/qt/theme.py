@@ -97,6 +97,20 @@ def app_qss(t: dict) -> str:
         background: {t['window_bg']}; color: {t['text_strong']}; font-weight: 700;
     }}
 
+    /* Combo genérico (ej. idioma en Ajustes) */
+    QComboBox {{
+        background: {t['input_bg']}; border: 1.5px solid {t['input_border']};
+        border-radius: {RADIUS['input']}px; padding: 8px 11px;
+        color: {t['text']}; font-weight: 600; min-width: 90px;
+    }}
+    QComboBox:focus, QComboBox:hover {{ border: 1.5px solid {t['accent']}; }}
+    QComboBox::drop-down {{ border: none; width: 22px; }}
+    QComboBox::down-arrow {{
+        image: none; width: 0; height: 0;
+        border-left: 4px solid transparent; border-right: 4px solid transparent;
+        border-top: 5px solid {t['text_muted']}; margin-right: 8px;
+    }}
+
     QComboBox#UnitBox {{
         background: {t['segment_bg']}; border: none; border-radius: 9px;
         padding: 6px 12px; color: {t['text']}; font-weight: 600; min-width: 64px;
@@ -105,8 +119,10 @@ def app_qss(t: dict) -> str:
     QComboBox QAbstractItemView {{
         background: {t['window_bg']}; color: {t['text']};
         selection-background-color: {t['accent']}; selection-color: #fff;
-        border: 1px solid {t['hairline']}; outline: none;
+        border: 1px solid {t['hairline']}; border-radius: 8px;
+        padding: 4px; outline: none;
     }}
+    QComboBox QAbstractItemView::item {{ min-height: 26px; padding: 2px 8px; }}
 
     QPushButton#QuotaBtn {{
         background: {t['accent_soft_bg']}; border: 1px solid {t['accent_soft_bd']};
