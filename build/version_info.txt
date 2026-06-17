@@ -1,0 +1,30 @@
+# Recurso de versión embebido en trafficMe.exe (metadata del editor).
+# Lo consume PyInstaller (EXE(version=...)) y lo lee Windows/Explorer y el
+# índice de confianza de la app. Mantener en sync con src/version.py.
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 7, 1, 0),
+    prodvers=(1, 7, 1, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable('040904B0', [
+        StringStruct('CompanyName', 'Gabriel Maglia'),
+        StringStruct('FileDescription', 'trafficMe - Monitor de consumo de red'),
+        StringStruct('FileVersion', '1.7.1.0'),
+        StringStruct('InternalName', 'trafficMe'),
+        StringStruct('LegalCopyright', '(c) 2026 Gabriel Maglia. Licencia MIT.'),
+        StringStruct('OriginalFilename', 'trafficMe.exe'),
+        StringStruct('ProductName', 'trafficMe'),
+        StringStruct('ProductVersion', '1.7.1.0')
+      ])
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)

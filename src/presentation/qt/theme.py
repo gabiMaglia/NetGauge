@@ -105,11 +105,6 @@ def app_qss(t: dict) -> str:
     }}
     QComboBox:focus, QComboBox:hover {{ border: 1.5px solid {t['accent']}; }}
     QComboBox::drop-down {{ border: none; width: 22px; }}
-    QComboBox::down-arrow {{
-        image: none; width: 0; height: 0;
-        border-left: 4px solid transparent; border-right: 4px solid transparent;
-        border-top: 5px solid {t['text_muted']}; margin-right: 8px;
-    }}
 
     QComboBox#UnitBox {{
         background: {t['segment_bg']}; border: none; border-radius: 9px;

@@ -224,6 +224,7 @@ class MainWindow(QWidget):
         lay.addLayout(cards)
 
         chart_card = QFrame()
+        self._chart_card = chart_card
         chart_card.setObjectName("ChartCard")
         cc = QVBoxLayout(chart_card)
         cc.setContentsMargins(16, 14, 16, 14)
@@ -584,6 +585,13 @@ class MainWindow(QWidget):
             self._native_applied = True
             apply_native_chrome(self, caption_height=52)
         super().showEvent(event)
+
+    def resizeEvent(self, event) -> None:
+        # Responsive: en alto chico se oculta el gráfico de ancho de banda
+        # para que las tarjetas y cuotas entren sin scroll.
+        if hasattr(self, "_chart_card"):
+            self._chart_card.setVisible(self.height() >= 600)
+        super().resizeEvent(event)
 
     def changeEvent(self, event) -> None:
         # Mantiene el glifo del botón en sync cuando el SO maximiza/restaura.

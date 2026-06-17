@@ -41,4 +41,5 @@ exe = EXE(
     target_arch="x86_64",   # Windows x64
     uac_admin=True,         # solicita elevación (necesario para ETW)
     icon="..\\assets\\icon.ico",
+    version="version_info.txt",  # metadata del editor (CompanyName/FileDescription)
 )
