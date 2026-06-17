@@ -300,6 +300,33 @@ class AppRow(QFrame):
         self._style_badge()
 
 
+class ConnRow(QFrame):
+    """Fila de conexión reutilizable: app · (geo) · ip:puerto · estado."""
+
+    def __init__(self, app_name: str, remote: str, status: str) -> None:
+        super().__init__()
+        self.setObjectName("AppRow")
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(10, 6, 12, 6)
+        lay.setSpacing(10)
+        name = QLabel(app_name)
+        name.setObjectName("AppName")
+        lay.addWidget(name)
+        self._geo = QLabel("")
+        self._geo.setObjectName("AppSplit")
+        lay.addWidget(self._geo)
+        lay.addStretch()
+        rem = QLabel(remote)
+        rem.setObjectName("AppTotal")
+        lay.addWidget(rem)
+        st = QLabel(status)
+        st.setObjectName("Chip")
+        lay.addWidget(st)
+
+    def set_geo(self, text: str) -> None:
+        self._geo.setText(text)
+
+
 def _paint_bars(p: QPainter, w: float, h: float, radius: float) -> None:
     """Dibuja el logo de marca (cuadrado azul + 3 barras blancas) en (0,0,w,h)."""
     p.setRenderHint(QPainter.RenderHint.Antialiasing)

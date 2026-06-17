@@ -22,6 +22,11 @@ CREATE INDEX IF NOT EXISTS idx_usage_recorded_at ON usage(recorded_at);
 CREATE INDEX IF NOT EXISTS idx_usage_app ON usage(app_name);
 """
 
+_SCHEMA_VERSION = 1  # subir y agregar una entrada en _MIGRATIONS al cambiar esquema
+
+# Migraciones idempotentes por versión destino. Ej: 2: ("ALTER TABLE ...",)
+_MIGRATIONS: dict[int, tuple[str, ...]] = {}
+
 
 class SqliteUsageRepository(UsageRepository):
     def __init__(self, db_path: str | Path) -> None:
@@ -31,6 +36,21 @@ class SqliteUsageRepository(UsageRepository):
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Aplica migraciones pendientes según PRAGMA user_version."""
+        current = self._conn.execute("PRAGMA user_version").fetchone()[0]
+        if current == 0:
+            # DB nueva (o pre-versionado): el esquema ya está al día.
+            self._conn.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
+            self._conn.commit()
+            return
+        for target in range(current + 1, _SCHEMA_VERSION + 1):
+            for stmt in _MIGRATIONS.get(target, ()):
+                self._conn.execute(stmt)
+            self._conn.execute(f"PRAGMA user_version = {target}")
+            self._conn.commit()
 
     def save_batch(self, records: Iterable[UsageRecord]) -> None:
         rows = [

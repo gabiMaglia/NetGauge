@@ -130,6 +130,8 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
   posición y tamaño de la ventana entre sesiones.
 - **Aviso de actualizaciones** vía GitHub Releases (chequeo en segundo plano; no
   descarga nada, solo te avisa y deja el link).
+- **Formato de números por idioma** (es/pt: `1.234,5` · en: `1,234.5`).
+- **Disclosure de privacidad** en Ajustes: explica exactamente qué envían VT y GeoIP.
 - **Retención del histórico** configurable: purga automática de datos viejos para
   que `usage.db` no crezca sin techo.
 

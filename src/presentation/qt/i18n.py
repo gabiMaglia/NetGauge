@@ -47,6 +47,10 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_key": "API key de VirusTotal",
         "dlg.settings.geoip": "GeoIP: país/proveedor de IPs remotas (ip-api.com)",
         "dlg.settings.anomaly": "Alertas de anomalías (picos / apps nuevas en red)",
+        "dlg.settings.privacy": "Privacidad: VirusTotal envía solo el hash SHA-256 "
+                                "del ejecutable; GeoIP envía la IP remota a ip-api.com. "
+                                "Nada más sale de tu equipo, y ambas están apagadas por "
+                                "defecto.",
         "alert.scope.daily": "diaria", "alert.scope.monthly": "mensual",
         "alert.quota.title": "Cuota {scope}",
         "alert.quota.body": "Alcanzaste el {pct}% de tu cuota {scope} "
@@ -113,6 +117,10 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_key": "VirusTotal API key",
         "dlg.settings.geoip": "GeoIP: country/provider of remote IPs (ip-api.com)",
         "dlg.settings.anomaly": "Anomaly alerts (spikes / new apps on network)",
+        "dlg.settings.privacy": "Privacy: VirusTotal sends only the executable's "
+                                "SHA-256 hash; GeoIP sends the remote IP to ip-api.com. "
+                                "Nothing else leaves your machine, and both are off by "
+                                "default.",
         "alert.scope.daily": "daily", "alert.scope.monthly": "monthly",
         "alert.quota.title": "{scope} quota",
         "alert.quota.body": "You reached {pct}% of your {scope} quota "
@@ -179,6 +187,10 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_key": "Chave de API do VirusTotal",
         "dlg.settings.geoip": "GeoIP: país/provedor de IPs remotas (ip-api.com)",
         "dlg.settings.anomaly": "Alertas de anomalias (picos / apps novos na rede)",
+        "dlg.settings.privacy": "Privacidade: o VirusTotal envia só o hash SHA-256 "
+                                "do executável; o GeoIP envia o IP remoto ao ip-api.com. "
+                                "Nada mais sai do seu equipamento, e ambos vêm "
+                                "desligados por padrão.",
         "alert.scope.daily": "diária", "alert.scope.monthly": "mensal",
         "alert.quota.title": "Cota {scope}",
         "alert.quota.body": "Você atingiu {pct}% da sua cota {scope} "
@@ -209,6 +221,27 @@ _STR: dict[str, dict[str, str]] = {
         "trust.vt_detected": "VirusTotal: {m}/{n} motores o marcam",
     },
 }
+
+
+# Separadores por idioma (es/pt: 1.234,5 · en: 1,234.5)
+_DECIMAL = {"es": ",", "en": ".", "pt": ","}
+_GROUP = {"es": ".", "en": ",", "pt": "."}
+
+
+def fmt_number(value: float, decimals: int = 1, group: bool = True) -> str:
+    """Formatea un número con separadores según el idioma actual."""
+    s = f"{value:,.{decimals}f}"  # base: ',' miles, '.' decimal
+    dec = _DECIMAL.get(_lang, ".")
+    grp = _GROUP.get(_lang, ",")
+    s = s.replace(",", "\x00").replace(".", dec).replace("\x00", grp if group else "")
+    return s
+
+
+def loc_bytes(num: float) -> str:
+    """human_bytes con el separador decimal del idioma actual ('47,7 MB')."""
+    from ...domain.models import human_bytes
+    val, _, unit = human_bytes(num).partition(" ")
+    return f"{val.replace('.', _DECIMAL.get(_lang, '.'))} {unit}"
 
 
 def set_language(lang: str) -> None:

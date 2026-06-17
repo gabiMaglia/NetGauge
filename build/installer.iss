@@ -3,7 +3,7 @@
 ; (requiere Inno Setup 6+: https://jrsoftware.org/isdl.php)
 
 #define AppName "Network Monitor"
-#define AppVersion "1.5.0"
+#define AppVersion "1.6.0"
 #define AppExe "NetworkMonitor.exe"
 
 [Setup]

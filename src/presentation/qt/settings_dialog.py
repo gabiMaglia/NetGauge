@@ -65,6 +65,11 @@ class SettingsDialog(QDialog):
         self._anomaly.setChecked(settings.anomaly_alerts_enabled)
         root.addWidget(self._anomaly)
 
+        privacy = QLabel(t("dlg.settings.privacy"))
+        privacy.setObjectName("FieldLabel")
+        privacy.setWordWrap(True)
+        root.addWidget(privacy)
+
         btns = QHBoxLayout()
         btns.addStretch()
         cancel = QPushButton(t("btn.cancel"))

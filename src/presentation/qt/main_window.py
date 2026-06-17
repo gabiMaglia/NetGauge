@@ -17,26 +17,24 @@ from PySide6.QtWidgets import (
 )
 
 from ...application.monitor_service import MonitorService
-from ...domain.models import human_bytes
 from .about_dialog import AboutDialog
-from .i18n import set_language, t
+from .i18n import fmt_number, loc_bytes, set_language, t
 from .quota_dialog import QuotaDialog
 from .settings_dialog import SettingsDialog
 from .theme import DARK, LIGHT, app_qss
-from .widgets import AppRow, BarsLogo, LiveChart, MetricCard, QuotaBar
+from .widgets import AppRow, BarsLogo, ConnRow, LiveChart, MetricCard, QuotaBar
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _PERIOD_CODES = ["session", "day", "week", "month"]
 
 
 def _fmt(num: float, unit: str) -> tuple[str, str]:
-    """Devuelve (valor, unidad) según la unidad elegida."""
+    """Devuelve (valor, unidad) según la unidad elegida, con formato por locale."""
     div = _UNITS.get(unit)
     if div is None:
-        txt = human_bytes(num)
-        parts = txt.split(" ")
-        return parts[0], parts[1] if len(parts) > 1 else "B"
-    return f"{num / div:,.1f}", unit
+        val, _, u = loc_bytes(num).partition(" ")
+        return val, u or "B"
+    return fmt_number(num / div, 1, group=True), unit
 
 
 class MainWindow(QWidget):
@@ -53,6 +51,7 @@ class MainWindow(QWidget):
             self._unit = "Auto"
         self._drag_pos: QPoint | None = None
         self._app_rows: dict[str, AppRow] = {}   # filas reutilizadas por nombre
+        self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
         self._data_ticks = 0
         self._period_chips: list[tuple[QPushButton, str]] = []
         self._legends: list[tuple[QLabel, str]] = []
@@ -312,6 +311,9 @@ class MainWindow(QWidget):
         self._conn_lay = QVBoxLayout(self._conn_container)
         self._conn_lay.setContentsMargins(0, 0, 0, 0)
         self._conn_lay.setSpacing(2)
+        self._conn_empty = QLabel(t("conn.empty"))
+        self._conn_empty.setObjectName("AppSplit")
+        self._conn_lay.addWidget(self._conn_empty)
         self._conn_lay.addStretch()
         scroll.setWidget(self._conn_container)
         lay.addWidget(scroll, 1)
@@ -345,19 +347,19 @@ class MainWindow(QWidget):
         self._daily_lbl.setText(t("quota.daily"))
         if d.has_limit:
             self._daily_val.setText(
-                f"{human_bytes(d.used_bytes)} / {human_bytes(d.limit_bytes)}")
+                f"{loc_bytes(d.used_bytes)} / {loc_bytes(d.limit_bytes)}")
             self._daily_bar.set_percent(d.percent)
         else:
-            self._daily_val.setText(f"{human_bytes(d.used_bytes)} · {t('quota.no_limit')}")
+            self._daily_val.setText(f"{loc_bytes(d.used_bytes)} · {t('quota.no_limit')}")
             self._daily_bar.set_percent(0)
         m = self._monitor.quota_status()
         self._month_lbl.setText(t("quota.monthly"))
         if m.has_limit:
             self._month_val.setText(
-                f"{human_bytes(m.used_bytes)} / {human_bytes(m.limit_bytes)}")
+                f"{loc_bytes(m.used_bytes)} / {loc_bytes(m.limit_bytes)}")
             self._month_bar.set_percent(m.percent)
         else:
-            self._month_val.setText(f"{human_bytes(m.used_bytes)} · {t('quota.no_limit')}")
+            self._month_val.setText(f"{loc_bytes(m.used_bytes)} · {t('quota.no_limit')}")
             self._month_bar.set_percent(0)
 
         self._rebuild_apps(rows, total)
@@ -404,50 +406,40 @@ class MainWindow(QWidget):
     def _refresh_connections(self) -> None:
         if self._tabs.currentIndex() != 2:  # solo si la pestaña está visible
             return
-        while self._conn_lay.count() > 1:
-            item = self._conn_lay.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        conns = sorted(self._monitor.connections(), key=lambda c: c.app_name.lower())
-        if not conns:
-            empty = QLabel(t("conn.empty"))
-            empty.setObjectName("AppSplit")
-            self._conn_lay.insertWidget(0, empty)
-            return
-        for c in conns[:200]:
-            self._conn_lay.insertWidget(self._conn_lay.count() - 1,
-                                        self._conn_row(c))
+        conns = sorted(self._monitor.connections(),
+                       key=lambda c: c.app_name.lower())[:200]
+        self._conn_empty.setVisible(not conns)
 
-    def _conn_row(self, c) -> QWidget:
-        row = QFrame()
-        row.setObjectName("AppRow")
-        lay = QHBoxLayout(row)
-        lay.setContentsMargins(10, 6, 12, 6)
-        lay.setSpacing(10)
-        name = QLabel(c.app_name)
-        name.setObjectName("AppName")
-        lay.addWidget(name)
-        geo = self._monitor.geo_for(c.raddr)
-        if geo:
-            cc, org = geo
-            geo_lbl = QLabel(f"{cc} · {org}"[:40])
-            geo_lbl.setObjectName("AppSplit")
-            lay.addWidget(geo_lbl)
-        lay.addStretch()
-        remote = QLabel(f"{c.raddr}:{c.rport}")
-        remote.setObjectName("AppTotal")
-        lay.addWidget(remote)
-        status = QLabel(c.status)
-        status.setObjectName("Chip")
-        lay.addWidget(status)
-        return row
+        wanted = {}
+        for c in conns:
+            key = f"{c.app_name}|{c.raddr}:{c.rport}|{c.status}"
+            wanted[key] = c
+
+        # 1) eliminar conexiones que ya no están
+        for key in list(self._conn_rows):
+            if key not in wanted:
+                row = self._conn_rows.pop(key)
+                self._conn_lay.removeWidget(row)
+                row.deleteLater()
+
+        # 2) crear/actualizar/reordenar in-place (no se recrea todo cada 2s)
+        for i, (key, c) in enumerate(wanted.items()):
+            row = self._conn_rows.get(key)
+            if row is None:
+                row = ConnRow(c.app_name, f"{c.raddr}:{c.rport}", c.status)
+                self._conn_rows[key] = row
+            if self._conn_lay.indexOf(row) != i:
+                self._conn_lay.removeWidget(row)
+                self._conn_lay.insertWidget(i, row)
+            geo = self._monitor.geo_for(c.raddr)
+            row.set_geo(f"{geo[0]} · {geo[1]}"[:40] if geo else "")
 
     def _tick(self) -> None:
         up, down = self._monitor.live_rate()
         self._chart.push(up, down)
-        self._speed_down.setText(f"↓ {human_bytes(down)}/s")
-        self._speed_up.setText(f"↑ {human_bytes(up)}/s")
-        self._peak_chip.setText(t("chart.peak", v=human_bytes(self._chart.peak())))
+        self._speed_down.setText(f"↓ {loc_bytes(down)}/s")
+        self._speed_up.setText(f"↑ {loc_bytes(up)}/s")
+        self._peak_chip.setText(t("chart.peak", v=loc_bytes(self._chart.peak())))
         self._data_ticks += 1
         if self._data_ticks % 2 == 0:
             self._refresh()
