@@ -33,31 +33,64 @@ def check_pywintrace() -> bool:
         return False
 
 
-def try_session() -> None:
-    print("\n[3] Intentando abrir sesión ETW de kernel-network...")
+def try_session(seconds: int = 15) -> None:
+    print("\n[3] Capturando eventos de kernel-network para VALIDAR el mapeo...")
+    print("    >>> Generá tráfico real: abrí webs, mirá un video, descargá algo. <<<")
     try:
+        import time
+        from collections import defaultdict
+
         from etw import ETW, ProviderInfo
         from etw.GUID import GUID
 
         guid = GUID("{7DD42A49-5329-4832-8DFD-43D979153A88}")
-        captured = {"n": 0}
+        # Estadística por event_id: cuántos, bytes totales, y un sample de campos.
+        stats = defaultdict(lambda: {"count": 0, "bytes": 0, "sample": None})
+
+        def _get(d, *keys):
+            for k in keys:
+                if k in d:
+                    return d[k]
+            # búsqueda case-insensitive
+            low = {str(kk).lower(): vv for kk, vv in d.items()}
+            for k in keys:
+                if k.lower() in low:
+                    return low[k.lower()]
+            return None
 
         def cb(event):
-            captured["n"] += 1
-            if captured["n"] <= 3:
-                print(f"    Evento recibido: {event!r}")
+            try:
+                event_id, data = event
+            except (ValueError, TypeError):
+                return
+            s = stats[event_id]
+            s["count"] += 1
+            size = _get(data, "size", "Size", "NumBytes", "TransferSize")
+            if isinstance(size, (int, float)):
+                s["bytes"] += int(size)
+            if s["sample"] is None and isinstance(data, dict):
+                s["sample"] = dict(list(data.items())[:12])
 
         session = ETW(providers=[ProviderInfo("KN", guid)], event_callback=cb)
         session.start()
-        print("    Sesión iniciada. Generá tráfico (abrí una web) ~8s...")
-        import time
-        time.sleep(8)
+        print(f"    Sesión iniciada. Capturando {seconds}s...")
+        time.sleep(seconds)
         session.stop()
-        print(f"    Eventos capturados: {captured['n']}")
-        if captured["n"] == 0:
-            print("    [!] 0 eventos: el provider no emitió. Revisar formato/IDs.")
-        else:
-            print("    [OK] ETW captura eventos. La integración debería funcionar.")
+
+        total = sum(v["count"] for v in stats.values())
+        print(f"\n    === RESULTADO: {total} eventos en {len(stats)} event_ids ===")
+        if total == 0:
+            print("    [!] 0 eventos. El provider no emitió (¿sin tráfico? ¿IDs?).")
+            return
+        print("    event_id |  count |     bytes_sum | campos (sample)")
+        print("    ---------+--------+---------------+------------------------------")
+        for eid in sorted(stats):
+            v = stats[eid]
+            keys = ", ".join(str(k) for k in (v["sample"] or {}).keys())
+            print(f"    {eid:>8} | {v['count']:>6} | {v['bytes']:>13} | {keys}")
+        print("\n    >>> PEGAME ESTA TABLA + un sample de campos de 1-2 event_ids:")
+        for eid in sorted(stats)[:4]:
+            print(f"      [{eid}] {stats[eid]['sample']}")
     except Exception as exc:  # noqa: BLE001
         import traceback
         print(f"    [X] Falló: {exc}")
