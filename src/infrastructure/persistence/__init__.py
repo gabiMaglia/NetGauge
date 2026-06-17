@@ -1,0 +1,1 @@
+"""src/infrastructure/persistence package."""

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Artefactos de build (PyInstaller / Inno Setup)
+dist/
+build/_work/
+build/Output/
+
+# Datos locales / runtime
+*.db
+*.log
+settings.json
+reports/
+
+# SO / editor
+Thumbs.db
+.vscode/
+.idea/
