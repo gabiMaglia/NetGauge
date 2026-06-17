@@ -22,6 +22,8 @@ from src.infrastructure.capture.trust import WindowsTrustEvaluator
 from src.infrastructure.persistence.settings_store import JsonSettingsStore
 from src.infrastructure.persistence.sqlite_repository import SqliteUsageRepository
 from src.infrastructure.reporting.report_generator import CsvReportGenerator
+from src.infrastructure.reporting.pdf_report_generator import PdfReportGenerator
+from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerator
 from src.presentation.qt.app import QtNotifier, run
 
 
@@ -61,6 +63,9 @@ def main() -> None:
         reputation=reputation,
         geoip=geoip,
     )
+    # Formatos de export adicionales (CSV ya viene por defecto).
+    monitor.register_reporter("xlsx", XlsxReportGenerator(_data_dir() / "reports"))
+    monitor.register_reporter("pdf", PdfReportGenerator(_data_dir() / "reports"))
 
     # Red de seguridad: informe + flush ante cierre del sistema o crash controlado.
     def _on_exit() -> None:

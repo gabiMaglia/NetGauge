@@ -1,9 +1,12 @@
 """Ventana principal trafficMe (frameless, redondeada, con barra de título propia)."""
 from __future__ import annotations
 
+import ipaddress
+
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtWidgets import (
     QButtonGroup,
+    QCheckBox,
     QComboBox,
     QFrame,
     QGridLayout,
@@ -27,6 +30,13 @@ from .widgets import AppRow, BarsLogo, ConnRow, LiveChart, MetricCard, QuotaBar
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _PERIOD_CODES = ["session", "day", "week", "month"]
+
+
+def _is_loopback(ip: str) -> bool:
+    try:
+        return ipaddress.ip_address(ip).is_loopback
+    except ValueError:
+        return False
 
 
 def _fmt(num: float, unit: str) -> tuple[str, str]:
@@ -313,9 +323,16 @@ class MainWindow(QWidget):
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 12, 0, 0)
         lay.setSpacing(8)
+        head = QHBoxLayout()
         self._conn_subtitle = QLabel(t("conn.subtitle"))
         self._conn_subtitle.setObjectName("AppSplit")
-        lay.addWidget(self._conn_subtitle)
+        head.addWidget(self._conn_subtitle)
+        head.addStretch()
+        self._hide_local_cb = QCheckBox(t("conn.hide_localhost"))
+        self._hide_local_cb.setChecked(self._monitor.settings.hide_localhost)
+        self._hide_local_cb.toggled.connect(self._toggle_hide_localhost)
+        head.addWidget(self._hide_local_cb)
+        lay.addLayout(head)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -423,8 +440,10 @@ class MainWindow(QWidget):
     def _refresh_connections(self) -> None:
         if self._tabs.currentIndex() != 2:  # solo si la pestaña está visible
             return
-        conns = sorted(self._monitor.connections(),
-                       key=lambda c: c.app_name.lower())[:200]
+        conns = self._monitor.connections()
+        if self._monitor.settings.hide_localhost:
+            conns = [c for c in conns if not _is_loopback(c.raddr)]
+        conns = sorted(conns, key=lambda c: c.app_name.lower())[:200]
         self._conn_empty.setVisible(not conns)
 
         wanted = {}
@@ -473,6 +492,12 @@ class MainWindow(QWidget):
         self._monitor.update_settings(s)
         self._refresh()
 
+    def _toggle_hide_localhost(self, checked: bool) -> None:
+        s = self._monitor.settings
+        s.hide_localhost = checked
+        self._monitor.update_settings(s)
+        self._refresh_connections()
+
     def _open_quota(self) -> None:
         dlg = QuotaDialog(self._monitor.settings, self)
         dlg.setStyleSheet(app_qss(self._theme))
@@ -514,6 +539,7 @@ class MainWindow(QWidget):
         for lbl, key in self._legends:
             lbl.setText(t(key))
         self._conn_subtitle.setText(t("conn.subtitle"))
+        self._hide_local_cb.setText(t("conn.hide_localhost"))
 
     def _toggle_theme(self) -> None:
         self._dark = not self._dark

@@ -60,6 +60,7 @@ class Settings:
     geoip_enabled: bool = False            # país/proveedor de IPs remotas (ip-api)
     anomaly_alerts_enabled: bool = True    # avisos de picos y apps nuevas en red
     window_geometry: str = ""              # "x,y,w,h" para restaurar la ventana
+    hide_localhost: bool = True            # oculta conexiones a 127.0.0.1/::1
 
     def to_dict(self) -> dict:
         return {
@@ -76,6 +77,7 @@ class Settings:
             "geoip_enabled": self.geoip_enabled,
             "anomaly_alerts_enabled": self.anomaly_alerts_enabled,
             "window_geometry": self.window_geometry,
+            "hide_localhost": self.hide_localhost,
         }
 
     @classmethod
@@ -94,6 +96,7 @@ class Settings:
             geoip_enabled=bool(data.get("geoip_enabled", False)),
             anomaly_alerts_enabled=bool(data.get("anomaly_alerts_enabled", True)),
             window_geometry=str(data.get("window_geometry", "")),
+            hide_localhost=bool(data.get("hide_localhost", True)),
         )
 
 

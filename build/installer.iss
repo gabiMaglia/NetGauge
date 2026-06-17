@@ -3,7 +3,7 @@
 ; (requiere Inno Setup 6+: https://jrsoftware.org/isdl.php)
 
 #define AppName "trafficMe"
-#define AppVersion "1.7.1"
+#define AppVersion "1.8.0"
 #define AppExe "trafficMe.exe"
 
 [Setup]

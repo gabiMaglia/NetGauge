@@ -3,6 +3,12 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [1.8.0] - 2026-06-17
+### Added
+- Export de informes en **Excel (.xlsx)** y **PDF**, además de CSV (menú del tray).
+- Toggle **"Ocultar localhost"** en la pestaña Conexiones (filtra 127.0.0.1/::1),
+  persistente.
+
 ## [1.7.1] - 2026-06-17
 ### Added
 - Metadata del editor embebida en el `.exe` (CompanyName/FileDescription).

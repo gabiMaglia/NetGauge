@@ -56,6 +56,7 @@ class MonitorService:
         self._capture = capture
         self._repo = repository
         self._reporter = reporter
+        self._reporters = {"csv": reporter}  # otros formatos se registran aparte
         self._settings_store = settings_store
         self._notifier = notifier
         self._flush_interval = flush_interval
@@ -353,7 +354,10 @@ class MonitorService:
             return None
         return self._geoip.lookup(ip)
 
-    def generate_session_report(self) -> str:
+    def register_reporter(self, fmt: str, generator: ReportGenerator) -> None:
+        self._reporters[fmt] = generator
+
+    def generate_session_report(self, fmt: str = "csv") -> str:
         now = datetime.now()
         records = [
             UsageRecord(u.app_name, u.bytes_sent, u.bytes_recv, now)
@@ -361,4 +365,5 @@ class MonitorService:
         ]
         if not records:
             return ""  # sin datos (p.ej. 2ª instancia que salió enseguida)
-        return self._reporter.generate(records)
+        reporter = self._reporters.get(fmt, self._reporter)
+        return reporter.generate(records)

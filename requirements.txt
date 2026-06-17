@@ -2,6 +2,9 @@ psutil>=5.9
 # PySide6 (LGPL): apta para distribución gratuita y comercial/closed-source.
 # (Se migró desde PyQt6, que es GPL/comercial y no servía para vender.)
 PySide6>=6.6
+# Export de informes (Excel / PDF). Ambas son BSD/MIT (aptas comercialmente).
+openpyxl>=3.1
+reportlab>=4.0
 # (pystray/Pillow ya no se usan: la UI y el tray ahora son Qt)
 # ETW por proceso (opcional pero recomendado; requiere Administrador):
 # Nota: la última versión publicada en PyPI es 0.2.0.

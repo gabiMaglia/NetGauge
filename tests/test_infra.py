@@ -27,6 +27,23 @@ def test_sha256_of_this_file_is_stable():
     assert h1 and h1 == h2 and len(h1) == 64
 
 
+def test_report_generators_write_nonempty_files(tmp_path):
+    from datetime import datetime
+    import os
+
+    from src.domain.models import UsageRecord
+    from src.infrastructure.reporting.pdf_report_generator import PdfReportGenerator
+    from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerator
+
+    recs = [UsageRecord("Chrome", 100, 200, datetime.now()),
+            UsageRecord("Spotify", 50, 80, datetime.now())]
+    for gen, ext in ((XlsxReportGenerator(tmp_path), ".xlsx"),
+                     (PdfReportGenerator(tmp_path), ".pdf")):
+        path = gen.generate(recs)
+        assert path.endswith(ext)
+        assert os.path.getsize(path) > 0
+
+
 # --- específico de Windows: firma real -------------------------------------
 if sys.platform == "win32":
     import os

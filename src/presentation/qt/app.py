@@ -87,14 +87,23 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     act_open = QAction(t("tray.metrics"), app)
     act_open.triggered.connect(lambda: (window.showNormal(), window.raise_(),
                                         window.activateWindow()))
-    act_report = QAction(t("tray.export"), app)
+    export_menu = QMenu(t("tray.export"))
 
-    def export() -> None:
-        path = monitor.generate_session_report()
+    def export(fmt: str) -> None:
+        try:
+            path = monitor.generate_session_report(fmt)
+        except Exception as exc:  # noqa: BLE001 — dependencia faltante / I/O
+            tray.showMessage("trafficMe", t("tray.report_error", err=str(exc)),
+                             QSystemTrayIcon.MessageIcon.Warning, 6000)
+            return
         msg = t("tray.report_saved", path=path) if path else t("tray.report_empty")
         tray.showMessage("trafficMe", msg,
                          QSystemTrayIcon.MessageIcon.Information, 5000)
-    act_report.triggered.connect(export)
+
+    for label, fmt in (("CSV", "csv"), ("Excel (.xlsx)", "xlsx"), ("PDF", "pdf")):
+        act = QAction(label, app)
+        act.triggered.connect(lambda _checked=False, f=fmt: export(f))
+        export_menu.addAction(act)
 
     act_about = QAction(t("tray.about"), app)
     act_about.triggered.connect(window._open_about)
@@ -115,7 +124,7 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
         window.activateWindow()
 
     menu.addAction(act_open)
-    menu.addAction(act_report)
+    menu.addMenu(export_menu)
     menu.addSeparator()
     menu.addAction(act_about)
     menu.addAction(act_quit)

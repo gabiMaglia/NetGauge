@@ -1,21 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec para Network Monitor (Windows x64).
 # Build:  pyinstaller build/network_monitor.spec --noconfirm
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
 hiddenimports = (
     collect_submodules("PySide6")
     + collect_submodules("etw")   # pywintrace: bundlear TODO el paquete o no hay ETW
+    + collect_submodules("reportlab")  # export PDF
+    + collect_submodules("openpyxl")   # export Excel (tiene imports dinámicos)
     + ["psutil"]
 )
+
+# reportlab trae fuentes/recursos que hay que bundlear o falla el export PDF.
+datas = collect_data_files("reportlab")
 
 a = Analysis(
     ["..\\main.py"],
     pathex=["."],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],

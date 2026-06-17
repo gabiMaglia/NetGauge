@@ -139,7 +139,8 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
 - **Selector de unidad** Auto / KB / MB / GB.
 - **Dashboard en dos vistas**: Global y Por aplicación.
 - **Tema claro/oscuro** y ventana sin marco con barra de título propia.
-- **Informe CSV**: al "Salir", al cierre del sistema (`atexit`) o on-demand.
+- **Informe CSV / Excel / PDF**: al "Salir", al cierre del sistema (`atexit`) o
+  on-demand desde el menú del tray.
 - **Settings persistentes** en `settings.json`.
 - **Acerca de** con botón de donación (Ko-fi), en la barra de título (ⓘ) y el tray.
 - **Multi-idioma**: español, inglés y portugués (cambia en vivo desde Ajustes ⚙).
@@ -152,7 +153,8 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
   nunca el archivo. No bloqueante (worker en segundo plano con throttle del free
   tier). Apagado por defecto.
 - **Conexiones activas por aplicación** (IP remota · puerto · estado) vía psutil,
-  con **GeoIP/ASN** opt-in (país y proveedor de cada IP remota, vía ip-api.com).
+  con **GeoIP/ASN** opt-in (país y proveedor de cada IP remota, vía ip-api.com) y
+  toggle para **ocultar conexiones a localhost**.
 - **Mini-gráfico (sparkline) en el ícono del tray** + tooltip con velocidad y app top.
 - **Alertas de anomalías**: pico de tráfico inusual (≥3× el promedio reciente) y
   apps que empiezan a usar la red por primera vez. Configurable en Ajustes.
