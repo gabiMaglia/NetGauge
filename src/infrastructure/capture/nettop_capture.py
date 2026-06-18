@@ -7,6 +7,26 @@ son ACUMULATIVOS desde que el proceso abrió sus sockets (igual que
 psutil.net_io_counters()), por lo que esta clase calcula deltas entre samples
 consecutivos por PID, descartando el primer sample (no hay base de referencia).
 
+Verificado empíricamente en este Mac (T-010) con `nettop -P -x -L 0 -s 1 -J
+bytes_in,bytes_out` mientras corría una descarga sostenida: para un mismo PID
+los valores de `bytes_in` crecen monótonamente entre bloques consecutivos
+(ej. 42000 -> 226800 -> 453600 -> 694400 -> 963200), confirmando que SON
+acumulativos. El parseo y el delta simple (current - prev) son correctos.
+
+El bug real de T-010 (picos seguidos de 0 con tráfico sostenido) NO era un
+"doble delta": era que `nettop` puede omitir transitoriamente a un PID de un
+bloque puntual (timing del pipe, proceso sin syscalls de red ese tick, bloque
+truncado, etc.) aunque el proceso siga generando tráfico. La implementación
+anterior reconstruía `_prev` solo con los PIDs presentes en el bloque actual,
+así que un PID ausente en un solo bloque perdía su base de referencia; al
+reaparecer se trataba como "primer sample" y el delta acumulado real (todo lo
+transferido durante la ausencia) se descartaba en silencio -> aparecía como 0
+en vez de como el consumo continuo real. Ahora `_prev` conserva la última
+lectura conocida de cada PID entre bloques (no se borra por ausencia
+puntual), y solo se purga tras `_MAX_MISSING_TICKS` bloques consecutivos sin
+aparecer (proceso terminado de verdad), evitando además que un PID que vuelve
+a aparecer DESPUÉS de purgado se confunda con un reset de contador.
+
 No requiere privilegios de Administrador ni entitlements especiales; es
 best-effort (puede no ver todo el tráfico, p.ej. de la propia VPN/proxy).
 Si el binario no existe o el proceso falla, lanza CaptureUnavailable y la
@@ -78,12 +98,17 @@ def split_into_blocks(stream_lines: Iterable[str]) -> Iterable[list[str]]:
 class NettopCaptureService(CaptureService):
     """Captura por proceso en macOS vía `nettop`. Best-effort, no privilegiada."""
 
+    # Cantidad de bloques consecutivos sin aparecer tras los cuales se purga
+    # la base de un PID (se asume proceso terminado, no ausencia transitoria).
+    _MAX_MISSING_TICKS = 3
+
     def __init__(self, interval: float = 1.0) -> None:
         self._interval = interval
         self._proc: subprocess.Popen | None = None
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._prev: dict[int, tuple[int, int]] = {}
+        # pid -> (bytes_in, bytes_out, ticks_ausente_consecutivos)
+        self._prev: dict[int, tuple[int, int, int]] = {}
 
     @staticmethod
     def is_available() -> bool:
@@ -130,21 +155,42 @@ class NettopCaptureService(CaptureService):
         current: dict[int, tuple[str, int, int]],
         on_sample: Callable[[TrafficSample], None],
     ) -> None:
-        new_prev: dict[int, tuple[int, int]] = {}
+        new_prev: dict[int, tuple[int, int, int]] = {}
+
         for pid, (name, bytes_in, bytes_out) in current.items():
-            new_prev[pid] = (bytes_in, bytes_out)
+            new_prev[pid] = (bytes_in, bytes_out, 0)
             prev = self._prev.get(pid)
             if prev is None:
                 continue  # primer sample del proceso: sin base para delta
-            prev_in, prev_out = prev
-            recv = max(0, bytes_in - prev_in)
-            sent = max(0, bytes_out - prev_out)
+            prev_in, prev_out, _missing = prev
+            delta_in = bytes_in - prev_in
+            delta_out = bytes_out - prev_out
+            if delta_in < 0 or delta_out < 0:
+                # Contador bajó: el proceso reinició sus sockets/PID reciclado.
+                # No hay base válida para un delta; se descarta sin pico falso
+                # (la próxima lectura ya arranca limpia con el valor actual).
+                continue
+            recv, sent = delta_in, delta_out
             if sent or recv:
                 on_sample(
                     TrafficSample(
                         pid=pid, app_name=name, bytes_sent=sent, bytes_recv=recv
                     )
                 )
+
+        # PIDs que tenían base previa pero no aparecieron en este bloque:
+        # conservar su última lectura conocida (no perder la base de delta
+        # por una ausencia transitoria) salvo que ya lleven demasiados
+        # bloques ausentes, en cuyo caso se asume que el proceso terminó.
+        for pid, (bytes_in, bytes_out, missing) in self._prev.items():
+            if pid in new_prev:
+                continue
+            missing += 1
+            if missing <= self._MAX_MISSING_TICKS:
+                new_prev[pid] = (bytes_in, bytes_out, missing)
+            # si supera el límite, se purga (no se copia a new_prev) y un
+            # futuro reaparición se trata como primer sample, no como reset.
+
         self._prev = new_prev
 
     def stop(self) -> None:

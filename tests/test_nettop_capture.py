@@ -72,21 +72,76 @@ def test_emit_deltas_skips_first_sample_then_emits_delta():
     assert sample.bytes_sent == 30
 
 
-def test_emit_deltas_ignores_counter_reset_with_max_zero():
+def test_emit_deltas_ignores_counter_reset_without_negative_bytes():
     svc = NettopCaptureService()
-    svc._prev = {1: (1000, 1000)}
+    svc._prev = {1: (1000, 1000, 0)}
     samples = []
-    # El proceso se reinició: el contador bajó. No debe reportar bytes negativos.
+    # El proceso se reinició: el contador bajó. No debe reportar bytes negativos
+    # ni inventar un pico; se descarta el delta inválido sin emitir evento.
     svc._emit_deltas({1: ("App", 10, 10)}, samples.append)
-    assert samples == []  # delta negativo clamped a 0 en ambos lados -> sin evento
+    assert samples == []
+    # La siguiente lectura ya usa el valor bajo como nueva base (sin pico falso).
+    svc._emit_deltas({1: ("App", 40, 30)}, samples.append)
+    assert len(samples) == 1
+    assert samples[0].bytes_recv == 30
+    assert samples[0].bytes_sent == 20
 
 
 def test_emit_deltas_skips_pids_with_no_traffic_change():
     svc = NettopCaptureService()
-    svc._prev = {1: (100, 100)}
+    svc._prev = {1: (100, 100, 0)}
     samples = []
     svc._emit_deltas({1: ("App", 100, 100)}, samples.append)
     assert samples == []
+
+
+def test_emit_deltas_survives_transient_pid_absence_without_losing_traffic():
+    """Caso real T-010: nettop omite un PID en un bloque puntual aunque el
+    proceso siga transmitiendo. Antes esto perdía la base de delta y el
+    tráfico real acumulado durante la ausencia se descartaba (aparecía como
+    0 en vez de como consumo continuo)."""
+    svc = NettopCaptureService()
+    samples = []
+
+    svc._emit_deltas({1: ("App", 100, 50)}, samples.append)  # primer sample
+    assert samples == []
+
+    svc._emit_deltas({1: ("App", 200, 50)}, samples.append)  # delta = 100
+    assert len(samples) == 1 and samples[0].bytes_recv == 100
+
+    # El PID no aparece en este bloque (ausencia transitoria), pero sigue
+    # transmitiendo en la realidad. No debe perderse la base de referencia.
+    svc._emit_deltas({}, samples.append)
+    assert len(samples) == 1  # sin nuevo evento, pero sin pérdida de base
+    assert 1 in svc._prev
+
+    # Reaparece con el contador acumulado avanzado durante la ausencia:
+    # debe emitir el delta completo (300), no tratarlo como primer sample.
+    svc._emit_deltas({1: ("App", 500, 50)}, samples.append)
+    assert len(samples) == 2
+    assert samples[1].bytes_recv == 300
+    assert samples[1].bytes_sent == 0
+
+
+def test_emit_deltas_purges_pid_after_too_many_missing_ticks():
+    """Si el PID falta más de `_MAX_MISSING_TICKS` bloques seguidos, se asume
+    que el proceso terminó: se purga la base para no calcular un delta
+    gigante (pico falso) si el PID se reciclara para otro proceso distinto."""
+    svc = NettopCaptureService()
+    samples = []
+
+    svc._emit_deltas({1: ("App", 100, 50)}, samples.append)
+    svc._emit_deltas({1: ("App", 200, 50)}, samples.append)
+    assert len(samples) == 1
+
+    for _ in range(svc._MAX_MISSING_TICKS + 1):
+        svc._emit_deltas({}, samples.append)
+    assert 1 not in svc._prev  # purgado tras exceder el límite de ausencias
+
+    # Reaparece (probablemente otro proceso reciclando el PID): se trata
+    # como primer sample, sin emitir un delta gigante espurio.
+    svc._emit_deltas({1: ("OtroProceso", 5000, 5000)}, samples.append)
+    assert len(samples) == 1  # no se agregó un nuevo evento por el "reset"
 
 
 def test_is_available_reflects_shutil_which(monkeypatch):
