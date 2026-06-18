@@ -1,3 +1,7 @@
 # Dependencias solo de desarrollo (no van al binario).
 -r requirements.txt
 pytest>=8.0
+# Pillow: solo para build/make_icon.py (generación de assets/icon.ico/.icns
+# en build-time). No se usa en runtime (la UI/tray son Qt) ni se empaqueta
+# en el binario final.
+Pillow>=10.0
