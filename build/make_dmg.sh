@@ -11,6 +11,10 @@
 #   build/make_dmg.sh arm64           # fuerza el sufijo de arch del .dmg
 #   build/make_dmg.sh x86_64
 #
+# La versión del nombre del .dmg sale de DMG_VERSION si está definida (CI la
+# inyecta con la versión del git tag); sin esa env var (build local) se usa
+# el default hardcodeado de abajo.
+#
 # Requiere macOS (usa hdiutil, no portable a Linux/Windows).
 set -euo pipefail
 
@@ -21,7 +25,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="trafficMe"
-VERSION="1.7.1"
+VERSION="${DMG_VERSION:-1.7.1}"
 ARCH="${1:-$(uname -m)}"
 
 if [[ "$ARCH" != "x86_64" && "$ARCH" != "arm64" ]]; then

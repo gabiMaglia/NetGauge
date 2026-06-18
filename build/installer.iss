@@ -3,7 +3,12 @@
 ; (requiere Inno Setup 6+: https://jrsoftware.org/isdl.php)
 
 #define AppName "trafficMe"
+; Permite inyectar la versión desde CI sin tocar este archivo:
+;   ISCC.exe build\installer.iss /DAppVersion=1.9.0
+; Sin ese define (build local), se usa el default de abajo.
+#ifndef AppVersion
 #define AppVersion "1.8.1"
+#endif
 #define AppExe "trafficMe.exe"
 
 [Setup]
