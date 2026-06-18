@@ -8,6 +8,6 @@ reportlab>=4.0
 # (pystray/Pillow ya no se usan: la UI y el tray ahora son Qt)
 # ETW por proceso (opcional pero recomendado; requiere Administrador):
 # Nota: la última versión publicada en PyPI es 0.2.0.
-pywintrace>=0.2.0
+pywintrace>=0.2.0; sys_platform == "win32"
 # Empaquetado (solo en build, no en runtime):
 pyinstaller>=6.0
