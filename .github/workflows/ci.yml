@@ -24,3 +24,55 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+  # T-004: build/test/package macOS en ambas arquitecturas. No reemplaza ni
+  # modifica el job Windows de arriba (mismo trigger, jobs corren en paralelo).
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            arch: x86_64
+          - os: macos-14
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pywintrace (requirements.txt) es Windows-only y no declara
+          # platform marker; se excluye en runners macOS. Pillow se instala
+          # aparte: la requiere build/make_icon_macos.py (no es dependencia
+          # de runtime de la app, solo del paso de generación de icono).
+          grep -v '^pywintrace' requirements-dev.txt > /tmp/requirements-macos.txt
+          pip install -r /tmp/requirements-macos.txt
+          pip install Pillow
+
+      - name: Run tests
+        run: pytest
+
+      - name: Generate macOS icon (.icns)
+        run: python3 build/make_icon_macos.py
+
+      - name: Build .app bundle (PyInstaller)
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: pyinstaller build/network_monitor_macos.spec --noconfirm
+
+      - name: Build .dmg
+        run: build/make_dmg.sh ${{ matrix.arch }}
+
+      - name: Upload .dmg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trafficMe-macos-${{ matrix.arch }}
+          path: dist/*.dmg
+          if-no-files-found: error
