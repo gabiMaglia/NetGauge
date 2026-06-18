@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -28,7 +29,21 @@ from src.presentation.qt.app import QtNotifier, run
 
 
 def _data_dir() -> Path:
-    base = Path.home() / "AppData" / "Local" / "trafficMe"
+    """Directorio de datos por plataforma (logs, DB, settings, reportes).
+
+    Windows: %LOCALAPPDATA%\\trafficMe (con fallback a ~/AppData/Local si la
+    env var no está seteada, igual que antes). macOS: ~/Library/Application
+    Support/trafficMe, convención estándar de la plataforma. Resto (Linux/CI):
+    ~/.trafficMe.
+    """
+    if sys.platform == "win32":
+        local = os.environ.get("LOCALAPPDATA")
+        base = Path(local) / "trafficMe" if local else \
+            Path.home() / "AppData" / "Local" / "trafficMe"
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support" / "trafficMe"
+    else:
+        base = Path.home() / ".trafficMe"
     base.mkdir(parents=True, exist_ok=True)
     return base
 

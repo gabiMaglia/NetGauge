@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ipaddress
+import sys
 
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtWidgets import (
@@ -556,10 +557,16 @@ class MainWindow(QWidget):
 
     # ---- gestión de ventana (maximizar / persistir geometría) ---------
     def _style_mode_badge(self) -> None:
-        etw = self._per_process
-        self._mode_badge.setText(t("mode.etw") if etw else t("mode.global"))
-        self._mode_badge.setToolTip(t("mode.etw_tip") if etw else t("mode.global_tip"))
-        color = "#10b981" if etw else "#f59e0b"
+        per_app = self._per_process
+        if per_app and sys.platform == "darwin":
+            label_key, tip_key = "mode.nettop", "mode.nettop_tip"
+        elif per_app:
+            label_key, tip_key = "mode.etw", "mode.etw_tip"
+        else:
+            label_key, tip_key = "mode.global", "mode.global_tip"
+        self._mode_badge.setText(t(label_key))
+        self._mode_badge.setToolTip(t(tip_key))
+        color = "#10b981" if per_app else "#f59e0b"
         self._mode_badge.setStyleSheet(
             f"color:{color}; border:1px solid {color}; border-radius:7px;"
             f"padding:1px 7px; font-size:11px; font-weight:700;")

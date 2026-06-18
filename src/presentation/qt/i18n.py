@@ -64,6 +64,8 @@ _STR: dict[str, dict[str, str]] = {
         "alert.update.body": "trafficMe {v} está disponible. Descargala en {url}",
         "mode.etw": "ETW · por app", "mode.global": "Global",
         "mode.etw_tip": "Captura por proceso activa (ETW, como admin).",
+        "mode.nettop": "nettop · por app",
+        "mode.nettop_tip": "Captura por proceso activa (nettop, best-effort).",
         "mode.global_tip": "Sin desglose por app: medición global (psutil). "
                            "Ejecutá como Administrador para activar ETW.",
         "conn.empty": "No hay conexiones activas.",
@@ -136,6 +138,8 @@ _STR: dict[str, dict[str, str]] = {
         "alert.update.body": "trafficMe {v} is available. Download it at {url}",
         "mode.etw": "ETW · per app", "mode.global": "Global",
         "mode.etw_tip": "Per-process capture active (ETW, as admin).",
+        "mode.nettop": "nettop · per app",
+        "mode.nettop_tip": "Per-process capture active (nettop, best-effort).",
         "mode.global_tip": "No per-app breakdown: global measurement (psutil). "
                            "Run as Administrator to enable ETW.",
         "conn.empty": "No active connections.",
@@ -208,6 +212,8 @@ _STR: dict[str, dict[str, str]] = {
         "alert.update.body": "trafficMe {v} está disponível. Baixe em {url}",
         "mode.etw": "ETW · por app", "mode.global": "Global",
         "mode.etw_tip": "Captura por processo ativa (ETW, como admin).",
+        "mode.nettop": "nettop · por app",
+        "mode.nettop_tip": "Captura por processo ativa (nettop, best-effort).",
         "mode.global_tip": "Sem detalhe por app: medição global (psutil). "
                            "Execute como Administrador para ativar o ETW.",
         "conn.empty": "Não há conexões ativas.",
