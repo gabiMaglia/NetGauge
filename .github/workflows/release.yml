@@ -86,13 +86,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # pywintrace (requirements.txt) es Windows-only y no declara
-          # platform marker; se excluye en runners macOS. Pillow se instala
-          # aparte: la requiere build/make_icon_macos.py (no es dependencia
-          # de runtime de la app, solo del paso de generación de icono).
-          grep -v '^pywintrace' requirements-dev.txt > /tmp/requirements-macos.txt
-          pip install -r /tmp/requirements-macos.txt
-          pip install Pillow
+          pip install -r requirements-dev.txt
 
       - name: Write APP_VERSION into src/version.py
         run: |
