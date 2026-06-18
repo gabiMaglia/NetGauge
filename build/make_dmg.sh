@@ -25,7 +25,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="trafficMe"
-VERSION="${DMG_VERSION:-1.7.1}"
+VERSION="${DMG_VERSION:-1.8.1}"
 ARCH="${1:-$(uname -m)}"
 
 if [[ "$ARCH" != "x86_64" && "$ARCH" != "arm64" ]]; then
