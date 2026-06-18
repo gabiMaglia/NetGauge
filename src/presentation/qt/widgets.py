@@ -238,15 +238,20 @@ class AppRow(QFrame):
         center.addWidget(self._bar)
         lay.addLayout(center, 1)
 
+        # Slot de confianza: SIEMPRE reserva 22px (aunque no haya badge) para
+        # que la columna quede alineada entre filas.
         self._trust = QLabel()
         self._trust.setFixedSize(22, 22)
         self._trust.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._trust.hide()
         lay.addWidget(self._trust)
 
-        right = QVBoxLayout()
+        # Columna de totales de ancho FIJO: así la barra mide igual en todas las
+        # filas (no depende del largo del número) y todo queda en escuadra.
+        right_w = QWidget()
+        right_w.setFixedWidth(128)
+        right = QVBoxLayout(right_w)
+        right.setContentsMargins(0, 0, 0, 0)
         right.setSpacing(3)
-        right.setAlignment(Qt.AlignmentFlag.AlignRight)
         self._tot = QLabel("")
         self._tot.setObjectName("AppTotal")
         self._tot.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -255,7 +260,7 @@ class AppRow(QFrame):
         self._sp.setAlignment(Qt.AlignmentFlag.AlignRight)
         right.addWidget(self._tot)
         right.addWidget(self._sp)
-        lay.addLayout(right)
+        lay.addWidget(right_w)
 
     def update_data(self, total: str, split: str, pct: float,
                     active: bool = False) -> None:
@@ -276,8 +281,10 @@ class AppRow(QFrame):
 
     def set_trust(self, level: str, tooltip: str) -> None:
         style = self._TRUST_STYLE.get(level)
-        if style is None:
-            self._trust.hide()
+        if style is None:  # sin dato: slot vacío pero el espacio queda reservado
+            self._trust.setText("")
+            self._trust.setToolTip("")
+            self._trust.setStyleSheet("background:transparent; border:none;")
             return
         color, sym = style
         self._trust.setText(sym)
@@ -285,7 +292,6 @@ class AppRow(QFrame):
         self._trust.setStyleSheet(
             f"color:{color}; background:rgba(0,0,0,0); border:1.5px solid {color};"
             f"border-radius:11px; font-size:12px; font-weight:800;")
-        self._trust.show()
 
     def _style_badge(self) -> None:
         icon = _app_icon(self._name, self._t)
