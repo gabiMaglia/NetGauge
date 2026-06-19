@@ -31,10 +31,27 @@ No requiere privilegios de Administrador ni entitlements especiales; es
 best-effort (puede no ver todo el tráfico, p.ej. de la propia VPN/proxy).
 Si el binario no existe o el proceso falla, lanza CaptureUnavailable y la
 fábrica cae a PsutilCaptureService, igual que hace Windows con ETW.
+
+T-011 (bug raíz de los picos→0): `nettop` detecta que su stdout no es un
+TTY cuando se lo lanza con `stdout=PIPE` (caso de `subprocess.Popen` común)
+y pasa a usar buffering completo de libc, acumulando varios bloques antes
+de volcarlos de una sola vez al pipe. Verificado empíricamente en este Mac:
+con pipe simple, 8 bloques esperados en ~8s (a 1/s) llegaron TODOS juntos
+en una sola ráfaga a t+12.02s. Lanzando `nettop` bajo un pseudo-terminal
+(PTY, vía `os.openpty`) en vez de un pipe, `nettop` ve un TTY en su stdout y
+usa line-buffering: los mismos 8 bloques llegaron a t=[0.05, 1.05, 2.03,
+3.03, 4.03, 5.03, 6.03, 7.02]s, es decir ~1 bloque/seg, cadencia pareja.
+Esto elimina el aliasing con el `_rate_tick` de 1s que causaba el patrón
+pico-luego-0. Bajo PTY, las líneas llegan terminadas en "\r\n" (traducción
+de terminal); el parseo ya tolera esto porque tanto `parse_nettop_block`
+como `split_into_blocks` hacen `.strip()` antes de evaluar cada línea.
 """
 from __future__ import annotations
 
 import logging
+import os
+import pty
+import select
 import shutil
 import subprocess
 import threading
@@ -95,6 +112,37 @@ def split_into_blocks(stream_lines: Iterable[str]) -> Iterable[list[str]]:
         yield block
 
 
+def iter_lines_from_fd(
+    fd: int, stop_event: threading.Event, chunk_size: int = 65536
+) -> Iterable[str]:
+    """Lee de un file descriptor (master de un PTY) y yieldea líneas de texto.
+
+    Usa `select` con timeout corto para poder revisar `stop_event`
+    periódicamente y no bloquear `stop()` indefinidamente. Decodea con
+    `errors="replace"` (best-effort, igual que `text=True` en Popen).
+    """
+    buf = b""
+    while not stop_event.is_set():
+        try:
+            ready, _, _ = select.select([fd], [], [], 0.5)
+        except (OSError, ValueError):
+            break
+        if fd not in ready:
+            continue
+        try:
+            chunk = os.read(fd, chunk_size)
+        except OSError:
+            break  # PTY cerrado del otro lado (proceso terminó)
+        if not chunk:
+            break
+        buf += chunk
+        while b"\n" in buf:
+            line, buf = buf.split(b"\n", 1)
+            yield line.decode(errors="replace")
+    if buf:
+        yield buf.decode(errors="replace")
+
+
 class NettopCaptureService(CaptureService):
     """Captura por proceso en macOS vía `nettop`. Best-effort, no privilegiada."""
 
@@ -107,6 +155,7 @@ class NettopCaptureService(CaptureService):
         self._proc: subprocess.Popen | None = None
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
+        self._master_fd: int | None = None
         # pid -> (bytes_in, bytes_out, ticks_ausente_consecutivos)
         self._prev: dict[int, tuple[int, int, int]] = {}
 
@@ -127,23 +176,39 @@ class NettopCaptureService(CaptureService):
         cmd = self._build_command()
         self._stop_event.clear()
         self._prev = {}
+
+        # Lanzar nettop bajo un PTY (en vez de un pipe simple) para que vea
+        # su stdout como un TTY y use line-buffering: así entrega cada
+        # bloque ~1/s en vez de bufferear varios y volcarlos en ráfaga
+        # (causa raíz de T-011, verificado empíricamente en este Mac).
+        try:
+            master_fd, slave_fd = pty.openpty()
+        except OSError as exc:
+            raise CaptureUnavailable(f"No se pudo abrir un PTY: {exc}") from exc
+
         try:
             self._proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                text=True, bufsize=1,
+                cmd, stdout=slave_fd, stderr=subprocess.DEVNULL,
+                close_fds=True,
             )
         except OSError as exc:
+            os.close(master_fd)
+            os.close(slave_fd)
             raise CaptureUnavailable(f"No se pudo iniciar nettop: {exc}") from exc
+        finally:
+            os.close(slave_fd)  # el hijo ya tiene su propio fd duplicado
 
+        self._master_fd = master_fd
         self._thread = threading.Thread(
             target=self._loop, args=(on_sample,), daemon=True
         )
         self._thread.start()
 
     def _loop(self, on_sample: Callable[[TrafficSample], None]) -> None:
-        assert self._proc is not None and self._proc.stdout is not None
+        assert self._master_fd is not None
         try:
-            for block in split_into_blocks(self._proc.stdout):
+            lines = iter_lines_from_fd(self._master_fd, self._stop_event)
+            for block in split_into_blocks(lines):
                 if self._stop_event.is_set():
                     break
                 self._emit_deltas(parse_nettop_block(block), on_sample)
@@ -207,3 +272,9 @@ class NettopCaptureService(CaptureService):
             self._proc = None
         if self._thread is not None:
             self._thread.join(timeout=self._interval + 2)
+        if self._master_fd is not None:
+            try:
+                os.close(self._master_fd)
+            except OSError:
+                pass
+            self._master_fd = None

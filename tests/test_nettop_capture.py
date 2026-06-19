@@ -5,8 +5,12 @@ de parseo y la lógica de deltas/fallback con fakes.
 """
 from __future__ import annotations
 
+import os
+import threading
+
 from src.infrastructure.capture.nettop_capture import (
     NettopCaptureService,
+    iter_lines_from_fd,
     parse_nettop_block,
     split_into_blocks,
 )
@@ -36,6 +40,66 @@ def test_parse_nettop_block_ignores_malformed_lines():
     result = parse_nettop_block(lines)
     assert list(result.keys()) == [42]
     assert result[42] == ("Valid", 10, 20)
+
+
+def test_parse_nettop_block_strips_carriage_return():
+    """T-011: bajo PTY, nettop emite líneas terminadas en "\\r\\n" (traducción
+    de terminal). El parseo debe tolerar el "\\r" igual que hace con espacios."""
+    lines = [
+        ",bytes_in,bytes_out,\r",
+        "Spotify.893,1349395,40520,\r",
+        "Google Chrome H.811,4485341,355531,\r",
+    ]
+    result = parse_nettop_block(lines)
+    assert result[893] == ("Spotify", 1349395, 40520)
+    assert result[811] == ("Google Chrome H", 4485341, 355531)
+
+
+def test_split_into_blocks_groups_by_header_with_carriage_return():
+    stream = [
+        ",bytes_in,bytes_out,\r\n",
+        "A.1,10,20,\r\n",
+        ",bytes_in,bytes_out,\r\n",
+        "A.1,15,25,\r\n",
+        "B.2,5,5,\r\n",
+    ]
+    blocks = list(split_into_blocks(stream))
+    assert len(blocks) == 2
+    assert parse_nettop_block(blocks[0]) == {1: ("A", 10, 20)}
+    assert parse_nettop_block(blocks[1]) == {1: ("A", 15, 25), 2: ("B", 5, 5)}
+
+
+def test_iter_lines_from_fd_yields_decoded_lines_until_eof():
+    """Simula el extremo maestro de un PTY: escribe en el extremo write de un
+    pipe os.pipe() (mismo contrato de fd crudo que un PTY) con "\\r\\n" y
+    confirma que iter_lines_from_fd reconstruye las líneas completas."""
+    read_fd, write_fd = os.pipe()
+    stop_event = threading.Event()
+
+    def writer():
+        os.write(write_fd, b",bytes_in,bytes_out,\r\n")
+        os.write(write_fd, b"App.1,10,20,\r\n")
+        os.close(write_fd)
+
+    t = threading.Thread(target=writer)
+    t.start()
+    lines = list(iter_lines_from_fd(read_fd, stop_event))
+    t.join()
+    os.close(read_fd)
+
+    assert lines == [",bytes_in,bytes_out,\r", "App.1,10,20,\r"]
+
+
+def test_iter_lines_from_fd_stops_when_stop_event_set():
+    read_fd, write_fd = os.pipe()
+    stop_event = threading.Event()
+    stop_event.set()  # ya detenido antes de empezar a leer
+
+    lines = list(iter_lines_from_fd(read_fd, stop_event))
+
+    os.close(read_fd)
+    os.close(write_fd)
+    assert lines == []
 
 
 def test_split_into_blocks_groups_by_header():
