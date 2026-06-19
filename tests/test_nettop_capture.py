@@ -235,6 +235,33 @@ def test_build_command_raises_when_nettop_missing(monkeypatch):
         pass
 
 
+def test_start_raises_capture_unavailable_when_popen_fails(monkeypatch):
+    """Si Popen falla, start() degrada a CaptureUnavailable (no a un OSError
+    crudo por doble-close del slave_fd) para que la factory caiga a psutil.
+    Regresión T-011 (defecto QA: except + finally cerraban slave_fd dos veces)."""
+    from src.infrastructure.capture.nettop_capture import CaptureUnavailable
+
+    monkeypatch.setattr(
+        "src.infrastructure.capture.nettop_capture.shutil.which",
+        lambda name: "/usr/bin/nettop",
+    )
+
+    def _boom(*args, **kwargs):
+        raise OSError("no se pudo ejecutar nettop")
+
+    monkeypatch.setattr(
+        "src.infrastructure.capture.nettop_capture.subprocess.Popen", _boom
+    )
+    svc = NettopCaptureService()
+    try:
+        svc.start(lambda sample: None)
+        assert False, "debía lanzar CaptureUnavailable"
+    except CaptureUnavailable:
+        pass
+    except OSError as exc:  # el doble-close se manifestaba acá (Bad file descriptor)
+        assert False, f"esperaba CaptureUnavailable, no OSError crudo: {exc}"
+
+
 def test_factory_returns_nettop_backend_on_macos(monkeypatch):
     import src.infrastructure.capture.factory as factory_mod
 

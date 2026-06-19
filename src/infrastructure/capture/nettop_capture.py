@@ -192,8 +192,9 @@ class NettopCaptureService(CaptureService):
                 close_fds=True,
             )
         except OSError as exc:
+            # slave_fd lo cierra el `finally` (corre siempre); acá solo el master
+            # para no fugarlo. Cerrar slave en ambos lados sería un doble-close.
             os.close(master_fd)
-            os.close(slave_fd)
             raise CaptureUnavailable(f"No se pudo iniciar nettop: {exc}") from exc
         finally:
             os.close(slave_fd)  # el hijo ya tiene su propio fd duplicado
