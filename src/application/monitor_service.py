@@ -85,8 +85,16 @@ class MonitorService:
         # Velocidad en vivo: bytes acumulados en la última ventana de 1s.
         self._rate_sent = 0
         self._rate_recv = 0
-        self._live_up = 0.0      # bytes/seg
+        self._live_up = 0.0      # bytes/seg (suavizado, lo que se muestra)
         self._live_down = 0.0
+        # Suavizado de la tasa mostrada (T-012): nettop entrega ~1 bloque/s
+        # pero su reloj no está en fase con _rate_tick (también 1s) -> deltas
+        # tipo [0, 2x, 0, 2x] (aliasing). Promedio móvil de las últimas 3
+        # lecturas crudas de 1s absorbe esa alternancia sin introducir
+        # demasiado lag (responde a un cambio real en ~3s).
+        self._RATE_WINDOW = 3
+        self._raw_up_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
+        self._raw_down_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
 
         self.settings: Settings = settings_store.load()
         self._alerts_fired: set[int] = set()
@@ -132,11 +140,20 @@ class MonitorService:
 
     def _rate_tick(self) -> None:
         with self._lock:
-            self._live_up = float(self._rate_sent)
-            self._live_down = float(self._rate_recv)
+            raw_up = float(self._rate_sent)
+            raw_down = float(self._rate_recv)
             self._rate_sent = 0
             self._rate_recv = 0
-        self._check_spike(self._live_up + self._live_down)
+            # Suavizado (T-012): promedio móvil sobre las últimas
+            # _RATE_WINDOW lecturas crudas de 1s. Solo afecta lo MOSTRADO
+            # (_live_up/_live_down); los totales/persistencia ya quedaron
+            # actualizados en _on_sample y no se tocan aquí.
+            self._raw_up_history.append(raw_up)
+            self._raw_down_history.append(raw_down)
+            self._live_up = sum(self._raw_up_history) / len(self._raw_up_history)
+            self._live_down = sum(self._raw_down_history) / len(self._raw_down_history)
+            smoothed_total = self._live_up + self._live_down
+        self._check_spike(smoothed_total)
         self._schedule_rate()
 
     # ---- i18n de avisos -----------------------------------------------
