@@ -85,6 +85,11 @@ class ReputationService(ABC):
     def set_api_key(self, key: str) -> None: ...
 
     @abstractmethod
+    def test_api_key(self, key: str) -> bool:
+        """True si la key es válida (consulta liviana, sin gastar cuota de
+        análisis). Bloqueante: el caller debe invocarla fuera del hilo de UI."""
+
+    @abstractmethod
     def lookup(self, exe_path: str) -> tuple[int, int] | None:
         """(maliciosos, total_motores) si hay dato; None si no/aún no."""
 

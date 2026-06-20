@@ -19,6 +19,7 @@ from ...domain.ports import ReputationService
 log = logging.getLogger(__name__)
 
 _API = "https://www.virustotal.com/api/v3/files/"
+_API_USERS = "https://www.virustotal.com/api/v3/users/"
 _MIN_INTERVAL = 16.0   # seg entre consultas (≈4/min, dentro del free tier)
 _UNKNOWN = "unknown"   # VT no conoce el archivo
 
@@ -34,6 +35,28 @@ class VirusTotalReputation(ReputationService):
 
     def set_api_key(self, key: str) -> None:
         self._api_key = key
+
+    def test_api_key(self, key: str) -> bool:
+        """Valida una key contra VT sin gastar cuota de análisis.
+
+        Usa GET /api/v3/users/{apikey}: VT devuelve los datos de la propia
+        cuenta asociada a esa key. Es liviano (no consulta archivos) y es el
+        mecanismo que VT documenta para "quién soy"/validación de credenciales.
+        Llamar siempre desde un hilo de fondo: hace I/O de red bloqueante.
+        """
+        key = (key or "").strip()
+        if not key:
+            return False
+        req = urllib.request.Request(
+            _API_USERS + key,
+            headers={"x-apikey": key, "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status == 200
+        except urllib.error.HTTPError:
+            return False
+        except urllib.error.URLError:
+            return False
 
     def lookup(self, exe_path: str) -> tuple[int, int] | None:
         if not exe_path or not self._api_key:
@@ -109,5 +132,7 @@ def _sha256(path: str) -> str | None:
 
 class NullReputation(ReputationService):
     def set_api_key(self, key: str) -> None: ...
+    def test_api_key(self, key: str) -> bool:
+        return False
     def lookup(self, exe_path: str) -> tuple[int, int] | None:
         return None

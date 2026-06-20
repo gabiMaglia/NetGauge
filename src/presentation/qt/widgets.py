@@ -245,6 +245,14 @@ class AppRow(QFrame):
         self._trust.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lay.addWidget(self._trust)
 
+        # Badge ADICIONAL específico de VirusTotal: independiente del de
+        # confianza local. Solo se pinta cuando VT efectivamente analizó la
+        # app (vt_total truthy); si está deshabilitado/sin key queda vacío.
+        self._vt_badge = QLabel()
+        self._vt_badge.setFixedSize(16, 16)
+        self._vt_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(self._vt_badge)
+
         # Columna de totales de ancho FIJO: así la barra mide igual en todas las
         # filas (no depende del largo del número) y todo queda en escuadra.
         right_w = QWidget()
@@ -292,6 +300,23 @@ class AppRow(QFrame):
         self._trust.setStyleSheet(
             f"color:{color}; background:rgba(0,0,0,0); border:1.5px solid {color};"
             f"border-radius:11px; font-size:12px; font-weight:800;")
+
+    def set_vt_badge(self, vt_malicious: int | None, vt_total: int | None,
+                     tooltip: str = "") -> None:
+        """Badge de "analizado por VT": verde=limpio, rojo=detectado,
+        sin pintar si VT no analizó esta app (deshabilitado o sin key)."""
+        if not vt_total:
+            self._vt_badge.setText("")
+            self._vt_badge.setToolTip("")
+            self._vt_badge.setStyleSheet("background:transparent; border:none;")
+            return
+        malicious = vt_malicious or 0
+        color = "#ef4444" if malicious > 0 else "#10b981"
+        self._vt_badge.setText("V")
+        self._vt_badge.setToolTip(tooltip)
+        self._vt_badge.setStyleSheet(
+            f"color:white; background:{color}; border-radius:8px;"
+            f"font-size:8px; font-weight:800;")
 
     def _style_badge(self) -> None:
         icon = _app_icon(self._name, self._t)

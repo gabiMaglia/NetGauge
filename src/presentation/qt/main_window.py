@@ -426,6 +426,8 @@ class MainWindow(QWidget):
             row.update_data(f"{vt} {ut}", f"↓{vd} ↑{vu}", pct, active=(i == 0))
             info = self._monitor.trust_for(app)
             row.set_trust(info.level, self._trust_tooltip(info))
+            row.set_vt_badge(info.vt_malicious, info.vt_total,
+                             self._vt_badge_tooltip(info))
 
     def _trust_tooltip(self, info) -> str:
         lines = [f"{t('trust.title')}: {t('trust.level.' + info.level)}"]
@@ -437,6 +439,12 @@ class MainWindow(QWidget):
             else:
                 lines.append("• " + t(r))
         return "\n".join(lines)
+
+    def _vt_badge_tooltip(self, info) -> str:
+        if not info.vt_total:
+            return ""
+        key = "trust.vt_detected" if (info.vt_malicious or 0) > 0 else "trust.vt_clean"
+        return t(key, m=info.vt_malicious, n=info.vt_total)
 
     def _refresh_connections(self) -> None:
         if self._tabs.currentIndex() != 2:  # solo si la pestaña está visible
@@ -507,7 +515,8 @@ class MainWindow(QWidget):
             self._refresh()
 
     def _open_settings(self) -> None:
-        dlg = SettingsDialog(self._monitor.settings, self)
+        dlg = SettingsDialog(self._monitor.settings, self,
+                             reputation=self._monitor.reputation_service)
         dlg.setStyleSheet(app_qss(self._theme))
         if dlg.exec():
             new = dlg.result_settings()

@@ -102,6 +102,12 @@ class MonitorService:
         self._daily_alerts_fired: set[int] = set()
         self._alert_day: datetime | None = None
 
+    @property
+    def reputation_service(self) -> ReputationService | None:
+        """Acceso de solo lectura para la capa de presentación (ej. probar
+        la API key de VirusTotal en Settings sin esperar a un proceso real)."""
+        return self._reputation
+
     # ---- ciclo de vida -------------------------------------------------
     def start(self) -> None:
         self._running = True
