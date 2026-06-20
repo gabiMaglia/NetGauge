@@ -101,14 +101,33 @@ def handle_native_event(window, message):
         return (True, 0)  # área cliente = toda la ventana (sin marco visible)
 
     if msg.message == _WM_NCHITTEST:
-        return _hit_test(window, msg)
+        try:
+            return _hit_test(window, msg)
+        except Exception:  # noqa: BLE001
+            # Si el hit-test falla (p.ej. por una config de DPI/escala atípica
+            # en la máquina), NO dejamos la excepción sin capturar: eso
+            # rompería el procesamiento nativo de mensajes y el header
+            # quedaría totalmente muerto (sin drag/resize/botones) de forma
+            # silenciosa. Devolver None hace que Qt caiga al comportamiento
+            # default de Windows para ese mensaje en vez de colgar el chrome.
+            return None
     return None
 
 
 def _hit_test(window, msg):
+    # WM_NCHITTEST llega siempre en coordenadas FÍSICAS de pantalla (píxeles
+    # reales del monitor), independientemente del escalado DPI configurado.
+    # window.mapFromGlobal() espera coordenadas LÓGICAS (las que usa Qt
+    # internamente, ya divididas por el factor de escala). Si no se convierte
+    # explícitamente, en escalados fraccionales (125%/150%/175% - comunes en
+    # notebooks) el punto cae desalineado: los botones del header dejan de
+    # recibir clicks y los bordes de resize no se detectan, aunque el resto
+    # de la UI (que no toca coordenadas físicas) funcione bien.
     x = ctypes.c_short(msg.lParam & 0xFFFF).value
     y = ctypes.c_short((msg.lParam >> 16) & 0xFFFF).value
-    pt = window.mapFromGlobal(QPoint(x, y))
+    ratio = window.devicePixelRatioF() or 1.0
+    global_logical = QPoint(round(x / ratio), round(y / ratio))
+    pt = window.mapFromGlobal(global_logical)
     lx, ly = pt.x(), pt.y()
     w, h = window.width(), window.height()
     b = _BORDER

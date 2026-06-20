@@ -19,8 +19,8 @@ def _set_app_user_model_id() -> None:
 import threading
 from collections import deque
 
-from PySide6.QtCore import QObject, QTimer, Signal
-from PySide6.QtGui import QAction
+from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtGui import QAction, QGuiApplication
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from ...application.monitor_service import MonitorService
@@ -62,8 +62,31 @@ class QtNotifier(QObject):
                                    QSystemTrayIcon.MessageIcon.Information, 6000)
 
 
+def _fix_dpi_rounding_policy() -> None:
+    """Fija la política de escalado DPI ANTES de crear QApplication.
+
+    Sin esto, con escalado fraccional de Windows (125%/150%/175% — frecuente
+    en notebooks, no tanto en monitores de escritorio) Qt puede redondear el
+    factor de escala de forma distinta a como lo hace win32 puro. El chrome
+    nativo de la ventana (native_window.py) recibe coordenadas FÍSICAS de
+    WM_NCHITTEST y las convierte a lógicas con QWindow.mapFromGlobal(); si la
+    política de redondeo no es consistente, ese mapeo queda desalineado y los
+    botones del header / bordes de resize "apuntan" al lugar equivocado
+    -> ventana inmóvil, sin resize y con los botones muertos pese a que el
+    resto de la UI (que no usa coordenadas físicas) funciona normal.
+    PassThrough preserva el factor de escala real (sin redondear a entero),
+    que es lo que necesita la conversión física<->lógica en native_window.py.
+    """
+    try:
+        QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    except Exception:  # noqa: BLE001 — best-effort, no debe impedir el arranque
+        pass
+
+
 def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int:
     _set_app_user_model_id()
+    _fix_dpi_rounding_policy()
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)  # cerrar la ventana NO cierra la app
     app_icon = make_app_qicon()
