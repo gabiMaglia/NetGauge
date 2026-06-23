@@ -3,6 +3,12 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/trafficMe-handoffs-[fecha].md
 
+### 2026-06-22 nerv-orquestador→nerv-web T-015
+- Entrega: construir la landing one-page de trafficMe (React+Vite, en `/landing`). Brief completo, decisiones PO, identidad visual, 13 secciones, reglas de contenido y criterios de aceptación: §T-015 en `engram/03_backlog.md`. Niv QA: Strong (>400 líneas).
+- Verdades verificadas contra el código (usar tal cual, NO inventar): MIT (LICENSE raíz); features reales en `src/` (connections, virustotal opt-in, geoip, trust/Authenticode solo-Windows, quota, anomalía 3×, reportes CSV/Excel/PDF); build sin firmar (ADR-001). Links: ver §T-015.
+- Restricciones: solo crear archivos bajo `/landing`; NO tocar `src/`, workflows ni instaladores. Descargas → `releases/latest`. 3 botones siempre visibles. Respetar reglas de contenido (cuota avisa NO bloquea; privacidad exacta; confianza=Windows).
+- Pendientes: screenshots reales no existen → usar placeholders. `npm run build` debe correr limpio antes de devolver el control.
+
 ### 2026-06-20 nerv-orquestador→nerv-desktop T-014
 - Entrega: PO reportó que metió la API key de VT, tildó el checkbox, y "no pasó nada" visible. Causa raíz real: NO es bug funcional (el flujo `_enrich_with_vt` en monitor_service.py:349 funciona), es falta total de feedback visual — el label del checkbox se corta por el ancho fijo del diálogo (420px) y solo se lee completo con hover; no hay indicador de "VT analizó esta app" ni de "la key es válida".
 - Se espera: (1) badge por proceso coloreado cuando VT analizó esa app, (2) LED de estado de conexión VT en Settings, (3) link a registro de VT. Ver criterios completos en backlog T-014.
