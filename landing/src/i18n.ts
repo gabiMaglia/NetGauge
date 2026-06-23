@@ -69,7 +69,7 @@ const es: Dict = {
 
   'hero.badge': 'Monitor de red · Open source',
   'hero.title':
-    'Sabé qué app se está <span style="color:var(--acc,#22d3ee);position:relative;white-space:nowrap">comiendo</span> tu internet.',
+    'Sabé qué app se está <span style="color:var(--acc,#458bf8);position:relative;white-space:nowrap">comiendo</span> tu internet.',
   'hero.subtitle':
     'Monitor de consumo de red por aplicación, en tiempo real. Gratis, de código abierto y privado: <span style="color:#cdddee;font-weight:600">tus datos nunca salen de tu equipo</span>. Windows y Mac.',
   'hero.viewGithub': 'Ver en GitHub',
@@ -216,7 +216,7 @@ const es: Dict = {
   'faq.q6.a':
     'No. La cuota te <b style="color:#cdddee">avisa</b> al 80% y al 100%, pero nunca bloquea ni corta la conexión. Vos decidís qué hacer.',
 
-  'cta.title': 'Tomá el control de tu red.<br><span style="color:var(--acc,#22d3ee)">Gratis.</span>',
+  'cta.title': 'Tomá el control de tu red.<br><span style="color:var(--acc,#458bf8)">Gratis.</span>',
   'cta.subtitle': 'Open source, sin telemetría y 100% local. Lo instalás en un minuto.',
   'cta.download': 'Descargar gratis',
   'cta.github': 'Ver en GitHub',
@@ -244,7 +244,7 @@ const en: Dict = {
 
   'hero.badge': 'Network monitor · Open source',
   'hero.title':
-    'Find out which app is <span style="color:var(--acc,#22d3ee);position:relative;white-space:nowrap">eating</span> your internet.',
+    'Find out which app is <span style="color:var(--acc,#458bf8);position:relative;white-space:nowrap">eating</span> your internet.',
   'hero.subtitle':
     'Real-time, per-app network usage monitor. Free, open source and private: <span style="color:#cdddee;font-weight:600">your data never leaves your machine</span>. Windows and Mac.',
   'hero.viewGithub': 'View on GitHub',
@@ -391,7 +391,7 @@ const en: Dict = {
   'faq.q6.a':
     'No. The quota <b style="color:#cdddee">warns</b> you at 80% and 100%, but it never blocks or cuts the connection. You decide what to do.',
 
-  'cta.title': 'Take control of your network.<br><span style="color:var(--acc,#22d3ee)">Free.</span>',
+  'cta.title': 'Take control of your network.<br><span style="color:var(--acc,#458bf8)">Free.</span>',
   'cta.subtitle': 'Open source, no telemetry and 100% local. Installs in a minute.',
   'cta.download': 'Download free',
   'cta.github': 'View on GitHub',
@@ -419,7 +419,7 @@ const pt: Dict = {
 
   'hero.badge': 'Monitor de rede · Open source',
   'hero.title':
-    'Saiba qual app está <span style="color:var(--acc,#22d3ee);position:relative;white-space:nowrap">consumindo</span> sua internet.',
+    'Saiba qual app está <span style="color:var(--acc,#458bf8);position:relative;white-space:nowrap">consumindo</span> sua internet.',
   'hero.subtitle':
     'Monitor de consumo de rede por aplicativo, em tempo real. Gratuito, de código aberto e privado: <span style="color:#cdddee;font-weight:600">seus dados nunca saem do seu computador</span>. Windows e Mac.',
   'hero.viewGithub': 'Ver no GitHub',
@@ -566,7 +566,7 @@ const pt: Dict = {
   'faq.q6.a':
     'Não. A cota <b style="color:#cdddee">avisa</b> em 80% e 100%, mas nunca bloqueia ou corta a conexão. Você decide o que fazer.',
 
-  'cta.title': 'Assuma o controle da sua rede.<br><span style="color:var(--acc,#22d3ee)">Gratuito.</span>',
+  'cta.title': 'Assuma o controle da sua rede.<br><span style="color:var(--acc,#458bf8)">Gratuito.</span>',
   'cta.subtitle': 'Open source, sem telemetria e 100% local. Você instala em um minuto.',
   'cta.download': 'Baixar gratis',
   'cta.github': 'Ver no GitHub',
@@ -632,8 +632,8 @@ export function applyLang(root: HTMLElement, lang: Lang): void {
   root.querySelectorAll<HTMLElement>('[data-lang-btn]').forEach((btn) => {
     const isActive = btn.getAttribute('data-lang-btn') === lang;
     btn.setAttribute('aria-pressed', String(isActive));
-    btn.style.background = isActive ? 'rgba(34,211,238,.14)' : 'transparent';
-    btn.style.color = isActive ? '#22d3ee' : '#9db1c9';
+    btn.style.background = isActive ? 'rgba(69,139,248,.14)' : 'transparent';
+    btn.style.color = isActive ? '#458bf8' : '#9db1c9';
   });
 
   document.documentElement.lang = lang;

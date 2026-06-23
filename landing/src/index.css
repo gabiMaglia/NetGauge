@@ -3,7 +3,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 88px; }
 body { margin: 0; background: #070b14; }
-::selection { background: rgba(34, 211, 238, .28); color: #fff; }
+::selection { background: rgba(69, 139, 248, .28); color: #fff; }
 
 @keyframes tmScroll { from { transform: translateX(0); } to { transform: translateX(-600px); } }
 @keyframes tmDraw { to { stroke-dashoffset: 0; } }
