@@ -3,6 +3,17 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.0.0] - 2026-06-23
+### Changed
+- **Rebrand completo: la app ahora se llama NetGauge.** Cambian el ejecutable,
+  el instalador, la identidad de la app y la carpeta de datos
+  (`%LOCALAPPDATA%\NetGauge`, `~/Library/Application Support/NetGauge`).
+### Added
+- **Migración automática del historial** desde instalaciones previas: al
+  actualizar, se copia tu `usage.db`, settings, log y reportes a la carpeta
+  nueva (no perdés tu historial).
+- Soporte macOS (Intel + Apple Silicon) y release multiplataforma (.exe + .dmg).
+
 ## [1.8.0] - 2026-06-17
 ### Added
 - Export de informes en **Excel (.xlsx)** y **PDF**, además de CSV (menú del tray).
