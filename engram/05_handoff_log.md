@@ -3,6 +3,11 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/NetGauge-handoffs-[fecha].md
 
+### 2026-06-23 nerv-orquestador (rename 2) T-019
+- Hecho: segundo rename NetLeak → NetGauge (cambio de marca PO) sobre archivos trackeados (sed exacto por caso; 0 leftovers). Skill run-netleak→run-netgauge. Se preservó la carpeta real `design_handoff_netLeak_panel`. Legacy de migración sigue trafficMe (NetLeak nunca shippeó). URLs → gabiMaglia/NetGauge. Commit aparte para la carpeta de diseño + gitignore .DS_Store.
+- Verificado: pytest 56 verde, compileall OK, landing build OK, bundle con NetGauge / cero NetLeak.
+- Pendiente: QA Strong; PO renombra repo GitHub a NetGauge; PRs encadenados. Nota: ramas T-016/T-018 conservan "netleak" en su nombre git.
+
 ### 2026-06-23 nerv-orquestador (port directo) T-018
 - Hecho: landing rehecha pixel-perfect contra `design_handoff_netLeak_panel/NetGauge Landing.dc.html`. Markup extraído byte a byte (script python, URLs → NetGauge) a `landing/src/landing.html`, inyectado vía `?raw`+dangerouslySetInnerHTML; runtime portado en `App.tsx` (detección SO con WebGL, contadores, reveal con reduced-motion, hover por `style-hover`); CSS base/keyframes del diseño en `index.css`; fuentes en `index.html`. Borrados los componentes de la interpretación previa (T-015).
 - Verificado: build (17 módulos) + lint verdes; bundle contiene acento #22d3ee/style-hover/URLs NetGauge; cero `trafficMe`/`rootRef`.
