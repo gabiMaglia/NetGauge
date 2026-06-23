@@ -54,8 +54,8 @@ jobs:
       - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NetLeak-windows-exe
-          path: build/Output/NetLeak-Setup-*-x64.exe
+          name: NetGauge-windows-exe
+          path: build/Output/NetGauge-Setup-*-x64.exe
           if-no-files-found: error
 
   macos:
@@ -108,7 +108,7 @@ jobs:
       - name: Upload .dmg artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NetLeak-macos-${{ matrix.arch }}
+          name: NetGauge-macos-${{ matrix.arch }}
           path: dist/*.dmg
           if-no-files-found: error
 
@@ -119,19 +119,19 @@ jobs:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: NetLeak-windows-exe
+          name: NetGauge-windows-exe
           path: release-assets
 
       - name: Download macOS x86_64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: NetLeak-macos-x86_64
+          name: NetGauge-macos-x86_64
           path: release-assets
 
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: NetLeak-macos-arm64
+          name: NetGauge-macos-arm64
           path: release-assets
 
       - name: Publish to GitHub Release

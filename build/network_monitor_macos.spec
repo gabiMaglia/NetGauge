@@ -61,7 +61,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="NetLeak",
+    name="NetGauge",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -77,17 +77,17 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name="NetLeak",
+    name="NetGauge",
 )
 
 app = BUNDLE(
     coll,
-    name="NetLeak.app",
+    name="NetGauge.app",
     icon="../assets/icon.icns",
-    bundle_identifier="com.gabrielmaglia.netleak",
+    bundle_identifier="com.gabrielmaglia.netgauge",
     info_plist={
-        "CFBundleName": "NetLeak",
-        "CFBundleDisplayName": "NetLeak",
+        "CFBundleName": "NetGauge",
+        "CFBundleDisplayName": "NetGauge",
         "CFBundleShortVersionString": "1.7.1",
         "CFBundleVersion": "1.7.1",
         "NSHighResolutionCapable": True,

@@ -21,7 +21,7 @@ class XlsxReportGenerator(ReportGenerator):
         from openpyxl.styles import Font, PatternFill
 
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = self._dir / (destination_hint or f"NetLeak_report_{stamp}.xlsx")
+        path = self._dir / (destination_hint or f"NetGauge_report_{stamp}.xlsx")
 
         wb = Workbook()
         ws = wb.active

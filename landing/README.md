@@ -1,6 +1,6 @@
-# NetLeak — Landing page
+# NetGauge — Landing page
 
-Landing one-page de NetLeak (ticket T-015). React + Vite + TypeScript, sin
+Landing one-page de NetGauge (ticket T-015). React + Vite + TypeScript, sin
 dependencias externas más allá del stack base. Vive en `/landing` y no toca
 nada del resto del repo (`src/`, workflows, instaladores).
 

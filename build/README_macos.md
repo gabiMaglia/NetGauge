@@ -1,6 +1,6 @@
 # Empaquetado macOS (T-003)
 
-Genera `NetLeak.app` (PyInstaller) y `NetLeak-<version>-<arch>.dmg`
+Genera `NetGauge.app` (PyInstaller) y `NetGauge-<version>-<arch>.dmg`
 (`hdiutil`, sin firmar). No afecta el pipeline Windows
 (`network_monitor.spec`, `installer.iss`, `sign.cmd` quedan intactos).
 
@@ -16,11 +16,11 @@ python3 build/make_icon_macos.py
 
 # 2. App bundle .app
 pyinstaller build/network_monitor_macos.spec --noconfirm
-# -> dist/NetLeak.app
+# -> dist/NetGauge.app
 
 # 3. .dmg sin firmar (arrastrar a Applications)
 build/make_dmg.sh
-# -> dist/NetLeak-1.7.1-<arch>.dmg   (arch = uname -m, o pasala como arg)
+# -> dist/NetGauge-1.7.1-<arch>.dmg   (arch = uname -m, o pasala como arg)
 ```
 
 Para forzar el sufijo de arquitectura del `.dmg` (debe coincidir con la

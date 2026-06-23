@@ -1,4 +1,4 @@
-# Requirements — NetLeak
+# Requirements — NetGauge
 
 ## 1. Visión (1 frase)
 Monitor de tráfico de red como app de escritorio multiplataforma (foco Windows), con captura por proceso y reportes exportables.
@@ -14,7 +14,7 @@ Monitor de tráfico de red como app de escritorio multiplataforma (foco Windows)
 |----|-------|--------------|
 
 ## 5. Enlaces (espejo del registry: tracker, board, Figma)
-- Repo: https://github.com/gabiMaglia/NetLeak
+- Repo: https://github.com/gabiMaglia/NetGauge
 - Tracker: ninguno
 - Board: —
 - Figma: —

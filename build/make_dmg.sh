@@ -1,6 +1,6 @@
 #!/bin/bash
-# Genera NetLeak-<version>-<arch>.dmg (estilo "arrastrar a Applications")
-# a partir del dist/NetLeak.app ya construido por PyInstaller.
+# Genera NetGauge-<version>-<arch>.dmg (estilo "arrastrar a Applications")
+# a partir del dist/NetGauge.app ya construido por PyInstaller.
 #
 # Sin firmar ni notarizado (ver ADR-001 / T-005 diferido a v2): Gatekeeper
 # mostrará advertencia al usuario final; aceptado para v1.
@@ -24,7 +24,7 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
 fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="NetLeak"
+APP_NAME="NetGauge"
 VERSION="${DMG_VERSION:-1.8.1}"
 ARCH="${1:-$(uname -m)}"
 

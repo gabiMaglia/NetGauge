@@ -29,7 +29,7 @@ from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerat
 from src.presentation.qt.app import QtNotifier, run
 
 
-_APP_NAME = "NetLeak"
+_APP_NAME = "NetGauge"
 _LEGACY_APP_NAME = "trafficMe"  # nombre previo al rename (T-016); migrar su historial.
 
 # Qué llevar de la carpeta vieja a la nueva al actualizar desde trafficMe.
@@ -53,7 +53,7 @@ def _base_for(app_name: str) -> Path:
 
 
 def _migrate_legacy_data(new_base: Path, legacy_base: Path) -> bool:
-    """Copia el historial de la instalación previa (trafficMe) a la nueva (NetLeak).
+    """Copia el historial de la instalación previa (trafficMe) a la nueva (NetGauge).
 
     Idempotente y conservador: solo migra si la instalación nueva está "limpia"
     (sin `usage.db`) y la vieja tiene datos. Copia (no mueve): la carpeta vieja
@@ -78,7 +78,7 @@ def _migrate_legacy_data(new_base: Path, legacy_base: Path) -> bool:
 
 
 def _data_dir() -> Path:
-    """Directorio de datos de NetLeak por plataforma (logs, DB, settings, reportes)."""
+    """Directorio de datos de NetGauge por plataforma (logs, DB, settings, reportes)."""
     base = _base_for(_APP_NAME)
     base.mkdir(parents=True, exist_ok=True)
     return base

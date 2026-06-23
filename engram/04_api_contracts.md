@@ -1,4 +1,4 @@
-# API Contracts — NetLeak
+# API Contracts — NetGauge
 
 ## Convenciones
 - N/A: app de escritorio sin API HTTP propia conocida hasta el momento.

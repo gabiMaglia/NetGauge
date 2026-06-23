@@ -1,12 +1,12 @@
-# Contribuir a NetLeak
+# Contribuir a NetGauge
 
 ¡Gracias por el interés! Es un proyecto chico y se agradecen issues y PRs.
 
 ## Setup
 
 ```powershell
-git clone https://github.com/gabiMaglia/NetLeak
-cd NetLeak
+git clone https://github.com/gabiMaglia/NetGauge
+cd NetGauge
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt

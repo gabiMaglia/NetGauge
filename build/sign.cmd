@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================================
-REM Firma de codigo para NetLeak (exe + instalador).
+REM Firma de codigo para NetGauge (exe + instalador).
 REM Requiere un certificado de firma (.pfx) y signtool.exe (Windows SDK).
 REM
 REM Uso (PowerShell o CMD, desde la raiz del proyecto):
@@ -18,13 +18,13 @@ if "%CERT_PFX%"=="" (
 )
 
 set TS=http://timestamp.digicert.com
-set EXE=dist\NetLeak.exe
+set EXE=dist\NetGauge.exe
 
 echo [sign] Firmando %EXE% ...
 signtool sign /f "%CERT_PFX%" /p "%CERT_PASS%" /fd SHA256 /tr %TS% /td SHA256 "%EXE%" || exit /b 1
 
 REM El instalador toma el nombre con la versión actual (comodín).
-for %%F in (build\Output\NetLeak-Setup-*-x64.exe) do (
+for %%F in (build\Output\NetGauge-Setup-*-x64.exe) do (
   echo [sign] Firmando %%F ...
   signtool sign /f "%CERT_PFX%" /p "%CERT_PASS%" /fd SHA256 /tr %TS% /td SHA256 "%%F" || exit /b 1
 )

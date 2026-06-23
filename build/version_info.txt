@@ -1,4 +1,4 @@
-# Recurso de versión embebido en NetLeak.exe (metadata del editor).
+# Recurso de versión embebido en NetGauge.exe (metadata del editor).
 # Lo consume PyInstaller (EXE(version=...)) y lo lee Windows/Explorer y el
 # índice de confianza de la app. Mantener en sync con src/version.py.
 VSVersionInfo(
@@ -16,12 +16,12 @@ VSVersionInfo(
     StringFileInfo([
       StringTable('040904B0', [
         StringStruct('CompanyName', 'Gabriel Maglia'),
-        StringStruct('FileDescription', 'NetLeak - Monitor de consumo de red'),
+        StringStruct('FileDescription', 'NetGauge - Monitor de consumo de red'),
         StringStruct('FileVersion', '1.7.1.0'),
-        StringStruct('InternalName', 'NetLeak'),
+        StringStruct('InternalName', 'NetGauge'),
         StringStruct('LegalCopyright', '(c) 2026 Gabriel Maglia. Licencia MIT.'),
-        StringStruct('OriginalFilename', 'NetLeak.exe'),
-        StringStruct('ProductName', 'NetLeak'),
+        StringStruct('OriginalFilename', 'NetGauge.exe'),
+        StringStruct('ProductName', 'NetGauge'),
         StringStruct('ProductVersion', '1.7.1.0')
       ])
     ]),

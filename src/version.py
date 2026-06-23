@@ -3,5 +3,5 @@ from __future__ import annotations
 
 APP_VERSION = "1.8.1"
 GITHUB_OWNER = "gabiMaglia"
-GITHUB_REPO = "NetLeak"
+GITHUB_REPO = "NetGauge"
 RELEASES_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases"

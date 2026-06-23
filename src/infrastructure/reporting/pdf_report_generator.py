@@ -26,13 +26,13 @@ class PdfReportGenerator(ReportGenerator):
         )
 
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = self._dir / (destination_hint or f"NetLeak_report_{stamp}.pdf")
+        path = self._dir / (destination_hint or f"NetGauge_report_{stamp}.pdf")
 
         styles = getSampleStyleSheet()
         doc = SimpleDocTemplate(str(path), pagesize=A4,
                                 topMargin=18 * mm, bottomMargin=18 * mm)
         story = [
-            Paragraph("NetLeak — Informe de consumo", styles["Title"]),
+            Paragraph("NetGauge — Informe de consumo", styles["Title"]),
             Paragraph(datetime.now().strftime("Generado: %Y-%m-%d %H:%M"),
                       styles["Normal"]),
             Spacer(1, 8 * mm),

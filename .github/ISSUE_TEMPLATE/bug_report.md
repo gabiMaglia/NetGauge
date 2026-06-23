@@ -16,10 +16,10 @@ Descripción clara del problema.
 Qué esperabas y qué pasó.
 
 **Entorno**
-- Versión de NetLeak: (ej. 1.7.1 — está en "Acerca de")
+- Versión de NetGauge: (ej. 1.7.1 — está en "Acerca de")
 - Windows: (ej. 11 23H2)
 - ¿Corriendo como Administrador?: sí / no
 - Modo de captura que muestra la barra: ETW / Global
 
 **Log**
-Pegá lo relevante de `%LOCALAPPDATA%\NetLeak\monitor.log`.
+Pegá lo relevante de `%LOCALAPPDATA%\NetGauge\monitor.log`.

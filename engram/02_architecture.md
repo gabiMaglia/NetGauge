@@ -1,4 +1,4 @@
-# Architecture — NetLeak
+# Architecture — NetGauge
 
 ## Stack
 | Capa | Tech | Versión | ADR |

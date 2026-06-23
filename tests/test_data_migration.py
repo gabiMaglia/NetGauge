@@ -1,4 +1,4 @@
-"""Migración del historial desde la instalación previa trafficMe → NetLeak (T-017)."""
+"""Migración del historial desde la instalación previa trafficMe → NetGauge (T-017)."""
 from __future__ import annotations
 
 from main import _migrate_legacy_data
@@ -16,7 +16,7 @@ def _seed_legacy(base):
 
 def test_migra_historial_a_instalacion_limpia(tmp_path):
     legacy = tmp_path / "trafficMe"
-    new = tmp_path / "NetLeak"
+    new = tmp_path / "NetGauge"
     _seed_legacy(legacy)
 
     assert _migrate_legacy_data(new, legacy) is True
@@ -31,7 +31,7 @@ def test_migra_historial_a_instalacion_limpia(tmp_path):
 
 def test_no_migra_si_la_instalacion_nueva_ya_tiene_datos(tmp_path):
     legacy = tmp_path / "trafficMe"
-    new = tmp_path / "NetLeak"
+    new = tmp_path / "NetGauge"
     _seed_legacy(legacy)
     new.mkdir()
     (new / "usage.db").write_bytes(b"datos-nuevos")
@@ -44,13 +44,13 @@ def test_no_migra_si_la_instalacion_nueva_ya_tiene_datos(tmp_path):
 
 def test_no_migra_si_no_hay_historial_viejo(tmp_path):
     legacy = tmp_path / "trafficMe"
-    new = tmp_path / "NetLeak"
+    new = tmp_path / "NetGauge"
     legacy.mkdir()  # existe pero sin usage.db
 
     assert _migrate_legacy_data(new, legacy) is False
 
 
 def test_no_migra_sobre_si_mismo(tmp_path):
-    same = tmp_path / "NetLeak"
+    same = tmp_path / "NetGauge"
     _seed_legacy(same)
     assert _migrate_legacy_data(same, same) is False

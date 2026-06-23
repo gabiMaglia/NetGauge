@@ -1,12 +1,12 @@
-# NetLeak
+# NetGauge
 
-[![CI](https://github.com/gabiMaglia/NetLeak/actions/workflows/ci.yml/badge.svg)](https://github.com/gabiMaglia/NetLeak/actions/workflows/ci.yml)
+[![CI](https://github.com/gabiMaglia/NetGauge/actions/workflows/ci.yml/badge.svg)](https://github.com/gabiMaglia/NetGauge/actions/workflows/ci.yml)
 
 Monitor de consumo de red para Windows x64. Vive en la bandeja del sistema,
 trackea subida/bajada **por aplicación**, persiste el historial en SQLite y
 genera un informe CSV al cerrar.
 
-Repo: **https://github.com/gabiMaglia/NetLeak** · UI en **PySide6** (LGPL).
+Repo: **https://github.com/gabiMaglia/NetGauge** · UI en **PySide6** (LGPL).
 
 ## ⚠️ El punto técnico que tenés que entender
 
@@ -26,7 +26,7 @@ Si falta cualquiera de los dos, la app cae automáticamente a un **modo global**
 ## Arquitectura (Clean Architecture)
 
 ```
-NetLeak/
+NetGauge/
 ├─ main.py                      # Composition Root: arma dependencias
 ├─ requirements.txt             # runtime (PySide6, psutil, pywintrace)
 ├─ requirements-dev.txt         # + pytest
@@ -77,7 +77,7 @@ NetLeak/
 **Regla de dependencia:** `presentation → application → domain ← infrastructure`.
 El dominio no importa nada de afuera; la infraestructura implementa los puertos.
 
-Datos en `%LOCALAPPDATA%\NetLeak\`: `usage.db`, `monitor.log`, `reports\`.
+Datos en `%LOCALAPPDATA%\NetGauge\`: `usage.db`, `monitor.log`, `reports\`.
 
 ## Ejecutar en desarrollo
 
@@ -105,18 +105,18 @@ cd "network Monitor"
 .\.venv\Scripts\Activate.ps1
 pip install pyinstaller
 pyinstaller build\network_monitor.spec --noconfirm
-# Resultado: dist\NetLeak.exe  (one-file, pide elevación al abrir)
+# Resultado: dist\NetGauge.exe  (one-file, pide elevación al abrir)
 ```
 
 ## Generar el instalador (Inno Setup)
 
 1. Instalá Inno Setup 6+ (https://jrsoftware.org/isdl.php).
-2. Asegurate de tener `dist\NetLeak.exe` ya compilado.
+2. Asegurate de tener `dist\NetGauge.exe` ya compilado.
 3. Compilá el instalador:
 
 ```powershell
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: build\Output\NetLeak-Setup-<versión>-x64.exe
+# Resultado: build\Output\NetGauge-Setup-<versión>-x64.exe
 ```
 
 > Detalle completo de firma de código y troubleshooting en [`docs/BUILD.md`](docs/BUILD.md).
@@ -169,12 +169,12 @@ Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
 - **Retención del histórico** configurable: purga automática de datos viejos para
   que `usage.db` no crezca sin techo.
 
-Archivos en `%LOCALAPPDATA%\NetLeak\`: `usage.db`, `settings.json`,
+Archivos en `%LOCALAPPDATA%\NetGauge\`: `usage.db`, `settings.json`,
 `monitor.log`, `reports\`.
 
 ## Apoyar el proyecto ☕
 
-NetLeak es software libre y gratuito. Si te resulta útil, podés invitar un café:
+NetGauge es software libre y gratuito. Si te resulta útil, podés invitar un café:
 
 **[ko-fi.com/gabrielmaglia](https://ko-fi.com/gabrielmaglia)**
 

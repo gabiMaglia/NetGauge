@@ -1,9 +1,9 @@
 ---
-name: run-netleak
-description: Lanza NetLeak (app de escritorio PySide6) desde código fuente en Windows para probar cambios manualmente. Trigger - cuando pidan correr, levantar, probar o ver la app andando.
+name: run-netgauge
+description: Lanza NetGauge (app de escritorio PySide6) desde código fuente en Windows para probar cambios manualmente. Trigger - cuando pidan correr, levantar, probar o ver la app andando.
 ---
 
-# Run NetLeak (desktop, Windows, desde código fuente)
+# Run NetGauge (desktop, Windows, desde código fuente)
 
 App de escritorio nativa (PySide6 + bandeja del sistema). No es web ni
 Electron — no hay forma de tomar screenshot automático de la ventana;
@@ -31,7 +31,7 @@ python -m venv .venv
 No hay ventana de consola con stdout útil (la app loguea a archivo). Revisar:
 
 ```bash
-tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetLeak/monitor.log"
+tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetGauge/monitor.log"
 ```
 
 - `[WARNING] ... Sin privilegios de Administrador: no se puede usar ETW.` → normal si la
@@ -42,7 +42,7 @@ tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetLeak/monitor.log"
 
 ## Datos de la app (settings, DB, reportes, log)
 
-`%LOCALAPPDATA%\NetLeak\` → `monitor.log`, `settings.json`, `usage.db`, `reports/`.
+`%LOCALAPPDATA%\NetGauge\` → `monitor.log`, `settings.json`, `usage.db`, `reports/`.
 
 ## Frenarla
 
