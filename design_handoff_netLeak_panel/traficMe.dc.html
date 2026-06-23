@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(1200px 600px at 50% -10%,#eef2f7 0%,#e4e8ee 60%,#dfe3ea 100%);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#0f172a;padding:56px 48px 96px">
+
+  <!-- PAGE HEADER -->
+  <div style="max-width:1640px;margin:0 auto 8px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:54px;height:54px;border-radius:15px;background:linear-gradient(150deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px -8px rgba(37,99,235,.6)">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/><path d="M3 20h18"/></svg>
+      </div>
+      <div>
+        <div style="font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1">trafic<span style="color:#3b82f6">Me</span></div>
+        <div style="font-size:14px;color:#64748b;margin-top:5px;font-weight:500">Monitor de consumo de red · exploración de dirección visual</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:#334155;box-shadow:0 2px 6px rgba(15,23,42,.04)"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6"></span>3 direcciones</div>
+      <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:#334155;box-shadow:0 2px 6px rgba(15,23,42,.04)">Tema claro + oscuro</div>
+      <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:#334155;box-shadow:0 2px 6px rgba(15,23,42,.04)">Pensado para PyQt</div>
+    </div>
+  </div>
+
+  <div id="decks" style="max-width:1640px;margin:36px auto 0;display:flex;flex-direction:column;gap:72px">
+
+    <!-- ========================= DIRECTION 01 · PANEL ========================= -->
+    <section>
+      <div style="display:flex;align-items:flex-end;gap:18px;margin-bottom:22px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:800;color:#3b82f6;letter-spacing:.14em">01</div>
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.01em">Panel</div>
+          <div style="font-size:14px;color:#64748b;font-weight:500;margin-top:3px">Dashboard suave y vendible — tarjetas de métricas, mucho aire, ideal para usuarios caseros.</div>
+        </div>
+        <div style="display:flex;gap:7px;margin-left:auto">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px">Plus Jakarta Sans</span>
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px">Amigable</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+
+        <!-- ===== MAIN WINDOW · LIGHT ===== -->
+        <div style="width:786px;border-radius:18px;overflow:hidden;background:#ffffff;border:1px solid #e7ebf0;box-shadow:0 30px 70px -28px rgba(15,23,42,.32)">
+          <!-- titlebar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1f5;background:#fbfcfe">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <span style="font-size:14px;font-weight:700">trafic<span style="color:#3b82f6">Me</span></span>
+              <span style="font-size:12.5px;color:#94a3b8;font-weight:500">· Mes actual</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700"><span style="color:#3b82f6">↓ 8.42 MB/s</span><span style="color:#10b981">↑ 1.18 MB/s</span></div>
+              <div style="display:flex;gap:14px;color:#94a3b8">
+                <span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span>
+              </div>
+            </div>
+          </div>
+          <!-- body -->
+          <div style="padding:20px">
+            <!-- toolbar -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+              <div style="display:flex;background:#f1f4f8;border-radius:11px;padding:3px;gap:2px">
+                <span style="font-size:13px;font-weight:600;color:#64748b;padding:7px 13px;border-radius:8px">Sesión</span>
+                <span style="font-size:13px;font-weight:600;color:#64748b;padding:7px 13px;border-radius:8px">Día</span>
+                <span style="font-size:13px;font-weight:600;color:#64748b;padding:7px 13px;border-radius:8px">Semana</span>
+                <span style="font-size:13px;font-weight:700;color:#1e293b;padding:7px 13px;border-radius:8px;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.12)">Mes</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;background:#f1f4f8;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;color:#475569;margin-left:auto">Auto <span style="color:#94a3b8">▾</span></div>
+              <div style="display:flex;align-items:center;gap:7px;background:#eff5ff;border:1px solid #dbe8ff;color:#2563eb;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 .9 14H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 3 8.1"/></svg> Cuota</div>
+            </div>
+            <!-- tabs -->
+            <div style="display:flex;gap:22px;border-bottom:1px solid #eef1f5;margin-bottom:20px">
+              <div style="font-size:13.5px;font-weight:700;color:#3b82f6;padding-bottom:11px;border-bottom:2px solid #3b82f6;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg> Global</div>
+              <div style="font-size:13.5px;font-weight:600;color:#94a3b8;padding-bottom:11px;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Por aplicación</div>
+            </div>
+            <!-- stat cards -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+              <div style="background:#f8fafc;border:1px solid #eef1f5;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#64748b"><span style="width:9px;height:9px;border-radius:50%;background:#3b82f6"></span>Bajada</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px">104.4 <span style="font-size:15px;color:#94a3b8;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-top:3px">73% del total</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #eef1f5;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#64748b"><span style="width:9px;height:9px;border-radius:50%;background:#10b981"></span>Subida</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px">38.2 <span style="font-size:15px;color:#94a3b8;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-top:3px">27% del total</div>
+              </div>
+              <div style="background:linear-gradient(150deg,#eff5ff,#e7f0ff);border:1px solid #d7e6ff;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#2563eb">Σ Total</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px;color:#1e293b">142.6 <span style="font-size:15px;color:#60a5fa;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#3b82f6;font-weight:700;margin-top:3px">↑ 12% vs ciclo previo</div>
+              </div>
+            </div>
+            <!-- chart card -->
+            <div style="background:#fbfcfe;border:1px solid #eef1f5;border-radius:14px;padding:16px 16px 8px;margin-bottom:18px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700;color:#334155">Ancho de banda en vivo</span>
+                <div style="display:flex;align-items:center;gap:14px">
+                  <span style="font-size:11.5px;font-weight:600;color:#94a3b8;background:#f1f4f8;border-radius:6px;padding:3px 8px">pico 11.7 MB/s</span>
+                  <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#64748b"><span style="width:10px;height:3px;border-radius:2px;background:#3b82f6"></span>Bajada</span>
+                  <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#64748b"><span style="width:10px;height:3px;border-radius:2px;background:#10b981"></span>Subida</span>
+                </div>
+              </div>
+              <svg viewBox="0 0 740 180" width="100%" height="150" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="p1dl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".28"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="p1ul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity=".22"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+                </defs>
+                <line x1="0" y1="45" x2="740" y2="45" stroke="#eef1f5" stroke-width="1"/>
+                <line x1="0" y1="90" x2="740" y2="90" stroke="#eef1f5" stroke-width="1"/>
+                <line x1="0" y1="135" x2="740" y2="135" stroke="#eef1f5" stroke-width="1"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150 L740,180 L0,180 Z" fill="url(#p1dl)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150" fill="none" stroke="#3b82f6" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161 L740,180 L0,180 Z" fill="url(#p1ul)"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <!-- quota progress -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:7px"><span style="color:#475569">Límite diario · hoy</span><span style="color:#0f172a;font-weight:700">6.8 / 10 GB</span></div>
+                <div style="height:9px;border-radius:6px;background:#eef1f5;overflow:hidden"><div style="width:68%;height:100%;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:7px"><span style="color:#475569">Límite mensual · este ciclo</span><span style="color:#0f172a;font-weight:700">142.6 / 200 GB</span></div>
+                <div style="height:9px;border-radius:6px;background:#eef1f5;overflow:hidden"><div style="width:71%;height:100%;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== MAIN WINDOW · DARK ===== -->
+        <div style="width:786px;border-radius:18px;overflow:hidden;background:#0d1117;border:1px solid #1e2530;box-shadow:0 30px 70px -28px rgba(2,6,23,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #1b222d;background:#10161f">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <span style="font-size:14px;font-weight:700;color:#e6edf6">trafic<span style="color:#60a5fa">Me</span></span>
+              <span style="font-size:12.5px;color:#5b6b80;font-weight:500">· Mes actual</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700"><span style="color:#60a5fa">↓ 8.42 MB/s</span><span style="color:#34d399">↑ 1.18 MB/s</span></div>
+              <div style="display:flex;gap:14px;color:#5b6b80"><span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span></div>
+            </div>
+          </div>
+          <div style="padding:20px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+              <div style="display:flex;background:#161b22;border-radius:11px;padding:3px;gap:2px">
+                <span style="font-size:13px;font-weight:600;color:#7c8b9e;padding:7px 13px;border-radius:8px">Sesión</span>
+                <span style="font-size:13px;font-weight:600;color:#7c8b9e;padding:7px 13px;border-radius:8px">Día</span>
+                <span style="font-size:13px;font-weight:600;color:#7c8b9e;padding:7px 13px;border-radius:8px">Semana</span>
+                <span style="font-size:13px;font-weight:700;color:#e6edf6;padding:7px 13px;border-radius:8px;background:#222b38">Mes</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;background:#161b22;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;color:#93a4b8;margin-left:auto">Auto <span style="color:#5b6b80">▾</span></div>
+              <div style="display:flex;align-items:center;gap:7px;background:#16263f;border:1px solid #244468;color:#7cb2ff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 .9 14H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 3 8.1"/></svg> Cuota</div>
+            </div>
+            <div style="display:flex;gap:22px;border-bottom:1px solid #1b222d;margin-bottom:20px">
+              <div style="font-size:13.5px;font-weight:700;color:#60a5fa;padding-bottom:11px;border-bottom:2px solid #60a5fa;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg> Global</div>
+              <div style="font-size:13.5px;font-weight:600;color:#5b6b80;padding-bottom:11px;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Por aplicación</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+              <div style="background:#141a22;border:1px solid #1e2530;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#93a4b8"><span style="width:9px;height:9px;border-radius:50%;background:#3b82f6"></span>Bajada</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px;color:#e6edf6">104.4 <span style="font-size:15px;color:#5b6b80;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#5b6b80;font-weight:600;margin-top:3px">73% del total</div>
+              </div>
+              <div style="background:#141a22;border:1px solid #1e2530;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#93a4b8"><span style="width:9px;height:9px;border-radius:50%;background:#10b981"></span>Subida</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px;color:#e6edf6">38.2 <span style="font-size:15px;color:#5b6b80;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#5b6b80;font-weight:600;margin-top:3px">27% del total</div>
+              </div>
+              <div style="background:linear-gradient(150deg,#15233a,#142036);border:1px solid #244468;border-radius:14px;padding:15px 16px">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#7cb2ff">Σ Total</div>
+                <div style="font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:9px;color:#e6edf6">142.6 <span style="font-size:15px;color:#60a5fa;font-weight:700">GB</span></div>
+                <div style="font-size:12px;color:#60a5fa;font-weight:700;margin-top:3px">↑ 12% vs ciclo previo</div>
+              </div>
+            </div>
+            <div style="background:#10151c;border:1px solid #1e2530;border-radius:14px;padding:16px 16px 8px;margin-bottom:18px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700;color:#c2cdda">Ancho de banda en vivo</span>
+                <div style="display:flex;align-items:center;gap:14px">
+                  <span style="font-size:11.5px;font-weight:600;color:#93a4b8;background:#1a212b;border-radius:6px;padding:3px 8px">pico 11.7 MB/s</span>
+                  <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#93a4b8"><span style="width:10px;height:3px;border-radius:2px;background:#3b82f6"></span>Bajada</span>
+                  <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#93a4b8"><span style="width:10px;height:3px;border-radius:2px;background:#10b981"></span>Subida</span>
+                </div>
+              </div>
+              <svg viewBox="0 0 740 180" width="100%" height="150" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="p1dd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".4"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="p1ud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity=".3"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+                </defs>
+                <line x1="0" y1="45" x2="740" y2="45" stroke="#1a212b" stroke-width="1"/>
+                <line x1="0" y1="90" x2="740" y2="90" stroke="#1a212b" stroke-width="1"/>
+                <line x1="0" y1="135" x2="740" y2="135" stroke="#1a212b" stroke-width="1"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150 L740,180 L0,180 Z" fill="url(#p1dd)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150" fill="none" stroke="#60a5fa" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161 L740,180 L0,180 Z" fill="url(#p1ud)"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:7px"><span style="color:#93a4b8">Límite diario · hoy</span><span style="color:#e6edf6;font-weight:700">6.8 / 10 GB</span></div>
+                <div style="height:9px;border-radius:6px;background:#1a212b;overflow:hidden"><div style="width:68%;height:100%;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:7px"><span style="color:#93a4b8">Límite mensual · este ciclo</span><span style="color:#e6edf6;font-weight:700">142.6 / 200 GB</span></div>
+                <div style="height:9px;border-radius:6px;background:#1a212b;overflow:hidden"><div style="width:71%;height:100%;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- secondary row: quota dialog + per-app -->
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-top:32px">
+
+        <!-- quota dialog (light) -->
+        <div style="width:420px;border-radius:18px;overflow:hidden;background:#ffffff;border:1px solid #e7ebf0;box-shadow:0 30px 70px -28px rgba(15,23,42,.32)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid #eef1f5;background:#fbfcfe">
+            <div style="display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 .9 14H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 3 8.1"/></svg> Configurar cuota</div>
+            <span style="font-size:16px;color:#94a3b8">✕</span>
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:17px">
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Límite diario (GB · 0 = sin límite)</label>
+              <div style="border:1.5px solid #e3e8ef;border-radius:10px;padding:11px 13px;font-size:14px;font-weight:600;color:#0f172a;background:#fff;display:flex;justify-content:space-between;align-items:center">10.0 <span style="font-size:12px;color:#94a3b8;font-weight:600">GB / día</span></div>
+            </div>
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Límite mensual (GB · 0 = sin límite)</label>
+              <div style="border:1.5px solid #3b82f6;border-radius:10px;padding:11px 13px;font-size:14px;font-weight:600;color:#0f172a;background:#fff;display:flex;justify-content:space-between;align-items:center;box-shadow:0 0 0 3px rgba(59,130,246,.12)">200.0 <span style="font-size:12px;color:#94a3b8;font-weight:600">GB / mes</span></div>
+            </div>
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Día de corte del ciclo (1–28)</label>
+              <div style="border:1.5px solid #e3e8ef;border-radius:10px;padding:11px 13px;font-size:14px;font-weight:600;color:#0f172a;background:#fff">1</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <div style="flex:1;text-align:center;border:1.5px solid #e3e8ef;border-radius:10px;padding:11px;font-size:13.5px;font-weight:700;color:#475569">Cancelar</div>
+              <div style="flex:1;text-align:center;background:linear-gradient(150deg,#3b82f6,#2563eb);border-radius:10px;padding:11px;font-size:13.5px;font-weight:700;color:#fff;box-shadow:0 8px 18px -6px rgba(37,99,235,.6)">Guardar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- per-app (light) -->
+        <div style="width:auto;flex:1;min-width:540px;border-radius:18px;overflow:hidden;background:#ffffff;border:1px solid #e7ebf0;box-shadow:0 30px 70px -28px rgba(15,23,42,.32)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1f5;background:#fbfcfe">
+            <div style="display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div><span style="font-size:14px;font-weight:700">trafic<span style="color:#3b82f6">Me</span></span></div>
+            <div style="display:flex;gap:14px;color:#94a3b8"><span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span></div>
+          </div>
+          <div style="padding:20px">
+            <div style="display:flex;gap:22px;border-bottom:1px solid #eef1f5;margin-bottom:18px">
+              <div style="font-size:13.5px;font-weight:600;color:#94a3b8;padding-bottom:11px">Global</div>
+              <div style="font-size:13.5px;font-weight:700;color:#3b82f6;padding-bottom:11px;border-bottom:2px solid #3b82f6">Por aplicación</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <!-- app rows -->
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px;background:#f8fafc">
+                <div style="width:34px;height:34px;border-radius:9px;background:#fef0e6;color:#ea7c3c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">C</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#1e293b">Google Chrome</div><div style="height:5px;border-radius:3px;background:#eef1f5;margin-top:7px;overflow:hidden"><div style="width:88%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px"></div></div></div>
+                <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#1e293b">48.2 GB</div><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px">↓42.6 ↑5.6</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#e7f0ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">S</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#1e293b">Steam</div><div style="height:5px;border-radius:3px;background:#eef1f5;margin-top:7px;overflow:hidden"><div style="width:58%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px"></div></div></div>
+                <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#1e293b">31.5 GB</div><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px">↓30.9 ↑0.6</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#e6f7ee;color:#10b981;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">♪</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#1e293b">Spotify</div><div style="height:5px;border-radius:3px;background:#eef1f5;margin-top:7px;overflow:hidden"><div style="width:24%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px"></div></div></div>
+                <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#1e293b">12.1 GB</div><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px">↓12.0 ↑0.1</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#eef1f5;color:#64748b;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">⊞</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#1e293b">Windows Update</div><div style="height:5px;border-radius:3px;background:#eef1f5;margin-top:7px;overflow:hidden"><div style="width:18%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px"></div></div></div>
+                <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#1e293b">9.7 GB</div><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px">↓9.7 ↑0.0</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:12px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#ecebfe;color:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">D</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#1e293b">Discord</div><div style="height:5px;border-radius:3px;background:#eef1f5;margin-top:7px;overflow:hidden"><div style="width:11%;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px"></div></div></div>
+                <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#1e293b">6.3 GB</div><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-top:2px">↓4.1 ↑2.2</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================= DIRECTION 02 · PULSE ========================= -->
+    <section style="font-family:'Space Grotesk',system-ui,sans-serif">
+      <div style="display:flex;align-items:flex-end;gap:18px;margin-bottom:22px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:700;color:#22d3ee;letter-spacing:.14em">02</div>
+        <div>
+          <div style="font-size:22px;font-weight:700;letter-spacing:-.01em;font-family:'Space Grotesk',sans-serif">Pulse</div>
+          <div style="font-size:14px;color:#64748b;font-weight:500;margin-top:3px;font-family:'Plus Jakarta Sans',sans-serif">Monitoreo tech en vivo — rejilla, cifras monoespaciadas y trazo con glow. Para gamers y técnicos.</div>
+        </div>
+        <div style="display:flex;gap:7px;margin-left:auto">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px;font-family:'Plus Jakarta Sans',sans-serif">Space Grotesk + JetBrains Mono</span>
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px;font-family:'Plus Jakarta Sans',sans-serif">Cyber</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+
+        <!-- ===== PULSE MAIN · DARK ===== -->
+        <div style="width:786px;border-radius:16px;overflow:hidden;background:#070b14;border:1px solid #16203a;box-shadow:0 30px 70px -26px rgba(2,6,23,.85),0 0 0 1px rgba(34,211,238,.05)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #121b30;background:#0a0f1c">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:26px;height:26px;border-radius:7px;background:#0e2433;border:1px solid #1d4a5e;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(34,211,238,.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <span style="font-size:13.5px;font-weight:700;color:#dbe5f0;letter-spacing:.02em">trafic<span style="color:#22d3ee">Me</span></span>
+              <span style="font-size:11px;color:#3f5573;font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace">LIVE</span>
+              <span style="width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 8px #22d3ee"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace"><span style="color:#38bdf8">↓ 8.42 MB/s</span><span style="color:#34d399">↑ 1.18 MB/s</span></div>
+              <div style="display:flex;gap:13px;color:#3f5573"><span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span></div>
+            </div>
+          </div>
+          <div style="padding:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+              <div style="display:flex;border:1px solid #16203a;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace">
+                <span style="font-size:11.5px;font-weight:500;color:#5b7290;padding:7px 12px;text-transform:uppercase;letter-spacing:.05em">Sesión</span>
+                <span style="font-size:11.5px;font-weight:500;color:#5b7290;padding:7px 12px;text-transform:uppercase;letter-spacing:.05em;border-left:1px solid #16203a">Día</span>
+                <span style="font-size:11.5px;font-weight:500;color:#5b7290;padding:7px 12px;text-transform:uppercase;letter-spacing:.05em;border-left:1px solid #16203a">Sem</span>
+                <span style="font-size:11.5px;font-weight:700;color:#06121c;padding:7px 12px;text-transform:uppercase;letter-spacing:.05em;background:#22d3ee;border-left:1px solid #16203a">Mes</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;border:1px solid #16203a;border-radius:9px;padding:7px 11px;font-size:11.5px;font-weight:600;color:#7c93b0;margin-left:auto;font-family:'JetBrains Mono',monospace;text-transform:uppercase">Auto ▾</div>
+              <div style="display:flex;align-items:center;gap:7px;background:rgba(34,211,238,.08);border:1px solid #1d4a5e;color:#22d3ee;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">⚙ Cuota</div>
+            </div>
+            <div style="display:flex;gap:20px;border-bottom:1px solid #121b30;margin-bottom:18px">
+              <div style="font-size:12px;font-weight:700;color:#22d3ee;padding-bottom:10px;border-bottom:2px solid #22d3ee;text-transform:uppercase;letter-spacing:.08em">● Global</div>
+              <div style="font-size:12px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Por aplicación</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+              <div style="background:#0b1322;border:1px solid #16203a;border-radius:11px;padding:14px 15px">
+                <div style="font-size:10.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▼ Bajada</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#38bdf8;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">104.4<span style="font-size:13px;color:#3f5573"> GB</span></div>
+              </div>
+              <div style="background:#0b1322;border:1px solid #16203a;border-radius:11px;padding:14px 15px">
+                <div style="font-size:10.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▲ Subida</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#34d399;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">38.2<span style="font-size:13px;color:#3f5573"> GB</span></div>
+              </div>
+              <div style="background:linear-gradient(150deg,rgba(34,211,238,.12),rgba(34,211,238,.03));border:1px solid #1d4a5e;border-radius:11px;padding:14px 15px;box-shadow:0 0 22px -6px rgba(34,211,238,.35) inset">
+                <div style="font-size:10.5px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.1em">Σ Total</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#e6f7fb;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">142.6<span style="font-size:13px;color:#22d3ee"> GB</span></div>
+              </div>
+            </div>
+            <div style="background:#080d18;border:1px solid #16203a;border-radius:11px;padding:14px 14px 6px;margin-bottom:16px;position:relative;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span style="font-size:11px;font-weight:700;color:#7c93b0;text-transform:uppercase;letter-spacing:.1em">Ancho de banda · tiempo real</span>
+                <span style="font-size:10.5px;font-weight:600;color:#22d3ee;font-family:'JetBrains Mono',monospace;border:1px solid #1d4a5e;border-radius:5px;padding:3px 7px">PICO 11.7 MB/s</span>
+              </div>
+              <svg viewBox="0 0 740 180" width="100%" height="160" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="p2d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".45"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="p2u" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".3"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/></linearGradient>
+                  <pattern id="p2grid" width="37" height="45" patternUnits="userSpaceOnUse"><path d="M37 0H0V45" fill="none" stroke="#101a2e" stroke-width="1"/></pattern>
+                  <filter id="p2glow"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <rect x="0" y="0" width="740" height="180" fill="url(#p2grid)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150 L740,180 L0,180 Z" fill="url(#p2d)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" filter="url(#p2glow)"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161 L740,180 L0,180 Z" fill="url(#p2u)"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161" fill="none" stroke="#34d399" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em"><span style="color:#7c93b0">Límite diario · hoy</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">6.8 / 10 GB · 68%</span></div>
+                <div style="height:7px;border-radius:4px;background:#101a2e;overflow:hidden"><div style="width:68%;height:100%;border-radius:4px;background:linear-gradient(90deg,#0891b2,#22d3ee);box-shadow:0 0 10px rgba(34,211,238,.6)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em"><span style="color:#7c93b0">Límite mensual · ciclo</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">142.6 / 200 GB · 71%</span></div>
+                <div style="height:7px;border-radius:4px;background:#101a2e;overflow:hidden"><div style="width:71%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d97706,#fbbf24);box-shadow:0 0 10px rgba(251,191,36,.5)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PULSE · LIGHT COMPANION ===== -->
+        <div style="width:786px;border-radius:16px;overflow:hidden;background:#ffffff;border:1px solid #e3e8ef;box-shadow:0 30px 70px -28px rgba(15,23,42,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #eef1f5;background:#f7f9fc">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:26px;height:26px;border-radius:7px;background:#e0f7fb;border:1px solid #a9e7f1;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <span style="font-size:13.5px;font-weight:700;color:#0f172a">trafic<span style="color:#0891b2">Me</span></span>
+              <span style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace">LIVE</span>
+              <span style="width:7px;height:7px;border-radius:50%;background:#06b6d4"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace"><span style="color:#0284c7">↓ 8.42 MB/s</span><span style="color:#059669">↑ 1.18 MB/s</span></div>
+              <div style="display:flex;gap:13px;color:#94a3b8"><span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span></div>
+            </div>
+          </div>
+          <div style="padding:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+              <div style="display:flex;border:1px solid #e3e8ef;border-radius:9px;overflow:hidden;font-family:'JetBrains Mono',monospace">
+                <span style="font-size:11.5px;font-weight:500;color:#94a3b8;padding:7px 12px;text-transform:uppercase">Sesión</span>
+                <span style="font-size:11.5px;font-weight:500;color:#94a3b8;padding:7px 12px;text-transform:uppercase;border-left:1px solid #e3e8ef">Día</span>
+                <span style="font-size:11.5px;font-weight:500;color:#94a3b8;padding:7px 12px;text-transform:uppercase;border-left:1px solid #e3e8ef">Sem</span>
+                <span style="font-size:11.5px;font-weight:700;color:#fff;padding:7px 12px;text-transform:uppercase;background:#06b6d4;border-left:1px solid #e3e8ef">Mes</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;border:1px solid #e3e8ef;border-radius:9px;padding:7px 11px;font-size:11.5px;font-weight:600;color:#475569;margin-left:auto;font-family:'JetBrains Mono',monospace;text-transform:uppercase">Auto ▾</div>
+              <div style="display:flex;align-items:center;gap:7px;background:#e0f7fb;border:1px solid #a9e7f1;color:#0891b2;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">⚙ Cuota</div>
+            </div>
+            <div style="display:flex;gap:20px;border-bottom:1px solid #eef1f5;margin-bottom:18px">
+              <div style="font-size:12px;font-weight:700;color:#0891b2;padding-bottom:10px;border-bottom:2px solid #06b6d4;text-transform:uppercase;letter-spacing:.08em">● Global</div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;padding-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Por aplicación</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+              <div style="background:#f7f9fc;border:1px solid #eef1f5;border-radius:11px;padding:14px 15px">
+                <div style="font-size:10.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em">▼ Bajada</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#0284c7;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">104.4<span style="font-size:13px;color:#94a3b8"> GB</span></div>
+              </div>
+              <div style="background:#f7f9fc;border:1px solid #eef1f5;border-radius:11px;padding:14px 15px">
+                <div style="font-size:10.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em">▲ Subida</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#059669;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">38.2<span style="font-size:13px;color:#94a3b8"> GB</span></div>
+              </div>
+              <div style="background:linear-gradient(150deg,#e0f7fb,#eafcff);border:1px solid #a9e7f1;border-radius:11px;padding:14px 15px">
+                <div style="font-size:10.5px;font-weight:700;color:#0891b2;text-transform:uppercase;letter-spacing:.1em">Σ Total</div>
+                <div style="font-size:26px;font-weight:700;margin-top:8px;color:#0f172a;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em">142.6<span style="font-size:13px;color:#06b6d4"> GB</span></div>
+              </div>
+            </div>
+            <div style="background:#fafdff;border:1px solid #eef1f5;border-radius:11px;padding:14px 14px 6px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.1em">Ancho de banda · tiempo real</span>
+                <span style="font-size:10.5px;font-weight:600;color:#0891b2;font-family:'JetBrains Mono',monospace;border:1px solid #a9e7f1;border-radius:5px;padding:3px 7px">PICO 11.7 MB/s</span>
+              </div>
+              <svg viewBox="0 0 740 180" width="100%" height="160" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="p2dl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06b6d4" stop-opacity=".26"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="p2ul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity=".2"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+                  <pattern id="p2gridl" width="37" height="45" patternUnits="userSpaceOnUse"><path d="M37 0H0V45" fill="none" stroke="#eef2f7" stroke-width="1"/></pattern>
+                </defs>
+                <rect x="0" y="0" width="740" height="180" fill="url(#p2gridl)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150 L740,180 L0,180 Z" fill="url(#p2dl)"/>
+                <path d="M0,150 L50,151 L100,149 L150,150 L200,147 L250,149 L300,142 L350,128 L380,96 L410,40 L430,22 L450,58 L480,112 L500,44 L515,26 L545,92 L575,132 L600,98 L630,120 L665,150 L700,152 L740,150" fill="none" stroke="#06b6d4" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161 L740,180 L0,180 Z" fill="url(#p2ul)"/>
+                <path d="M0,162 L50,163 L100,161 L150,162 L200,160 L250,161 L300,156 L350,148 L380,124 L410,80 L430,66 L450,96 L480,138 L500,86 L515,70 L545,118 L575,148 L600,122 L630,138 L665,160 L700,162 L740,161" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em"><span style="color:#475569">Límite diario · hoy</span><span style="color:#0f172a;font-family:'JetBrains Mono',monospace">6.8 / 10 GB · 68%</span></div>
+                <div style="height:7px;border-radius:4px;background:#eef1f5;overflow:hidden"><div style="width:68%;height:100%;border-radius:4px;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em"><span style="color:#475569">Límite mensual · ciclo</span><span style="color:#0f172a;font-family:'JetBrains Mono',monospace">142.6 / 200 GB · 71%</span></div>
+                <div style="height:7px;border-radius:4px;background:#eef1f5;overflow:hidden"><div style="width:71%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- pulse secondary: quota + per-app (dark) -->
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-top:32px">
+        <div style="width:420px;border-radius:16px;overflow:hidden;background:#070b14;border:1px solid #16203a;box-shadow:0 30px 70px -26px rgba(2,6,23,.85)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #121b30;background:#0a0f1c">
+            <div style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:#dbe5f0;text-transform:uppercase;letter-spacing:.06em">⚙ Configurar cuota</div>
+            <span style="font-size:16px;color:#3f5573">✕</span>
+          </div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:15px">
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#7c93b0;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">Límite diario · GB</label>
+              <div style="border:1px solid #16203a;border-radius:9px;padding:11px 13px;font-size:14px;font-weight:600;color:#dbe5f0;background:#0b1322;font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between"><span>10.0</span><span style="color:#3f5573;font-size:12px">GB/d</span></div>
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#7c93b0;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">Límite mensual · GB</label>
+              <div style="border:1px solid #1d4a5e;border-radius:9px;padding:11px 13px;font-size:14px;font-weight:600;color:#dbe5f0;background:#0b1322;font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;box-shadow:0 0 0 3px rgba(34,211,238,.12)"><span>200.0</span><span style="color:#22d3ee;font-size:12px">GB/m</span></div>
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#7c93b0;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">Día de corte · 1–28</label>
+              <div style="border:1px solid #16203a;border-radius:9px;padding:11px 13px;font-size:14px;font-weight:600;color:#dbe5f0;background:#0b1322;font-family:'JetBrains Mono',monospace">01</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:2px">
+              <div style="flex:1;text-align:center;border:1px solid #16203a;border-radius:9px;padding:11px;font-size:12px;font-weight:700;color:#7c93b0;text-transform:uppercase;letter-spacing:.06em">Cancelar</div>
+              <div style="flex:1;text-align:center;background:#22d3ee;color:#06121c;border-radius:9px;padding:11px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;box-shadow:0 0 18px -2px rgba(34,211,238,.6)">Guardar</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:540px;border-radius:16px;overflow:hidden;background:#070b14;border:1px solid #16203a;box-shadow:0 30px 70px -26px rgba(2,6,23,.85)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #121b30;background:#0a0f1c">
+            <div style="display:flex;align-items:center;gap:11px"><div style="width:26px;height:26px;border-radius:7px;background:#0e2433;border:1px solid #1d4a5e;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div><span style="font-size:13.5px;font-weight:700;color:#dbe5f0">trafic<span style="color:#22d3ee">Me</span></span></div>
+            <div style="display:flex;gap:13px;color:#3f5573"><span style="font-size:14px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:14px">✕</span></div>
+          </div>
+          <div style="padding:18px">
+            <div style="display:flex;gap:20px;border-bottom:1px solid #121b30;margin-bottom:16px">
+              <div style="font-size:12px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Global</div>
+              <div style="font-size:12px;font-weight:700;color:#22d3ee;padding-bottom:10px;border-bottom:2px solid #22d3ee;text-transform:uppercase;letter-spacing:.08em">Por aplicación</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:9px;background:#0b1322;border:1px solid #16203a">
+                <div style="width:32px;height:32px;border-radius:8px;background:#2a1a10;color:#ea7c3c;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">C</div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#dbe5f0;font-family:'Space Grotesk',sans-serif">Google Chrome</div><div style="height:4px;border-radius:2px;background:#101a2e;margin-top:7px;overflow:hidden"><div style="width:88%;height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee);box-shadow:0 0 8px rgba(34,211,238,.6)"></div></div></div>
+                <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#38bdf8">48.2 GB</div><div style="font-size:10px;color:#3f5573;margin-top:2px">↓42.6 ↑5.6</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:9px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#0d2238;color:#38bdf8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">S</div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#dbe5f0;font-family:'Space Grotesk',sans-serif">Steam</div><div style="height:4px;border-radius:2px;background:#101a2e;margin-top:7px;overflow:hidden"><div style="width:58%;height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div></div>
+                <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#38bdf8">31.5 GB</div><div style="font-size:10px;color:#3f5573;margin-top:2px">↓30.9 ↑0.6</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:9px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#0d2a1d;color:#34d399;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">♪</div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#dbe5f0;font-family:'Space Grotesk',sans-serif">Spotify</div><div style="height:4px;border-radius:2px;background:#101a2e;margin-top:7px;overflow:hidden"><div style="width:24%;height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div></div>
+                <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#38bdf8">12.1 GB</div><div style="font-size:10px;color:#3f5573;margin-top:2px">↓12.0 ↑0.1</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:9px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#161b22;color:#7c93b0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">⊞</div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#dbe5f0;font-family:'Space Grotesk',sans-serif">Windows Update</div><div style="height:4px;border-radius:2px;background:#101a2e;margin-top:7px;overflow:hidden"><div style="width:18%;height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div></div>
+                <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#38bdf8">9.7 GB</div><div style="font-size:10px;color:#3f5573;margin-top:2px">↓9.7 ↑0.0</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:9px">
+                <div style="width:32px;height:32px;border-radius:8px;background:#1c1b2e;color:#818cf8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">D</div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#dbe5f0;font-family:'Space Grotesk',sans-serif">Discord</div><div style="height:4px;border-radius:2px;background:#101a2e;margin-top:7px;overflow:hidden"><div style="width:11%;height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div></div>
+                <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#38bdf8">6.3 GB</div><div style="font-size:10px;color:#3f5573;margin-top:2px">↓4.1 ↑2.2</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= DIRECTION 03 · NÚCLEO ========================= -->
+    <section style="font-family:'Hanken Grotesk',system-ui,sans-serif">
+      <div style="display:flex;align-items:flex-end;gap:18px;margin-bottom:22px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:800;color:#2563eb;letter-spacing:.14em;font-family:'Hanken Grotesk',sans-serif">03</div>
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'Hanken Grotesk',sans-serif">Núcleo</div>
+          <div style="font-size:14px;color:#64748b;font-weight:500;margin-top:3px;font-family:'Plus Jakarta Sans',sans-serif">Minimalista profesional — rail lateral, una cifra protagonista y mucho aire. Para perfiles IT.</div>
+        </div>
+        <div style="display:flex;gap:7px;margin-left:auto">
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px;font-family:'Plus Jakarta Sans',sans-serif">Hanken Grotesk</span>
+          <span style="font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e3e8ef;border-radius:6px;padding:4px 9px;font-family:'Plus Jakarta Sans',sans-serif">Minimal</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+
+        <!-- ===== NÚCLEO MAIN · LIGHT (sidebar layout) ===== -->
+        <div style="width:786px;border-radius:16px;overflow:hidden;background:#ffffff;border:1px solid #ececec;box-shadow:0 30px 70px -30px rgba(0,0,0,.22);display:flex">
+          <!-- sidebar -->
+          <div style="width:58px;background:#fafafa;border-right:1px solid #f0f0f0;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px">
+            <div style="width:30px;height:30px;border-radius:9px;background:#2563eb;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;background:#eef2ff;color:#2563eb;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;color:#a1a1aa;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;color:#a1a1aa;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 .9 14H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 3 8.1"/></svg></div>
+          </div>
+          <!-- content -->
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #f4f4f5">
+              <div style="font-size:15px;font-weight:800;letter-spacing:-.01em;color:#18181b">Consumo</div>
+              <div style="display:flex;align-items:center;gap:18px">
+                <div style="display:flex;gap:16px;font-size:13px;font-weight:600"><span style="color:#a1a1aa">Sesión</span><span style="color:#a1a1aa">Día</span><span style="color:#a1a1aa">Semana</span><span style="color:#18181b;border-bottom:2px solid #2563eb;padding-bottom:2px">Mes</span></div>
+                <div style="display:flex;gap:11px;color:#a1a1aa"><span style="font-size:13px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:13px">✕</span></div>
+              </div>
+            </div>
+            <div style="padding:26px 22px">
+              <!-- hero -->
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:12.5px;font-weight:600;color:#a1a1aa;text-transform:uppercase;letter-spacing:.08em">Total este ciclo</div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600"><span style="color:#2563eb">↓ 8.42 MB/s</span><span style="color:#71717a">·</span><span style="color:#16a34a">↑ 1.18 MB/s</span></div>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:12px">
+                <div style="font-size:58px;font-weight:800;letter-spacing:-.03em;color:#18181b;line-height:1">142.6</div>
+                <div style="font-size:20px;font-weight:700;color:#a1a1aa">GB</div>
+                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#16a34a;background:#f0fdf4;border-radius:7px;padding:5px 10px">↑ 12% vs ciclo previo</div>
+              </div>
+              <!-- thin chart -->
+              <div style="margin:22px 0 6px">
+                <svg viewBox="0 0 740 120" width="100%" height="110" preserveAspectRatio="none">
+                  <defs><linearGradient id="p3l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".14"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+                  <path d="M0,96 L50,97 L100,95 L150,96 L200,93 L250,95 L300,88 L350,76 L380,52 L410,18 L430,8 L450,40 L480,70 L500,24 L515,12 L545,54 L575,84 L600,60 L630,76 L665,96 L700,98 L740,96 L740,120 L0,120 Z" fill="url(#p3l)"/>
+                  <path d="M0,96 L50,97 L100,95 L150,96 L200,93 L250,95 L300,88 L350,76 L380,52 L410,18 L430,8 L450,40 L480,70 L500,24 L515,12 L545,54 L575,84 L600,60 L630,76 L665,96 L700,98 L740,96" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <!-- split + quota -->
+              <div style="display:flex;gap:0;border-top:1px solid #f4f4f5;padding-top:18px">
+                <div style="flex:1;padding-right:20px">
+                  <div style="font-size:12px;font-weight:600;color:#a1a1aa;margin-bottom:4px">Bajada</div>
+                  <div style="font-size:21px;font-weight:800;color:#18181b;letter-spacing:-.02em">104.4 <span style="font-size:13px;color:#a1a1aa;font-weight:700">GB</span></div>
+                </div>
+                <div style="flex:1;padding:0 20px;border-left:1px solid #f4f4f5">
+                  <div style="font-size:12px;font-weight:600;color:#a1a1aa;margin-bottom:4px">Subida</div>
+                  <div style="font-size:21px;font-weight:800;color:#18181b;letter-spacing:-.02em">38.2 <span style="font-size:13px;color:#a1a1aa;font-weight:700">GB</span></div>
+                </div>
+                <div style="flex:1.3;padding-left:20px;border-left:1px solid #f4f4f5">
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#71717a;margin-bottom:6px"><span>Mensual</span><span style="color:#18181b">71%</span></div>
+                  <div style="height:6px;border-radius:4px;background:#f1f1f3;overflow:hidden;margin-bottom:10px"><div style="width:71%;height:100%;border-radius:4px;background:#2563eb"></div></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#71717a;margin-bottom:6px"><span>Diario</span><span style="color:#18181b">68%</span></div>
+                  <div style="height:6px;border-radius:4px;background:#f1f1f3;overflow:hidden"><div style="width:68%;height:100%;border-radius:4px;background:#d4d4d8"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== NÚCLEO MAIN · DARK COMPANION ===== -->
+        <div style="width:786px;border-radius:16px;overflow:hidden;background:#0c0c0e;border:1px solid #1f1f23;box-shadow:0 30px 70px -28px rgba(0,0,0,.7);display:flex">
+          <div style="width:58px;background:#121214;border-right:1px solid #1f1f23;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px">
+            <div style="width:30px;height:30px;border-radius:9px;background:#3b82f6;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;background:#16223f;color:#60a5fa;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;color:#52525b;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+            <div style="width:38px;height:38px;border-radius:10px;color:#52525b;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 .9 14H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 3 8.1"/></svg></div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #1a1a1d">
+              <div style="font-size:15px;font-weight:800;letter-spacing:-.01em;color:#fafafa">Consumo</div>
+              <div style="display:flex;align-items:center;gap:18px">
+                <div style="display:flex;gap:16px;font-size:13px;font-weight:600"><span style="color:#52525b">Sesión</span><span style="color:#52525b">Día</span><span style="color:#52525b">Semana</span><span style="color:#fafafa;border-bottom:2px solid #3b82f6;padding-bottom:2px">Mes</span></div>
+                <div style="display:flex;gap:11px;color:#52525b"><span style="font-size:13px">—</span><span style="font-size:11px;border:1.4px solid currentColor;width:11px;height:11px;display:inline-block;border-radius:2px"></span><span style="font-size:13px">✕</span></div>
+              </div>
+            </div>
+            <div style="padding:26px 22px">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:12.5px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:.08em">Total este ciclo</div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600"><span style="color:#60a5fa">↓ 8.42 MB/s</span><span style="color:#52525b">·</span><span style="color:#4ade80">↑ 1.18 MB/s</span></div>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:12px">
+                <div style="font-size:58px;font-weight:800;letter-spacing:-.03em;color:#fafafa;line-height:1">142.6</div>
+                <div style="font-size:20px;font-weight:700;color:#52525b">GB</div>
+                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#4ade80;background:#0e2417;border-radius:7px;padding:5px 10px">↑ 12% vs ciclo previo</div>
+              </div>
+              <div style="margin:22px 0 6px">
+                <svg viewBox="0 0 740 120" width="100%" height="110" preserveAspectRatio="none">
+                  <defs><linearGradient id="p3d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".24"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+                  <path d="M0,96 L50,97 L100,95 L150,96 L200,93 L250,95 L300,88 L350,76 L380,52 L410,18 L430,8 L450,40 L480,70 L500,24 L515,12 L545,54 L575,84 L600,60 L630,76 L665,96 L700,98 L740,96 L740,120 L0,120 Z" fill="url(#p3d)"/>
+                  <path d="M0,96 L50,97 L100,95 L150,96 L200,93 L250,95 L300,88 L350,76 L380,52 L410,18 L430,8 L450,40 L480,70 L500,24 L515,12 L545,54 L575,84 L600,60 L630,76 L665,96 L700,98 L740,96" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div style="display:flex;gap:0;border-top:1px solid #1a1a1d;padding-top:18px">
+                <div style="flex:1;padding-right:20px">
+                  <div style="font-size:12px;font-weight:600;color:#71717a;margin-bottom:4px">Bajada</div>
+                  <div style="font-size:21px;font-weight:800;color:#fafafa;letter-spacing:-.02em">104.4 <span style="font-size:13px;color:#52525b;font-weight:700">GB</span></div>
+                </div>
+                <div style="flex:1;padding:0 20px;border-left:1px solid #1a1a1d">
+                  <div style="font-size:12px;font-weight:600;color:#71717a;margin-bottom:4px">Subida</div>
+                  <div style="font-size:21px;font-weight:800;color:#fafafa;letter-spacing:-.02em">38.2 <span style="font-size:13px;color:#52525b;font-weight:700">GB</span></div>
+                </div>
+                <div style="flex:1.3;padding-left:20px;border-left:1px solid #1a1a1d">
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#a1a1aa;margin-bottom:6px"><span>Mensual</span><span style="color:#fafafa">71%</span></div>
+                  <div style="height:6px;border-radius:4px;background:#1f1f23;overflow:hidden;margin-bottom:10px"><div style="width:71%;height:100%;border-radius:4px;background:#3b82f6"></div></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:#a1a1aa;margin-bottom:6px"><span>Diario</span><span style="color:#fafafa">68%</span></div>
+                  <div style="height:6px;border-radius:4px;background:#1f1f23;overflow:hidden"><div style="width:68%;height:100%;border-radius:4px;background:#3f3f46"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- núcleo secondary: quota + per-app (light) -->
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-top:32px">
+        <div style="width:420px;border-radius:16px;overflow:hidden;background:#ffffff;border:1px solid #ececec;box-shadow:0 30px 70px -30px rgba(0,0,0,.22)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 6px">
+            <div style="font-size:16px;font-weight:800;letter-spacing:-.01em;color:#18181b">Configurar cuota</div>
+            <span style="font-size:16px;color:#a1a1aa">✕</span>
+          </div>
+          <div style="padding:8px 22px 22px;display:flex;flex-direction:column;gap:18px">
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#71717a;display:block;margin-bottom:8px">Límite diario <span style="color:#a1a1aa;font-weight:500">· 0 = sin límite</span></label>
+              <div style="border-bottom:1.5px solid #ececec;padding:6px 2px;font-size:18px;font-weight:700;color:#18181b;display:flex;justify-content:space-between;align-items:baseline">10.0 <span style="font-size:12.5px;color:#a1a1aa;font-weight:600">GB / día</span></div>
+            </div>
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#71717a;display:block;margin-bottom:8px">Límite mensual <span style="color:#a1a1aa;font-weight:500">· 0 = sin límite</span></label>
+              <div style="border-bottom:2px solid #2563eb;padding:6px 2px;font-size:18px;font-weight:700;color:#18181b;display:flex;justify-content:space-between;align-items:baseline">200.0 <span style="font-size:12.5px;color:#2563eb;font-weight:600">GB / mes</span></div>
+            </div>
+            <div>
+              <label style="font-size:12.5px;font-weight:600;color:#71717a;display:block;margin-bottom:8px">Día de corte del ciclo <span style="color:#a1a1aa;font-weight:500">· 1–28</span></label>
+              <div style="border-bottom:1.5px solid #ececec;padding:6px 2px;font-size:18px;font-weight:700;color:#18181b">1</div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+              <div style="text-align:center;border-radius:9px;padding:11px 18px;font-size:13.5px;font-weight:700;color:#71717a">Cancelar</div>
+              <div style="text-align:center;background:#18181b;color:#fff;border-radius:9px;padding:11px 22px;font-size:13.5px;font-weight:700">Guardar</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:540px;border-radius:16px;overflow:hidden;background:#ffffff;border:1px solid #ececec;box-shadow:0 30px 70px -30px rgba(0,0,0,.22)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #f4f4f5">
+            <div style="font-size:15px;font-weight:800;letter-spacing:-.01em;color:#18181b">Por aplicación</div>
+            <div style="font-size:12.5px;font-weight:600;color:#a1a1aa">Mes · ordenado por total</div>
+          </div>
+          <div style="padding:10px 14px 16px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 8px;border-bottom:1px solid #f7f7f8">
+              <div style="width:32px;height:32px;border-radius:9px;background:#fef0e6;color:#ea7c3c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">C</div>
+              <div style="font-size:13.5px;font-weight:700;color:#18181b;width:160px">Google Chrome</div>
+              <div style="flex:1;height:4px;border-radius:3px;background:#f1f1f3;overflow:hidden"><div style="width:88%;height:100%;background:#2563eb"></div></div>
+              <div style="font-size:14px;font-weight:800;color:#18181b;width:72px;text-align:right">48.2 GB</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 8px;border-bottom:1px solid #f7f7f8">
+              <div style="width:32px;height:32px;border-radius:9px;background:#e7f0ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">S</div>
+              <div style="font-size:13.5px;font-weight:700;color:#18181b;width:160px">Steam</div>
+              <div style="flex:1;height:4px;border-radius:3px;background:#f1f1f3;overflow:hidden"><div style="width:58%;height:100%;background:#2563eb"></div></div>
+              <div style="font-size:14px;font-weight:800;color:#18181b;width:72px;text-align:right">31.5 GB</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 8px;border-bottom:1px solid #f7f7f8">
+              <div style="width:32px;height:32px;border-radius:9px;background:#e6f7ee;color:#16a34a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">♪</div>
+              <div style="font-size:13.5px;font-weight:700;color:#18181b;width:160px">Spotify</div>
+              <div style="flex:1;height:4px;border-radius:3px;background:#f1f1f3;overflow:hidden"><div style="width:24%;height:100%;background:#2563eb"></div></div>
+              <div style="font-size:14px;font-weight:800;color:#18181b;width:72px;text-align:right">12.1 GB</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 8px;border-bottom:1px solid #f7f7f8">
+              <div style="width:32px;height:32px;border-radius:9px;background:#f1f1f3;color:#71717a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">⊞</div>
+              <div style="font-size:13.5px;font-weight:700;color:#18181b;width:160px">Windows Update</div>
+              <div style="flex:1;height:4px;border-radius:3px;background:#f1f1f3;overflow:hidden"><div style="width:18%;height:100%;background:#2563eb"></div></div>
+              <div style="font-size:14px;font-weight:800;color:#18181b;width:72px;text-align:right">9.7 GB</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 8px">
+              <div style="width:32px;height:32px;border-radius:9px;background:#ecebfe;color:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">D</div>
+              <div style="font-size:13.5px;font-weight:700;color:#18181b;width:160px">Discord</div>
+              <div style="flex:1;height:4px;border-radius:3px;background:#f1f1f3;overflow:hidden"><div style="width:11%;height:100%;background:#2563eb"></div></div>
+              <div style="font-size:14px;font-weight:800;color:#18181b;width:72px;text-align:right">6.3 GB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
