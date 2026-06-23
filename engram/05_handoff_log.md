@@ -3,6 +3,12 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/NetGauge-handoffs-[fecha].md
 
+### 2026-06-23 nerv-orquestador→nerv-desktop T-023 + T-024 + T-025
+- Entrega: tres fixes de captura macOS en `feature/T-023-capture-robustness` (sobre main). T-023 leak de nettop huérfanos (Strong, diagnóstico CONFIRMADO: orphan tras cierre no-limpio, ppid=1); T-024 ocultar helper nettop de la lista (Advisory); T-025 nombres con caracteres raros/cajas (Strong). Specs y criterios: §T-023/§T-024/§T-025 en backlog.
+- ÉNFASIS PO: **compatibilidad multiplataforma** — todo macOS-scoped; el path Windows/ETW debe quedar IDÉNTICO; guardar las diferencias de señales en Windows.
+- Pistas: nombre macOS viene de nettop tal cual (truncado/garble posible); decode errors="replace"→U+FFFD; FONT_FAMILY solo-latín (theme.py:48). Reap por firma exacta de nettop.
+- Pendiente: implementar 1 commit por ticket, tests, suite verde; devolver handoff estructurado. No marcar Done (QA).
+
 ### 2026-06-23 nerv-web→nerv-orquestador T-020 + T-021 (retorno) + T-022 (orq)
 - Retorno nerv-web: T-020 (i18n ES/EN/PT, `i18n.ts` 141 claves + switcher + detección/persistencia) y T-021 (ícono 3 barras en favicon + 4 logos) commiteados (6e794bb, b844e22). Build+lint verdes. Caveat: sin verificación visual en navegador (lo hará QA/PO). Verifiqué reglas de verdad en los 3 idiomas e ícono: OK.
 - T-022 (orquestador, directo): accent cian→azul #458bf8 (alineado al ícono) + armonización de tonos soporte; verde/ámbar/rojo intactos. Commit f587811, build+lint verdes, 0 cian en bundle.

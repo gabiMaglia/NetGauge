@@ -51,6 +51,41 @@ barras rx=2 fill=gradiente: (x12 y38 w10 h14) (x27 y24 w10 h28) (x42 y12 w10 h40
 2. Los **3 logos inline** de `landing.html` (header, titlebar del mock de ventana, footer) usan el mismo mark de la app (no la línea). Mantener tamaños (34/24/30px aprox) y el glow/encuadre del diseño donde aplique.
 3. Coherencia visual: el ícono es el mismo en favicon, header, mock y footer (= ícono de la app). Build limpio.
 
+## Sprint 3 — Robustez de captura macOS + nombres
+| ID | Ext (ADO/Jira) | Tarea | Asignado | Estado | Niv | Criterios de aceptación | Rama |
+|----|----------------|-------|----------|--------|-----|--------------------------|------|
+| T-023 | — | Leak de procesos `nettop` huérfanos (se acumulan tras cierres no-limpios) | nerv-desktop | To Do | S | Ver §T-023 | feature/T-023-capture-robustness (sobre main) |
+| T-024 | — | Ocultar el helper propio (`nettop`) de la lista "Por aplicación" | nerv-desktop | To Do | A | Ver §T-024 | feature/T-023-capture-robustness |
+| T-025 | — | Nombres de apps con caracteres raros / rectángulos vacíos (tofu / U+FFFD) | nerv-desktop | To Do | S | Ver §T-025 | feature/T-023-capture-robustness |
+
+## §T-023 · Leak de `nettop` huérfanos
+**Estado:** To Do · **Tech Lead:** nerv-desktop · **Niv QA:** Strong (path de captura + manejo de procesos) · Reportado por PO (vio `nettop` ×4 en la lista de procesos del sistema).
+**Diagnóstico (CONFIRMADO empíricamente por orquestador):** `nettop -P -x -L 0` corre indefinido. Con cierre limpio, `stop()` lo termina OK. Con cierre NO-limpio (force-quit/crash/`kill -9`/logout), `stop()`/atexit NO corren y el `nettop` hijo queda **huérfano** (reparentado a launchd, ppid 1) y sigue vivo. Cada arranque spawnea otro → se acumulan. Prueba: tras `kill -9` al python padre, el `nettop` siguió vivo con ppid=1. NO es duplicación intra-sesión (la UI agrupa por nombre, `monitor_service.py:134`).
+**Criterios de aceptación:**
+1. **Reap al arrancar:** antes de lanzar nettop, terminar cualquier `nettop` previo que matchee NUESTRA firma exacta (`-P -x -L 0 … -J bytes_in,bytes_out`), del usuario actual. SIGTERM y luego SIGKILL si sigue. Acota a 1 instancia y limpia huérfanos acumulados.
+2. **Cierre robusto:** manejar `SIGTERM`/`SIGINT` (además del `atexit` actual) para llamar a `stop()`/cleanup. `SIGKILL` no es atrapable → por eso (1) es la red de seguridad.
+3. **MULTIPLATAFORMA — no romper Windows:** el reap y la firma de nettop son macOS-only (viven en `NettopCaptureService`/path darwin); el path Windows/ETW queda **idéntico**. Los handlers de señales deben guardar diferencias de plataforma (SIGTERM/SIGINT en Windows tienen semántica distinta; no romper el arranque Windows).
+4. Tests: reap mata solo lo que matchea la firma; cleanup en stop sigue OK; idempotencia. Suite verde. Sin cambios de comportamiento en Windows.
+
+## §T-024 · Ocultar el helper propio de la lista
+**Estado:** To Do · **Tech Lead:** nerv-desktop · **Niv QA:** Advisory.
+**Contexto:** `nettop` es el helper interno de la app (macOS), no una app que el usuario abrió; mostrarlo en "Por aplicación" confunde. (En Windows el helper es ETW in-process, no hay subproceso visible.)
+**Criterios:**
+1. Excluir de la lista/persistencia el proceso helper propio (al menos `nettop` en macOS; genérico/extensible). No contar su tráfico como "una app".
+2. Filtro acotado y documentado; sin afectar el resto de apps ni el path Windows.
+3. Test del filtro. Suite verde.
+
+## §T-025 · Nombres con caracteres raros / rectángulos vacíos
+**Estado:** To Do · **Tech Lead:** nerv-desktop · **Niv QA:** Strong (correctitud de datos + UI) · Reportado por PO (algunas apps con "caracteres super raros, rectángulos grandes vacíos").
+**Hipótesis (a verificar, P-3 — no asumir):** dos causas posibles, pueden coexistir:
+- (a) **Decodificación:** `iter_lines_from_fd` decodea con `errors="replace"` → bytes inválidos (nombre multibyte truncado por nettop) producen U+FFFD () que se ve como caja. nettop además trunca nombres a un ancho.
+- (b) **Fuente/glyphs:** `theme.py:48 FONT_FAMILY='"Plus Jakarta Sans","Segoe UI",sans-serif'`; Plus Jakarta es solo-latín → nombres con CJK/emoji/acentos no cubiertos caen al fallback y pueden dar "tofu" (□) si la cadena no tiene glyph.
+**Criterios de aceptación:**
+1. Verificar empíricamente con un caso real cuál(es) causa(s) aplica(n) (capturar el nombre crudo de nettop para una app afectada).
+2. Corregir el origen: preferible **resolver el nombre real del proceso por PID** (p. ej. psutil) en vez del nombre truncado/garbleado de nettop, o normalizar/validar la decodificación. Mismo criterio aplicable al path Windows si también muestra nombres raros.
+3. Asegurar **fallback de fuente** en la UI que cubra scripts no-latinos comunes (sin romper la identidad visual): que un nombre con caracteres no-latinos se vea legible, no como cajas.
+4. **Multiplataforma:** la solución no debe degradar Windows; idealmente mejora ambos. Tests del parseo/normalización de nombres. Suite verde.
+
 ## Veredictos QA
 | Tarea | Veredicto | Defectos (si rechazo) | Fecha |
 |-------|-----------|------------------------|-------|
