@@ -45,6 +45,20 @@ Esto elimina el aliasing con el `_rate_tick` de 1s que causaba el patrón
 pico-luego-0. Bajo PTY, las líneas llegan terminadas en "\r\n" (traducción
 de terminal); el parseo ya tolera esto porque tanto `parse_nettop_block`
 como `split_into_blocks` hacen `.strip()` antes de evaluar cada línea.
+
+T-023 (leak de huérfanos): con cierre NO-limpio del proceso padre (force-quit,
+crash, `kill -9`, logout), `stop()`/`atexit` no llegan a ejecutarse y el
+`nettop` hijo queda reparentado a launchd (ppid=1), vivo indefinidamente.
+Cada arranque nuevo lanza otro más -> se acumulan (confirmado empíricamente:
+tras `kill -9` al padre, el `nettop` siguió corriendo con ppid=1). Mitigación
+de dos capas: (1) al arrancar, `_reap_orphans()` mata cualquier `nettop`
+previo del usuario actual cuya línea de comando matchee EXACTAMENTE la
+firma propia (ver `_OWN_SIGNATURE_ARGS`), por las dudas que haya quedado
+alguno de una sesión anterior; (2) manejo de SIGTERM/SIGINT (instalado desde
+`main.py`, solo en macOS) para correr el mismo cleanup que `atexit` ante un
+cierre "casi limpio" (ej. `kill` sin -9, logout ordenado). `SIGKILL` no es
+atrapable por ningún proceso, así que (1) sigue siendo la red de seguridad
+final para los casos que ningún handler puede cubrir.
 """
 from __future__ import annotations
 
@@ -143,6 +157,30 @@ def iter_lines_from_fd(
         yield buf.decode(errors="replace")
 
 
+def _is_own_nettop_cmdline(cmdline: list[str]) -> bool:
+    """True si `cmdline` (de `psutil.Process.cmdline()`) matchea EXACTAMENTE
+    la firma de argumentos que usa esta clase (sin contar el intervalo `-s`,
+    que varía). Evita matar cualquier otro `nettop` que el usuario/sistema
+    pueda tener corriendo con flags distintos.
+    """
+    if len(cmdline) < 2:
+        return False
+    exe = cmdline[0]
+    if os.path.basename(exe) != "nettop":
+        return False
+    args = cmdline[1:]
+    # Firma propia: ["-P", "-x", "-L", "0", "-s", "<N>", "-J", "bytes_in,bytes_out"]
+    if len(args) != 8:
+        return False
+    if args[0:5] != ["-P", "-x", "-L", "0", "-s"]:
+        return False
+    if not args[5].isdigit():
+        return False
+    if args[6:8] != ["-J", "bytes_in,bytes_out"]:
+        return False
+    return True
+
+
 class NettopCaptureService(CaptureService):
     """Captura por proceso en macOS vía `nettop`. Best-effort, no privilegiada."""
 
@@ -163,6 +201,67 @@ class NettopCaptureService(CaptureService):
     def is_available() -> bool:
         return shutil.which("nettop") is not None
 
+    @staticmethod
+    def reap_orphans() -> int:
+        """Termina cualquier `nettop` del usuario actual cuya línea de comando
+        matchee exactamente nuestra firma (T-023): red de seguridad contra
+        huérfanos acumulados por cierres no-limpios de sesiones anteriores.
+
+        SIGTERM primero; si sigue vivo tras un breve margen, SIGKILL. Devuelve
+        la cantidad de procesos reapeados (best-effort: nunca lanza).
+        """
+        import signal as _signal
+        import time as _time
+
+        try:
+            import psutil
+        except Exception:  # noqa: BLE001
+            return 0
+
+        current_uid = os.getuid() if hasattr(os, "getuid") else None
+        candidates: list["psutil.Process"] = []
+        try:
+            for proc in psutil.process_iter(["pid", "uids", "cmdline"]):
+                try:
+                    if current_uid is not None:
+                        uids = proc.info.get("uids")
+                        if uids is not None and uids.real != current_uid:
+                            continue
+                    cmdline = proc.info.get("cmdline") or []
+                    if _is_own_nettop_cmdline(cmdline):
+                        candidates.append(proc)
+                except (psutil.NoSuchProcess, psutil.AccessDenied, ValueError):
+                    continue
+        except Exception as exc:  # noqa: BLE001
+            log.warning("nettop: fallo enumerando procesos para reap (%s).", exc)
+            return 0
+
+        reaped = 0
+        for proc in candidates:
+            try:
+                proc.send_signal(_signal.SIGTERM)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
+                continue
+            except Exception as exc:  # noqa: BLE001
+                log.warning("nettop: fallo enviando SIGTERM a huérfano (%s).", exc)
+                continue
+            reaped += 1
+
+        if candidates:
+            _time.sleep(0.2)
+            for proc in candidates:
+                try:
+                    if proc.is_running():
+                        proc.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
+                    continue
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("nettop: fallo enviando SIGKILL a huérfano (%s).", exc)
+
+        if reaped:
+            log.info("nettop: reapeados %d proceso(s) huérfano(s) al arrancar.", reaped)
+        return reaped
+
     def _build_command(self) -> list[str]:
         nettop_path = shutil.which("nettop")
         if not nettop_path:
@@ -173,6 +272,7 @@ class NettopCaptureService(CaptureService):
         ]
 
     def start(self, on_sample: Callable[[TrafficSample], None]) -> None:
+        self.reap_orphans()
         cmd = self._build_command()
         self._stop_event.clear()
         self._prev = {}

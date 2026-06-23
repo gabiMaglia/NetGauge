@@ -10,6 +10,7 @@ import threading
 
 from src.infrastructure.capture.nettop_capture import (
     NettopCaptureService,
+    _is_own_nettop_cmdline,
     iter_lines_from_fd,
     parse_nettop_block,
     split_into_blocks,
@@ -289,3 +290,155 @@ def test_factory_falls_back_to_psutil_on_macos_without_nettop(monkeypatch):
     service, per_process = factory_mod.create_capture_service()
     assert isinstance(service, PsutilCaptureService)
     assert per_process is False
+
+
+# ---- T-023: reap de huérfanos -----------------------------------------
+
+def test_is_own_nettop_cmdline_matches_exact_signature():
+    assert _is_own_nettop_cmdline(
+        ["/usr/bin/nettop", "-P", "-x", "-L", "0", "-s", "1",
+         "-J", "bytes_in,bytes_out"]
+    ) is True
+
+
+def test_is_own_nettop_cmdline_rejects_other_nettop_invocations():
+    # Otro proceso (no nuestro) corriendo nettop con flags distintos: no debe
+    # matchear, para no matar un nettop ajeno al usuario.
+    assert _is_own_nettop_cmdline(["/usr/bin/nettop", "-l", "1"]) is False
+    assert _is_own_nettop_cmdline(["/usr/bin/nettop"]) is False
+    assert _is_own_nettop_cmdline([]) is False
+
+
+def test_is_own_nettop_cmdline_rejects_non_nettop_executable():
+    assert _is_own_nettop_cmdline(
+        ["/usr/bin/top", "-P", "-x", "-L", "0", "-s", "1",
+         "-J", "bytes_in,bytes_out"]
+    ) is False
+
+
+def test_is_own_nettop_cmdline_requires_numeric_interval():
+    assert _is_own_nettop_cmdline(
+        ["/usr/bin/nettop", "-P", "-x", "-L", "0", "-s", "abc",
+         "-J", "bytes_in,bytes_out"]
+    ) is False
+
+
+class _FakeProc:
+    """Doble de psutil.Process suficiente para testear reap_orphans()."""
+
+    def __init__(self, pid: int, cmdline: list[str], uid: int = 501) -> None:
+        self.pid = pid
+        self.info = {"pid": pid, "cmdline": cmdline,
+                     "uids": _FakeUids(uid)}
+        self.terminated = False
+        self.killed = False
+        self._alive = True
+
+    def send_signal(self, signum) -> None:
+        self.terminated = True
+
+    def kill(self) -> None:
+        self.killed = True
+        self._alive = False
+
+    def is_running(self) -> bool:
+        return self._alive
+
+
+class _FakeUids:
+    def __init__(self, real: int) -> None:
+        self.real = real
+
+
+def test_reap_orphans_terminates_only_own_signature(monkeypatch):
+    import src.infrastructure.capture.nettop_capture as mod
+
+    own = _FakeProc(111, ["/usr/bin/nettop", "-P", "-x", "-L", "0", "-s", "1",
+                          "-J", "bytes_in,bytes_out"])
+    other_nettop = _FakeProc(222, ["/usr/bin/nettop", "-l", "1"])
+    unrelated = _FakeProc(333, ["/usr/bin/top"])
+
+    monkeypatch.setattr(os, "getuid", lambda: 501, raising=False)
+
+    fake_psutil = type("FakePsutilModule", (), {})()
+    fake_psutil.process_iter = lambda attrs: [own, other_nettop, unrelated]
+    fake_psutil.NoSuchProcess = type("NoSuchProcess", (Exception,), {})
+    fake_psutil.AccessDenied = type("AccessDenied", (Exception,), {})
+
+    monkeypatch.setitem(__import__("sys").modules, "psutil", fake_psutil)
+
+    reaped = mod.NettopCaptureService.reap_orphans()
+
+    assert reaped == 1
+    assert own.terminated is True
+    assert other_nettop.terminated is False
+    assert unrelated.terminated is False
+
+
+def test_reap_orphans_skips_other_users_processes(monkeypatch):
+    import src.infrastructure.capture.nettop_capture as mod
+
+    other_user = _FakeProc(
+        444, ["/usr/bin/nettop", "-P", "-x", "-L", "0", "-s", "1",
+              "-J", "bytes_in,bytes_out"], uid=999,
+    )
+
+    monkeypatch.setattr(os, "getuid", lambda: 501, raising=False)
+
+    fake_psutil = type("FakePsutilModule", (), {})()
+    fake_psutil.process_iter = lambda attrs: [other_user]
+    fake_psutil.NoSuchProcess = type("NoSuchProcess", (Exception,), {})
+    fake_psutil.AccessDenied = type("AccessDenied", (Exception,), {})
+
+    monkeypatch.setitem(__import__("sys").modules, "psutil", fake_psutil)
+
+    reaped = mod.NettopCaptureService.reap_orphans()
+
+    assert reaped == 0
+    assert other_user.terminated is False
+
+
+def test_reap_orphans_is_safe_without_psutil(monkeypatch):
+    """Si psutil no se puede importar, reap_orphans() no debe lanzar (best-effort)."""
+    import builtins
+    import src.infrastructure.capture.nettop_capture as mod
+
+    real_import = builtins.__import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == "psutil":
+            raise ImportError("no psutil")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _fake_import)
+    assert mod.NettopCaptureService.reap_orphans() == 0
+
+
+def test_start_calls_reap_orphans_before_launching(monkeypatch):
+    """start() debe reapear huérfanos ANTES de lanzar el nuevo nettop (T-023)."""
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        "src.infrastructure.capture.nettop_capture.shutil.which",
+        lambda name: "/usr/bin/nettop",
+    )
+    monkeypatch.setattr(
+        NettopCaptureService, "reap_orphans",
+        staticmethod(lambda: calls.append("reap") or 0),
+    )
+
+    def _boom(*args, **kwargs):
+        calls.append("popen")
+        raise OSError("no se ejecuta de verdad en el test")
+
+    monkeypatch.setattr(
+        "src.infrastructure.capture.nettop_capture.subprocess.Popen", _boom
+    )
+
+    svc = NettopCaptureService()
+    try:
+        svc.start(lambda sample: None)
+    except Exception:
+        pass
+
+    assert calls == ["reap", "popen"]

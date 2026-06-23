@@ -9,6 +9,7 @@ import atexit
 import logging
 import os
 import shutil
+import signal
 import sys
 from pathlib import Path
 
@@ -141,6 +142,23 @@ def main() -> None:
         repository.close()
 
     atexit.register(_on_exit)
+
+    # Cierre robusto ante SIGTERM/SIGINT (T-023): solo macOS. En Windows la
+    # semántica de estas señales es distinta (no hay un SIGTERM "de verdad" -
+    # Python las simula parcialmente, y closeEvent/atexit ya cubren el cierre
+    # normal de la ventana), así que el handler NO se instala ahí para no
+    # alterar el comportamiento existente. `SIGKILL` sigue sin ser atrapable
+    # en ningún caso; la red de seguridad final es el reap al arrancar
+    # (NettopCaptureService.reap_orphans, en el path nettop de macOS).
+    if sys.platform == "darwin":
+        def _on_signal(signum: int, _frame) -> None:
+            logging.info("Señal %s recibida: cerrando de forma ordenada.", signum)
+            atexit.unregister(_on_exit)  # evita correr el cleanup dos veces
+            _on_exit()
+            sys.exit(0)
+
+        signal.signal(signal.SIGTERM, _on_signal)
+        signal.signal(signal.SIGINT, _on_signal)
 
     run(monitor, per_process, notifier)
 
