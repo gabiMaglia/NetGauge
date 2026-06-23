@@ -15,6 +15,8 @@
 |----|----------------|-------|----------|--------|-----|--------------------------|------|
 | T-015 | — | Landing page one-page (responsive, mobile-first) para NetLeak; objetivo #1 descargar, #2 confianza (privacidad + open source) | nerv-web | En progreso | S | Ver detalle completo en §T-015 (abajo) | feature/T-015-landing-page |
 | T-016 | — | Rename completo de la app trafficMe → NetLeak (código, instaladores, nombres de archivo, workflows, URLs, engram) | nerv-orquestador | En progreso | S | Ver detalle en §T-016 (abajo) | feature/T-016-rename-netleak (stack sobre T-015) |
+| T-017 | — | Migración de historial trafficMe → NetLeak al actualizar (resuelve el caveat de pérdida de datos del rename) | nerv-orquestador | En progreso | S | Al primer arranque, si el dir NetLeak está limpio y existe el dir trafficMe con datos, copiar usage.db/settings.json/monitor.log/reports/. Idempotente, copia (no mueve), nunca rompe el arranque. Tests. | feature/T-017-data-migration (stack sobre T-016) |
+| T-018 | — | Landing pixel-perfect contra `design_handoff_netLeak_panel/NetLeak Landing.dc.html` (reemplaza la interpretación previa de T-015) | nerv-web | To Do | S | Reproducir el diseño 1:1 (acento #22d3ee, Plus Jakarta Sans + JetBrains Mono, mock de ventana, sparklines, reveal/contador/detección SO). URLs → NetLeak. Build limpio. | feature/T-018-landing-pixel-perfect (stack sobre T-017) |
 
 ## Veredictos QA
 | Tarea | Veredicto | Defectos (si rechazo) | Fecha |
