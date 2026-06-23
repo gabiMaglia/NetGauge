@@ -1,14 +1,12 @@
 # STATE — NetGauge · actualizado: 2026-06-23
 
 **Marca final:** NetGauge (dos renames: trafficMe → NetLeak → NetGauge; NetLeak nunca se publicó).
-**Sprint:** 1 — Marketing (landing) + rename de marca
-**Rama activa:** feature/T-019-rename-netgauge
-**Stack de ramas:** main → T-015 (landing v1) → T-016 (rename→NetLeak) → T-017 (migración) → T-018 (landing pixel-perfect) → T-019 (rename→NetGauge)
-**Hecho, pendiente de QA (Strong):**
-- **T-016/T-019** rename total a NetGauge — pytest+build verdes, 0 leftovers.
-- **T-017** migración de historial trafficMe → NetGauge al actualizar — 4 tests verdes (56 total).
-- **T-018** landing pixel-perfect del diseño (`design_handoff_netLeak_panel/NetLeak Landing.dc.html`) — markup byte a byte, runtime portado, build+lint verdes.
+**Sprint:** 1 — Marketing (landing) + rebrand → **RELEASE v2.0.0 PUSHEADO**
+**Rama objetivo:** main (en `origin/main`, commit 2467d5c) · repo GitHub renombrado a **gabiMaglia/NetGauge** · remoto local actualizado.
+**Release:** tag **v2.0.0** pusheado → workflow `release.yml` corriendo (run 28050985263). Pendiente: confirmar que publique los 3 assets (NetGauge-Setup-x64.exe + 2 .dmg, sin firmar).
+**Mergeado a main (ff) y pusheado:** T-015 (landing v1) · T-016/T-019 (rename→NetGauge) · T-017 (migración historial) · T-018 (landing pixel-perfect) · release prep (version 2.0.0 + changelog).
+**QA:** Strong NO ejecutada — release por decisión directa del PO. Deuda: auditar T-016..T-019 post-release si se quiere.
 **Bloqueos:** ninguno
-**Próximo paso sugerido:** validación visual de la landing (npm run dev); decidir hosting (recomendado Vercel + dominio, ej. netgauge.app); QA Strong; el PO renombra el repo en GitHub a `NetGauge`; luego PRs encadenados T-015→T-019.
-**Caveats abiertos:** ramas T-016/T-018 conservan "netleak" en su nombre git (solo el texto del engram dice netgauge); identidad de app cambió con el rename (app_id/bundle_id) → SO la trata como app nueva; validar v1.8.4 en máquina T-013; DT-002 (endpoint VT con key real).
+**Próximo paso sugerido:** confirmar assets del Release v2.0.0; decidir hosting de la landing (recomendado Vercel + dominio netgauge.app); validar v2.0.0 instalado (incl. migración de historial) en una máquina real.
+**Caveats abiertos:** ramas feature T-016/T-018 conservan "netleak" en su nombre git (cosmético); identidad de app cambió (app_id/bundle_id) → SO la trata como app nueva; DT-002 (endpoint VT con key real); validar T-013 en la máquina afectada.
 **Preguntas abiertas al PO:** 0
