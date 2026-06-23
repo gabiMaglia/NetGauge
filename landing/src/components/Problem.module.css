@@ -1,0 +1,13 @@
+.inner {
+  max-width: 46rem;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.text {
+  font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+  margin: 0;
+}

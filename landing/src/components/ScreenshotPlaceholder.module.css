@@ -1,0 +1,72 @@
+.frame {
+  margin: 0;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, var(--surface-strong), var(--bg));
+  overflow: hidden;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+}
+
+.titlebar {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem 0;
+}
+
+.tab {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.tabActive {
+  color: var(--accent);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.body {
+  padding: 1.5rem;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.barGroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 140px;
+}
+
+.bar {
+  flex: 1;
+  border-radius: 0.3rem 0.3rem 0 0;
+  background: linear-gradient(180deg, var(--accent), transparent);
+  opacity: 0.6;
+}
+
+.caption {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}

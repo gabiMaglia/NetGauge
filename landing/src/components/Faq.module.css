@@ -1,0 +1,14 @@
+.section {
+  background: var(--bg-elevated);
+}
+
+.heading {
+  text-align: center;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 0 0 2rem;
+}
+
+.wrapper {
+  max-width: 42rem;
+  margin: 0 auto;
+}
