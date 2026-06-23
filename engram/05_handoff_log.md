@@ -3,6 +3,11 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/NetGauge-handoffs-[fecha].md
 
+### 2026-06-23 nerv-web→nerv-orquestador T-020 + T-021 (retorno) + T-022 (orq)
+- Retorno nerv-web: T-020 (i18n ES/EN/PT, `i18n.ts` 141 claves + switcher + detección/persistencia) y T-021 (ícono 3 barras en favicon + 4 logos) commiteados (6e794bb, b844e22). Build+lint verdes. Caveat: sin verificación visual en navegador (lo hará QA/PO). Verifiqué reglas de verdad en los 3 idiomas e ícono: OK.
+- T-022 (orquestador, directo): accent cian→azul #458bf8 (alineado al ícono) + armonización de tonos soporte; verde/ámbar/rojo intactos. Commit f587811, build+lint verdes, 0 cian en bundle.
+- Pendiente: validación visual (npm run dev) de i18n + accent + ícono; QA Strong; luego merge a main + decidir si entra en otra release.
+
 ### 2026-06-23 nerv-orquestador→nerv-web T-020 + T-021
 - Entrega: dos mejoras de landing en `feature/T-020-landing-i18n` (sobre main, post-release v2.0.0). T-020 = i18n ES/EN/PT + switcher (Niv Strong); T-021 = unificar ícono con el de la app (3 barras gradiente azul; Niv Advisory). Specs completas y criterios: §T-020 y §T-021 en `engram/03_backlog.md`.
 - Verdades a respetar en los 3 idiomas (no inventar): cuota avisa NO bloquea; privacidad exacta; índice de confianza = solo Windows. Ícono real definido en build/make_icon.py (geometría en §T-021).

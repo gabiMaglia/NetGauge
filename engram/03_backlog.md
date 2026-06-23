@@ -22,8 +22,9 @@
 ## Sprint 2 — Landing: i18n + ícono
 | ID | Ext (ADO/Jira) | Tarea | Asignado | Estado | Niv | Criterios de aceptación | Rama |
 |----|----------------|-------|----------|--------|-----|--------------------------|------|
-| T-020 | — | i18n de la landing: traducir a inglés y portugués (base español) con switcher de idioma | nerv-web | En progreso | S | Ver §T-020 | feature/T-020-landing-i18n (sobre main) |
-| T-021 | — | Unificar el ícono de la landing con el real de la app (3 barras, gradiente azul) en todos lados | nerv-web | To Do | A | Ver §T-021 | feature/T-020-landing-i18n |
+| T-020 | — | i18n de la landing: traducir a inglés y portugués (base español) con switcher de idioma | nerv-web | En revisión QA | S | Ver §T-020 | feature/T-020-landing-i18n (sobre main) |
+| T-021 | — | Unificar el ícono de la landing con el real de la app (3 barras, gradiente azul) en todos lados | nerv-web | En revisión QA | A | Ver §T-021 | feature/T-020-landing-i18n |
+| T-022 | — | Cambiar el accent de la landing a azul #458BF8 (alineado al ícono) + armonizar paleta compatible en toda la landing | nerv-orquestador | En revisión QA | A | Accent primario = #458BF8 en toda la landing (reemplaza el cian #22d3ee y sus rgba/tonos derivados); paleta de soporte armonizada a azul y cohesiva; verde (ok/subida) y ámbar/rojo (cuota) se mantienen (semánticos); ícono ya es azul, queda igual; build+lint limpios | feature/T-020-landing-i18n |
 
 ## §T-020 · i18n landing (ES/EN/PT)
 **Estado:** En progreso · **Tech Lead:** nerv-web · **Rama:** `feature/T-020-landing-i18n` (sobre main) · **Niv QA:** Strong · Pedido PO 2026-06-23.

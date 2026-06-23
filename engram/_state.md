@@ -1,7 +1,8 @@
 # STATE — NetGauge · actualizado: 2026-06-23
 
 **Marca final:** NetGauge (dos renames: trafficMe → NetLeak → NetGauge; NetLeak nunca se publicó).
-**Sprint:** 1 — Marketing (landing) + rebrand → **RELEASE v2.0.0 PUSHEADO**
+**Sprint:** 2 — Landing polish (i18n + ícono + accent) · (Sprint 1 cerró con RELEASE v2.0.0 pusheado)
+**Rama de trabajo actual:** feature/T-020-landing-i18n (sobre main) — T-020 i18n ES/EN/PT + switcher, T-021 ícono unificado (3 barras), T-022 accent azul #458bf8. Build+lint verdes, commiteado, pendiente validación visual + QA + merge a main.
 **Rama objetivo:** main (en `origin/main`, commit 2467d5c) · repo GitHub renombrado a **gabiMaglia/NetGauge** · remoto local actualizado.
 **Release:** tag **v2.0.0** pusheado → workflow `release.yml` corriendo (run 28050985263). Pendiente: confirmar que publique los 3 assets (NetGauge-Setup-x64.exe + 2 .dmg, sin firmar).
 **Mergeado a main (ff) y pusheado:** T-015 (landing v1) · T-016/T-019 (rename→NetGauge) · T-017 (migración historial) · T-018 (landing pixel-perfect) · release prep (version 2.0.0 + changelog).
