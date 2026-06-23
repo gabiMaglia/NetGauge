@@ -19,6 +19,37 @@
 | T-018 | — | Landing pixel-perfect contra `design_handoff_netLeak_panel/NetGauge Landing.dc.html` (reemplaza la interpretación previa de T-015) | nerv-orquestador (port directo) | En revisión QA | S | Reproducir el diseño 1:1 (acento #22d3ee, Plus Jakarta Sans + JetBrains Mono, mock de ventana, sparklines, reveal/contador/detección SO). URLs → NetGauge. Build limpio. | feature/T-018-landing-pixel-perfect (stack sobre T-017) |
 | T-019 | — | Segundo rename: NetLeak → **NetGauge** (toda la app), por cambio de marca del PO | nerv-orquestador | En revisión QA | S | 0 ocurrencias exactas de NetLeak/netleak en trackeados (se preserva `design_handoff_netLeak_panel`, carpeta real); legacy de migración sigue siendo trafficMe (NetLeak nunca se publicó); pytest+build verdes; URLs → gabiMaglia/NetGauge | feature/T-019-rename-netgauge (stack sobre T-018) |
 
+## Sprint 2 — Landing: i18n + ícono
+| ID | Ext (ADO/Jira) | Tarea | Asignado | Estado | Niv | Criterios de aceptación | Rama |
+|----|----------------|-------|----------|--------|-----|--------------------------|------|
+| T-020 | — | i18n de la landing: traducir a inglés y portugués (base español) con switcher de idioma | nerv-web | En progreso | S | Ver §T-020 | feature/T-020-landing-i18n (sobre main) |
+| T-021 | — | Unificar el ícono de la landing con el real de la app (3 barras, gradiente azul) en todos lados | nerv-web | To Do | A | Ver §T-021 | feature/T-020-landing-i18n |
+
+## §T-020 · i18n landing (ES/EN/PT)
+**Estado:** En progreso · **Tech Lead:** nerv-web · **Rama:** `feature/T-020-landing-i18n` (sobre main) · **Niv QA:** Strong · Pedido PO 2026-06-23.
+**Alcance:** la landing hoy está solo en español (`landing/src/landing.html` inyectado como innerHTML + runtime en `App.tsx`). Sumar **inglés y portugués (Brasil)**.
+**Criterios de aceptación:**
+1. **Todo** el texto visible traducible a ES/EN/PT: header/nav, hero (incl. H1 con el span "comiendo"), micro-line, badges de confianza, problema (antes/después), las 6 features (título+desc), cómo funciona (3 pasos + tray mock label), privacidad (incl. los 3 bullets y "en tu equipo / 0 servidores"), avanzado (3 cards), comparativa (filas + "Otros monitores" + valores), descarga (títulos, botones, link, acordeón honesto + mini-instrucciones Win/Mac), FAQ (6 Q+A), CTA final, footer. También los `data-os-label/data-os-sub` (labels de descarga por SO) y el mock de la ventana (pestañas Global/Por aplicación/Conexiones, Bajada/Subida/Total, "Ancho de banda · 2 min", límites diario/mensual).
+2. **Switcher de idioma** visible en el header (estilo coherente con el diseño: dark, acento #22d3ee, JetBrains Mono). Persistir elección en `localStorage`.
+3. **Auto-detección** inicial por `navigator.language` (es→ES, pt→PT, resto→EN o ES; definir default ES si es indeterminado), overridable por el switcher.
+4. Actualizar `<html lang>` y `document.title` por idioma. SEO: meta description traducida (al menos vía JS al cambiar idioma).
+5. **Pixel-perfect intacto:** el layout/estilos no cambian; solo el texto. Enfoque libre (recomendado: anotar nodos con `data-i18n`/`data-i18n-html` + diccionario, o templating de `landing.html`). Si se cambia de innerHTML a componentes, mantener la fidelidad 1:1 verificable.
+6. **Reglas de contenido (VERDAD) en los 3 idiomas:** la cuota AVISA, no corta/bloquea; privacidad exacta (historial local; VT/GeoIP opt-in y apagados; solo hash o IP, nunca archivos); "índice de confianza" = SOLO Windows (Authenticode). No inventar números/reseñas.
+7. Respetar `prefers-reduced-motion` y accesibilidad (switcher operable por teclado, `lang` correcto). Build + lint limpios.
+
+## §T-021 · Ícono unificado con la app
+**Estado:** To Do · **Tech Lead:** nerv-web · **Rama:** `feature/T-020-landing-i18n` · **Niv QA:** Advisory · Pedido PO 2026-06-23.
+**Contexto:** la landing usa hoy un mark de "línea/sparkline" (favicon `landing/public/favicon.svg` con polyline cian #22d3c5, y 3 logos inline en `landing.html` con `<path d="M3 15l4-5 4 3 5-7 3 4"/>`). El **ícono real de la app** (build/make_icon.py, make_icon_macos.py, make_app_qicon) es **3 barras verticales ascendentes con gradiente azul** `#3b82f6` (abajo) → `#60a5fa` (arriba) sobre fondo `#1e1e2e`.
+**SVG de referencia (geometría exacta, grilla 64):**
+```
+viewBox 0 0 64 64; <rect 64x64 rx=14 fill=#1e1e2e>; gradiente vertical #60a5fa(top)→#3b82f6(bottom);
+barras rx=2 fill=gradiente: (x12 y38 w10 h14) (x27 y24 w10 h28) (x42 y12 w10 h40)
+```
+**Criterios de aceptación:**
+1. `landing/public/favicon.svg` reemplazado por el mark de 3 barras (geometría de arriba).
+2. Los **3 logos inline** de `landing.html` (header, titlebar del mock de ventana, footer) usan el mismo mark de la app (no la línea). Mantener tamaños (34/24/30px aprox) y el glow/encuadre del diseño donde aplique.
+3. Coherencia visual: el ícono es el mismo en favicon, header, mock y footer (= ícono de la app). Build limpio.
+
 ## Veredictos QA
 | Tarea | Veredicto | Defectos (si rechazo) | Fecha |
 |-------|-----------|------------------------|-------|

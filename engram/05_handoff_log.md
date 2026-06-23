@@ -3,6 +3,12 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/NetGauge-handoffs-[fecha].md
 
+### 2026-06-23 nerv-orquestador→nerv-web T-020 + T-021
+- Entrega: dos mejoras de landing en `feature/T-020-landing-i18n` (sobre main, post-release v2.0.0). T-020 = i18n ES/EN/PT + switcher (Niv Strong); T-021 = unificar ícono con el de la app (3 barras gradiente azul; Niv Advisory). Specs completas y criterios: §T-020 y §T-021 en `engram/03_backlog.md`.
+- Verdades a respetar en los 3 idiomas (no inventar): cuota avisa NO bloquea; privacidad exacta; índice de confianza = solo Windows. Ícono real definido en build/make_icon.py (geometría en §T-021).
+- Restricciones: solo `landing/`; pixel-perfect intacto (solo cambia texto + ícono). Build+lint limpios antes de devolver. Hacer T-020 primero, luego T-021. Commits separados por ticket.
+- Pendiente: validación visual + QA. Devolver handoff estructurado.
+
 ### 2026-06-23 nerv-orquestador (rename 2) T-019
 - Hecho: segundo rename NetLeak → NetGauge (cambio de marca PO) sobre archivos trackeados (sed exacto por caso; 0 leftovers). Skill run-netleak→run-netgauge. Se preservó la carpeta real `design_handoff_netLeak_panel`. Legacy de migración sigue trafficMe (NetLeak nunca shippeó). URLs → gabiMaglia/NetGauge. Commit aparte para la carpeta de diseño + gitignore .DS_Store.
 - Verificado: pytest 56 verde, compileall OK, landing build OK, bundle con NetGauge / cero NetLeak.
