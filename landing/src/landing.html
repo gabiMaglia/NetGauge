@@ -10,13 +10,18 @@
         <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#e6f0fa">Net<span style="color:var(--acc,#22d3ee)">Gauge</span></span>
       </a>
       <nav data-desktop-nav style="display:flex;gap:30px;margin:0 auto;align-items:center">
-        <a href="#funciones" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Funciones</a>
-        <a href="#como-funciona" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Cómo funciona</a>
-        <a href="#privacidad" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Privacidad</a>
-        <a href="#faq" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">FAQ</a>
+        <a href="#funciones" data-i18n="nav.features" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Funciones</a>
+        <a href="#como-funciona" data-i18n="nav.how" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Cómo funciona</a>
+        <a href="#privacidad" data-i18n="nav.privacy" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">Privacidad</a>
+        <a href="#faq" data-i18n="nav.faq" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;transition:color .15s" style-hover="color:#e6f0fa">FAQ</a>
         <a href="https://github.com/gabiMaglia/NetGauge" target="_blank" rel="noopener" style="font-size:14.5px;font-weight:600;color:#9db1c9;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .15s" style-hover="color:#e6f0fa">GitHub <span style="font-size:12px;opacity:.7">↗</span></a>
       </nav>
-      <a href="#descargar" style="flex:none;margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--acc,#22d3ee);color:#04141b;font-weight:800;font-size:14.5px;text-decoration:none;padding:10px 18px;border-radius:11px;box-shadow:0 0 0 1px rgba(34,211,238,.3),0 10px 26px -10px rgba(34,211,238,.6);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(34,211,238,.5),0 16px 34px -10px rgba(34,211,238,.75)">Descargar gratis</a>
+      <div data-lang-switcher role="group" aria-label="Idioma / Language / Idioma" style="flex:none;margin-left:auto;display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.03);border:1px solid #1d2c45;border-radius:9px;padding:3px;font-family:'JetBrains Mono',monospace">
+        <button type="button" data-lang-btn="es" aria-pressed="false" style="border:none;background:transparent;color:#9db1c9;font-size:12px;font-weight:700;letter-spacing:.04em;padding:6px 9px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s">ES</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false" style="border:none;background:transparent;color:#9db1c9;font-size:12px;font-weight:700;letter-spacing:.04em;padding:6px 9px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s">EN</button>
+        <button type="button" data-lang-btn="pt" aria-pressed="false" style="border:none;background:transparent;color:#9db1c9;font-size:12px;font-weight:700;letter-spacing:.04em;padding:6px 9px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s">PT</button>
+      </div>
+      <a href="#descargar" data-i18n="nav.cta" style="flex:none;display:inline-flex;align-items:center;gap:8px;background:var(--acc,#22d3ee);color:#04141b;font-weight:800;font-size:14.5px;text-decoration:none;padding:10px 18px;border-radius:11px;box-shadow:0 0 0 1px rgba(34,211,238,.3),0 10px 26px -10px rgba(34,211,238,.6);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-1px);box-shadow:0 0 0 1px rgba(34,211,238,.5),0 16px 34px -10px rgba(34,211,238,.75)">Descargar gratis</a>
     </div>
   </header>
 
@@ -28,10 +33,10 @@
         <div data-reveal style="display:inline-flex;align-items:center;gap:10px;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.22);border-radius:999px;padding:7px 14px 7px 10px;margin-bottom:26px">
           <span style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:tmBlink 1.8s ease-in-out infinite"></span><span style="font-size:12.5px;font-weight:700;color:#34d399;font-family:'JetBrains Mono',monospace;letter-spacing:.04em">EN VIVO</span></span>
           <span style="width:1px;height:13px;background:#1d3350"></span>
-          <span style="font-size:12.5px;font-weight:600;color:#9db1c9">Monitor de red · Open source</span>
+          <span data-i18n="hero.badge" style="font-size:12.5px;font-weight:600;color:#9db1c9">Monitor de red · Open source</span>
         </div>
-        <h1 data-reveal data-reveal-delay="60" style="font-size:clamp(38px,5.6vw,66px);line-height:1.04;font-weight:800;letter-spacing:-.03em;margin:0 0 22px;color:#f3f9ff">Sabé qué app se está <span style="color:var(--acc,#22d3ee);position:relative;white-space:nowrap">comiendo</span> tu internet.</h1>
-        <p data-reveal data-reveal-delay="120" style="font-size:clamp(16px,1.5vw,19px);line-height:1.6;color:#9db1c9;margin:0 0 32px;max-width:560px">Monitor de consumo de red por aplicación, en tiempo real. Gratis, de código abierto y privado: <span style="color:#cdddee;font-weight:600">tus datos nunca salen de tu equipo</span>. Windows y Mac.</p>
+        <h1 data-reveal data-reveal-delay="60" data-i18n-html="hero.title" style="font-size:clamp(38px,5.6vw,66px);line-height:1.04;font-weight:800;letter-spacing:-.03em;margin:0 0 22px;color:#f3f9ff">Sabé qué app se está <span style="color:var(--acc,#22d3ee);position:relative;white-space:nowrap">comiendo</span> tu internet.</h1>
+        <p data-reveal data-reveal-delay="120" data-i18n-html="hero.subtitle" style="font-size:clamp(16px,1.5vw,19px);line-height:1.6;color:#9db1c9;margin:0 0 32px;max-width:560px">Monitor de consumo de red por aplicación, en tiempo real. Gratis, de código abierto y privado: <span style="color:#cdddee;font-weight:600">tus datos nunca salen de tu equipo</span>. Windows y Mac.</p>
         <div data-reveal data-reveal-delay="180" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:22px">
           <a data-os-primary href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:13px;background:var(--acc,#22d3ee);color:#04141b;font-weight:800;font-size:16px;text-decoration:none;padding:15px 24px;border-radius:13px;box-shadow:0 0 0 1px rgba(34,211,238,.35),0 16px 40px -12px rgba(34,211,238,.6);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-2px);box-shadow:0 0 0 1px rgba(34,211,238,.5),0 22px 50px -12px rgba(34,211,238,.8)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
@@ -39,11 +44,11 @@
           </a>
           <a href="https://github.com/gabiMaglia/NetGauge" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid #24344e;color:#e6f0fa;font-weight:700;font-size:15.5px;text-decoration:none;padding:15px 22px;border-radius:13px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:rgba(255,255,255,.06)">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.7c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
-            Ver en GitHub
+            <span data-i18n="hero.viewGithub">Ver en GitHub</span>
           </a>
         </div>
         <div data-reveal data-reveal-delay="240" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:600;color:#7e93ab;font-family:'JetBrains Mono',monospace">
-          <span>Gratis</span><span style="color:#2a3a52">·</span><span>Open source (MIT)</span><span style="color:#2a3a52">·</span><span>Sin telemetría</span><span style="color:#2a3a52">·</span><span>Windows + macOS</span>
+          <span data-i18n="hero.tag1">Gratis</span><span style="color:#2a3a52">·</span><span data-i18n="hero.tag2">Open source (MIT)</span><span style="color:#2a3a52">·</span><span data-i18n="hero.tag3">Sin telemetría</span><span style="color:#2a3a52">·</span><span data-i18n="hero.tag4">Windows + macOS</span>
         </div>
       </div>
 
@@ -67,30 +72,30 @@
           <div style="padding:16px">
             <!-- tabs -->
             <div style="display:flex;gap:18px;border-bottom:1px solid #121b30;margin-bottom:16px">
-              <span style="font-size:11.5px;font-weight:700;color:#22d3ee;padding-bottom:10px;border-bottom:2px solid #22d3ee;text-transform:uppercase;letter-spacing:.07em">● Global</span>
-              <span style="font-size:11.5px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Por aplicación</span>
-              <span style="font-size:11.5px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Conexiones</span>
+              <span data-i18n="mock.tabGlobal" style="font-size:11.5px;font-weight:700;color:#22d3ee;padding-bottom:10px;border-bottom:2px solid #22d3ee;text-transform:uppercase;letter-spacing:.07em">● Global</span>
+              <span data-i18n="mock.tabPerApp" style="font-size:11.5px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Por aplicación</span>
+              <span data-i18n="mock.tabConnections" style="font-size:11.5px;font-weight:600;color:#5b7290;padding-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Conexiones</span>
             </div>
             <!-- stat cards -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
               <div style="background:#0b1322;border:1px solid #16203a;border-radius:11px;padding:12px 13px">
-                <div style="font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▼ Bajada</div>
+                <div data-i18n="mock.download" style="font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▼ Bajada</div>
                 <div style="font-size:23px;font-weight:700;margin-top:6px;color:#38bdf8;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em"><span data-count="104.4" data-dec="1">104.4</span><span style="font-size:11px;color:#3f5573"> GB</span></div>
               </div>
               <div style="background:#0b1322;border:1px solid #16203a;border-radius:11px;padding:12px 13px">
-                <div style="font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▲ Subida</div>
+                <div data-i18n="mock.upload" style="font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.1em">▲ Subida</div>
                 <div style="font-size:23px;font-weight:700;margin-top:6px;color:#34d399;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em"><span data-count="38.2" data-dec="1">38.2</span><span style="font-size:11px;color:#3f5573"> GB</span></div>
               </div>
               <div style="background:linear-gradient(150deg,rgba(34,211,238,.13),rgba(34,211,238,.03));border:1px solid #1d4a5e;border-radius:11px;padding:12px 13px">
-                <div style="font-size:9.5px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.1em">Σ Total</div>
+                <div data-i18n="mock.total" style="font-size:9.5px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.1em">Σ Total</div>
                 <div style="font-size:23px;font-weight:700;margin-top:6px;color:#e6f7fb;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em"><span data-count="142.6" data-dec="1">142.6</span><span style="font-size:11px;color:#22d3ee"> GB</span></div>
               </div>
             </div>
             <!-- chart -->
             <div style="background:#080d18;border:1px solid #16203a;border-radius:11px;padding:13px 13px 5px;margin-bottom:14px;position:relative;overflow:hidden">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <span style="font-size:10px;font-weight:700;color:#7c93b0;text-transform:uppercase;letter-spacing:.1em">Ancho de banda · 2 min</span>
-                <span style="font-size:9.5px;font-weight:600;color:#22d3ee;font-family:'JetBrains Mono',monospace;border:1px solid #1d4a5e;border-radius:5px;padding:2px 6px">PICO 11.7 MB/s</span>
+                <span data-i18n="mock.bandwidth" style="font-size:10px;font-weight:700;color:#7c93b0;text-transform:uppercase;letter-spacing:.1em">Ancho de banda · 2 min</span>
+                <span data-i18n="mock.peak" style="font-size:9.5px;font-weight:600;color:#22d3ee;font-family:'JetBrains Mono',monospace;border:1px solid #1d4a5e;border-radius:5px;padding:2px 6px">PICO 11.7 MB/s</span>
               </div>
               <svg viewBox="0 0 560 150" width="100%" height="138" preserveAspectRatio="none">
                 <defs>
@@ -110,11 +115,11 @@
             <!-- quota bars -->
             <div style="display:flex;flex-direction:column;gap:11px">
               <div>
-                <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em"><span style="color:#7c93b0">Límite diario · hoy</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">6.8 / 10 GB · 68%</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em"><span data-i18n="mock.dailyLimit" style="color:#7c93b0">Límite diario · hoy</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">6.8 / 10 GB · 68%</span></div>
                 <div style="height:6px;border-radius:4px;background:#101a2e;overflow:hidden"><div style="width:68%;height:100%;border-radius:4px;background:linear-gradient(90deg,#0891b2,#22d3ee);box-shadow:0 0 10px rgba(34,211,238,.6)"></div></div>
               </div>
               <div>
-                <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em"><span style="color:#7c93b0">Límite mensual · ciclo</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">142.6 / 200 GB · 71%</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em"><span data-i18n="mock.monthlyLimit" style="color:#7c93b0">Límite mensual · ciclo</span><span style="color:#dbe5f0;font-family:'JetBrains Mono',monospace">142.6 / 200 GB · 71%</span></div>
                 <div style="height:6px;border-radius:4px;background:#101a2e;overflow:hidden"><div style="width:71%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d97706,#fbbf24);box-shadow:0 0 10px rgba(251,191,36,.5)"></div></div>
               </div>
             </div>
@@ -137,37 +142,37 @@
   <!-- ===================== TRUST BAR ===================== -->
   <section style="border-top:1px solid #101827;border-bottom:1px solid #101827;background:#080d18">
     <div data-reveal style="max-width:1200px;margin:0 auto;padding:22px 24px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
-      <span style="font-size:12px;font-weight:700;color:#5b7290;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;margin-right:6px">VERIFICABLE:</span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Licencia MIT</span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#9db1c9"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.7c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>Código en GitHub</span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde">⊞ Windows 10/11</span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"> macOS Intel + Apple Silicon</span>
-      <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>100% local</span>
+      <span data-i18n="trust.label" style="font-size:12px;font-weight:700;color:#5b7290;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;margin-right:6px">VERIFICABLE:</span>
+      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span data-i18n="trust.mit">Licencia MIT</span></span>
+      <span style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#9db1c9"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.7c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg><span data-i18n="trust.github">Código en GitHub</span></span>
+      <span data-i18n="trust.windows" style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde">⊞ Windows 10/11</span>
+      <span data-i18n="trust.macos" style="display:inline-flex;align-items:center;gap:8px;background:#0c1322;border:1px solid #18243c;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;color:#bcccde"> macOS Intel + Apple Silicon</span>
+      <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span data-i18n="trust.local">100% local</span></span>
     </div>
   </section>
 
   <!-- ===================== PROBLEMA ===================== -->
   <section style="max-width:1200px;margin:0 auto;padding:clamp(64px,9vw,118px) 24px">
     <div data-reveal style="max-width:780px;margin:0 auto 48px;text-align:center">
-      <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">El problema</div>
-      <h2 style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 18px;color:#f3f9ff">El medidor de tu sistema te da un total.<br><span style="color:#5b7290">No el culpable.</span></h2>
-      <p style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">NetGauge te muestra el <span style="color:#cdddee;font-weight:600">ranking de apps</span> que consumen — ahora y en tu historial.</p>
+      <div data-i18n="problem.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">El problema</div>
+      <h2 data-i18n-html="problem.title" style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 18px;color:#f3f9ff">El medidor de tu sistema te da un total.<br><span style="color:#5b7290">No el culpable.</span></h2>
+      <p data-i18n-html="problem.body" style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">NetGauge te muestra el <span style="color:#cdddee;font-weight:600">ranking de apps</span> que consumen — ahora y en tu historial.</p>
     </div>
     <div data-reveal data-reveal-delay="100" style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch;max-width:920px;margin:0 auto">
       <!-- before -->
       <div style="flex:1 1 300px;border-radius:18px;background:#0a0f1a;border:1px solid #14202f;padding:26px;position:relative">
-        <div style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Lo que ves hoy</div>
+        <div data-i18n="problem.beforeLabel" style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Lo que ves hoy</div>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0 22px">
-          <div style="font-size:13px;color:#62788f;margin-bottom:6px;font-weight:600">Datos usados este mes</div>
+          <div data-i18n="problem.beforeCaption" style="font-size:13px;color:#62788f;margin-bottom:6px;font-weight:600">Datos usados este mes</div>
           <div style="font-size:46px;font-weight:800;color:#46586e;letter-spacing:-.03em;font-family:'JetBrains Mono',monospace;filter:blur(.3px)">142.6 GB</div>
-          <div style="font-size:13px;color:#3f5168;margin-top:8px">¿De dónde salió? Misterio.</div>
+          <div data-i18n="problem.beforeMystery" style="font-size:13px;color:#3f5168;margin-top:8px">¿De dónde salió? Misterio.</div>
         </div>
       </div>
       <!-- arrow -->
       <div style="flex:none;display:flex;align-items:center;justify-content:center;padding:0 2px"><div style="width:42px;height:42px;border-radius:50%;background:rgba(34,211,238,.09);border:1px solid rgba(34,211,238,.25);display:flex;align-items:center;justify-content:center;color:#22d3ee"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
       <!-- after -->
       <div style="flex:1 1 300px;border-radius:18px;background:linear-gradient(180deg,#0c1626,#0a1120);border:1px solid #1d3350;padding:26px;box-shadow:0 0 0 1px rgba(34,211,238,.05),0 24px 60px -34px rgba(34,211,238,.35)">
-        <div style="font-size:12px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Lo que ves con NetGauge</div>
+        <div data-i18n="problem.afterLabel" style="font-size:12px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Lo que ves con NetGauge</div>
         <div style="display:flex;flex-direction:column;gap:11px">
           <div style="display:flex;align-items:center;gap:11px">
             <div style="width:30px;height:30px;border-radius:8px;background:#2a1a10;color:#ea7c3c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">C</div>
@@ -197,41 +202,41 @@
   <!-- ===================== FUNCIONES ===================== -->
   <section id="funciones" style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,104px) 24px">
     <div data-reveal style="text-align:center;max-width:720px;margin:0 auto 52px">
-      <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Funciones</div>
-      <h2 style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 16px;color:#f3f9ff">Todo lo que tu red estaba escondiendo</h2>
-      <p style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Medición real por proceso. Nada de estimaciones.</p>
+      <div data-i18n="features.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Funciones</div>
+      <h2 data-i18n="features.title" style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 16px;color:#f3f9ff">Todo lo que tu red estaba escondiendo</h2>
+      <p data-i18n="features.subtitle" style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Medición real por proceso. Nada de estimaciones.</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
       <!-- card -->
       <div data-reveal style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Consumo por aplicación</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Mirá exactamente cuánto gastó cada programa. Ranking claro, de mayor a menor.</p>
+        <h3 data-i18n="features.f1.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Consumo por aplicación</h3>
+        <p data-i18n="features.f1.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Mirá exactamente cuánto gastó cada programa. Ranking claro, de mayor a menor.</p>
       </div>
       <div data-reveal data-reveal-delay="60" style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Velocidad en tiempo real</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Subida y bajada al instante (<span style="color:#38bdf8;font-weight:700">↓</span>/<span style="color:#34d399;font-weight:700">↑</span>) con un gráfico de los últimos 2 minutos.</p>
+        <h3 data-i18n="features.f2.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Velocidad en tiempo real</h3>
+        <p data-i18n-html="features.f2.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Subida y bajada al instante (<span style="color:#38bdf8;font-weight:700">↓</span>/<span style="color:#34d399;font-weight:700">↑</span>) con un gráfico de los últimos 2 minutos.</p>
       </div>
       <div data-reveal data-reveal-delay="120" style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.22);color:#fbbf24;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Cuotas con alertas</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Poné un tope diario o mensual. Te <span style="color:#cdddee;font-weight:600">avisa al 80% y al 100%</span> — nunca corta la conexión.</p>
+        <h3 data-i18n="features.f3.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Cuotas con alertas</h3>
+        <p data-i18n-html="features.f3.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Poné un tope diario o mensual. Te <span style="color:#cdddee;font-weight:600">avisa al 80% y al 100%</span> — nunca corta la conexión.</p>
       </div>
       <div data-reveal style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Historial completo</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Sesión, día, semana o mes. Todo guardado <span style="color:#cdddee;font-weight:600">local</span> en tu equipo.</p>
+        <h3 data-i18n="features.f4.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Historial completo</h3>
+        <p data-i18n-html="features.f4.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Sesión, día, semana o mes. Todo guardado <span style="color:#cdddee;font-weight:600">local</span> en tu equipo.</p>
       </div>
       <div data-reveal data-reveal-delay="60" style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.22);color:#34d399;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Privacidad real</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Sin telemetría. VirusTotal y GeoIP son opcionales y vienen <span style="color:#cdddee;font-weight:600">apagados</span>.</p>
+        <h3 data-i18n="features.f5.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Privacidad real</h3>
+        <p data-i18n-html="features.f5.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Sin telemetría. VirusTotal y GeoIP son opcionales y vienen <span style="color:#cdddee;font-weight:600">apagados</span>.</p>
       </div>
       <div data-reveal data-reveal-delay="120" style="background:linear-gradient(180deg,#0c1424,#0a1020);border:1px solid #18243c;border-radius:18px;padding:26px;transition:border-color .25s,transform .25s" style-hover="border-color:#22384f;transform:translateY(-3px)">
         <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;margin-bottom:18px"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg></div>
-        <h3 style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Informes en un clic</h3>
-        <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Exportá a <span style="color:#cdddee;font-weight:600">CSV, Excel o PDF</span> cuando lo necesites.</p>
+        <h3 data-i18n="features.f6.title" style="font-size:18.5px;font-weight:700;color:#eaf2fb;letter-spacing:-.01em;margin:0 0 9px">Informes en un clic</h3>
+        <p data-i18n-html="features.f6.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Exportá a <span style="color:#cdddee;font-weight:600">CSV, Excel o PDF</span> cuando lo necesites.</p>
       </div>
     </div>
   </section>
@@ -240,19 +245,19 @@
   <section id="como-funciona" style="border-top:1px solid #101827;background:linear-gradient(180deg,#080d18,#070b14)">
     <div style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,104px) 24px">
       <div data-reveal style="text-align:center;max-width:720px;margin:0 auto 56px">
-        <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Cómo funciona</div>
-        <h2 style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Listo en tres pasos</h2>
+        <div data-i18n="how.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Cómo funciona</div>
+        <h2 data-i18n="how.title" style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Listo en tres pasos</h2>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
         <div data-reveal style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:30px 26px">
           <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#22d3ee;border:1px solid #1d4a5e;border-radius:8px;padding:5px 9px">01</span><div style="height:1px;flex:1;background:linear-gradient(90deg,#1d4a5e,transparent)"></div></div>
-          <h3 style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Descargá e instalá</h3>
-          <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Bajá el instalador para Windows o Mac. Liviano y sin vueltas.</p>
+          <h3 data-i18n="how.s1.title" style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Descargá e instalá</h3>
+          <p data-i18n="how.s1.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Bajá el instalador para Windows o Mac. Liviano y sin vueltas.</p>
         </div>
         <div data-reveal data-reveal-delay="80" style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:30px 26px">
           <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#22d3ee;border:1px solid #1d4a5e;border-radius:8px;padding:5px 9px">02</span><div style="height:1px;flex:1;background:linear-gradient(90deg,#1d4a5e,transparent)"></div></div>
-          <h3 style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Vive en tu bandeja</h3>
-          <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0 0 18px">Queda en la bandeja del sistema con un mini-gráfico. Siempre a mano, nunca molesto.</p>
+          <h3 data-i18n="how.s2.title" style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Vive en tu bandeja</h3>
+          <p data-i18n="how.s2.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0 0 18px">Queda en la bandeja del sistema con un mini-gráfico. Siempre a mano, nunca molesto.</p>
           <!-- tray mock -->
           <div style="display:flex;align-items:center;gap:9px;background:#0a0f1a;border:1px solid #14202f;border-radius:11px;padding:9px 11px;width:max-content;max-width:100%">
             <div style="display:flex;align-items:center;gap:6px;border-right:1px solid #14202f;padding-right:9px">
@@ -265,8 +270,8 @@
         </div>
         <div data-reveal data-reveal-delay="160" style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:30px 26px">
           <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#22d3ee;border:1px solid #1d4a5e;border-radius:8px;padding:5px 9px">03</span><div style="height:1px;flex:1;background:linear-gradient(90deg,#1d4a5e,transparent)"></div></div>
-          <h3 style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Mirá, controlá y exportá</h3>
-          <p style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Abrí el panel para ver el detalle, poné cuotas y exportá informes cuando quieras.</p>
+          <h3 data-i18n="how.s3.title" style="font-size:19px;font-weight:700;color:#eaf2fb;margin:0 0 9px;letter-spacing:-.01em">Mirá, controlá y exportá</h3>
+          <p data-i18n="how.s3.body" style="font-size:14.5px;line-height:1.55;color:#9db1c9;margin:0">Abrí el panel para ver el detalle, poné cuotas y exportá informes cuando quieras.</p>
         </div>
       </div>
     </div>
@@ -278,21 +283,21 @@
       <div style="position:absolute;top:-40px;right:-30px;width:280px;height:280px;border-radius:50%;background:radial-gradient(closest-side,rgba(34,211,238,.1),transparent 72%);pointer-events:none"></div>
       <div style="display:flex;gap:clamp(28px,4vw,56px);flex-wrap:wrap;align-items:center;position:relative">
         <div style="flex:1 1 380px;min-width:0">
-          <div style="display:inline-flex;align-items:center;gap:9px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.28);border-radius:999px;padding:7px 14px;margin-bottom:22px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span style="font-size:12.5px;font-weight:700;color:#34d399;font-family:'JetBrains Mono',monospace">PRIVACIDAD</span></div>
-          <h2 style="font-size:clamp(28px,4vw,44px);line-height:1.08;font-weight:800;letter-spacing:-.025em;margin:0 0 18px;color:#f3f9ff">Tus datos son tuyos.<br>En serio.</h2>
-          <p style="font-size:clamp(15px,1.5vw,17.5px);line-height:1.62;color:#9db1c9;margin:0 0 26px;max-width:540px">Todo el historial vive <span style="color:#cdddee;font-weight:600">local</span> en tu equipo. NetGauge no manda nada a ningún servidor. Las únicas funciones que usan internet son <span style="color:#cdddee;font-weight:600">opcionales y vienen apagadas</span>.</p>
+          <div style="display:inline-flex;align-items:center;gap:9px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.28);border-radius:999px;padding:7px 14px;margin-bottom:22px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span data-i18n="privacy.badge" style="font-size:12.5px;font-weight:700;color:#34d399;font-family:'JetBrains Mono',monospace">PRIVACIDAD</span></div>
+          <h2 data-i18n-html="privacy.title" style="font-size:clamp(28px,4vw,44px);line-height:1.08;font-weight:800;letter-spacing:-.025em;margin:0 0 18px;color:#f3f9ff">Tus datos son tuyos.<br>En serio.</h2>
+          <p data-i18n-html="privacy.body" style="font-size:clamp(15px,1.5vw,17.5px);line-height:1.62;color:#9db1c9;margin:0 0 26px;max-width:540px">Todo el historial vive <span style="color:#cdddee;font-weight:600">local</span> en tu equipo. NetGauge no manda nada a ningún servidor. Las únicas funciones que usan internet son <span style="color:#cdddee;font-weight:600">opcionales y vienen apagadas</span>.</p>
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span style="font-size:14.5px;line-height:1.5;color:#bcccde"><b style="color:#eaf2fb;font-weight:700">Historial 100% local.</b> Nada sube a la nube.</span></div>
-            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span style="font-size:14.5px;line-height:1.5;color:#bcccde"><b style="color:#eaf2fb;font-weight:700">VirusTotal y GeoIP apagados.</b> Vos decidís si los prendés.</span></div>
-            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span style="font-size:14.5px;line-height:1.5;color:#bcccde">Y si los prendés, solo viaja <b style="color:#eaf2fb;font-weight:700">un hash o una IP</b> — nunca tus archivos.</span></div>
+            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span data-i18n-html="privacy.bullet1" style="font-size:14.5px;line-height:1.5;color:#bcccde"><b style="color:#eaf2fb;font-weight:700">Historial 100% local.</b> Nada sube a la nube.</span></div>
+            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span data-i18n-html="privacy.bullet2" style="font-size:14.5px;line-height:1.5;color:#bcccde"><b style="color:#eaf2fb;font-weight:700">VirusTotal y GeoIP apagados.</b> Vos decidís si los prendés.</span></div>
+            <div style="display:flex;gap:13px;align-items:flex-start"><span style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:6px;background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;color:#34d399"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></span><span data-i18n-html="privacy.bullet3" style="font-size:14.5px;line-height:1.5;color:#bcccde">Y si los prendés, solo viaja <b style="color:#eaf2fb;font-weight:700">un hash o una IP</b> — nunca tus archivos.</span></div>
           </div>
         </div>
         <div style="flex:1 1 240px;min-width:0;display:flex;justify-content:center">
           <div style="text-align:center;background:#091018;border:1px solid #173042;border-radius:20px;padding:34px 38px;box-shadow:0 30px 70px -34px rgba(0,0,0,.8)">
             <div style="font-size:clamp(56px,9vw,82px);font-weight:800;color:#34d399;letter-spacing:-.04em;line-height:1;font-family:'JetBrains Mono',monospace;text-shadow:0 0 40px rgba(52,211,153,.4)">100%</div>
-            <div style="font-size:14px;font-weight:700;color:#9db1c9;margin-top:8px;letter-spacing:.02em">en tu equipo</div>
+            <div data-i18n="privacy.card.sub" style="font-size:14px;font-weight:700;color:#9db1c9;margin-top:8px;letter-spacing:.02em">en tu equipo</div>
             <div style="height:1px;background:#173042;margin:18px 0"></div>
-            <div style="font-size:12.5px;color:#62788f;font-family:'JetBrains Mono',monospace">0 servidores · 0 cuentas</div>
+            <div data-i18n="privacy.card.detail" style="font-size:12.5px;color:#62788f;font-family:'JetBrains Mono',monospace">0 servidores · 0 cuentas</div>
           </div>
         </div>
       </div>
@@ -302,17 +307,17 @@
   <!-- ===================== AVANZADO / SEGURIDAD ===================== -->
   <section style="max-width:1200px;margin:0 auto;padding:clamp(40px,5vw,64px) 24px clamp(56px,8vw,100px)">
     <div data-reveal style="text-align:center;max-width:720px;margin:0 auto 52px">
-      <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Para power users</div>
-      <h2 style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 16px;color:#f3f9ff">Mirá debajo del capó</h2>
-      <p style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Cada conexión, identificada. Cada anomalía, avisada.</p>
+      <div data-i18n="advanced.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Para power users</div>
+      <h2 data-i18n="advanced.title" style="font-size:clamp(28px,4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0 0 16px;color:#f3f9ff">Mirá debajo del capó</h2>
+      <p data-i18n="advanced.subtitle" style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Cada conexión, identificada. Cada anomalía, avisada.</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start">
       <!-- conexiones with mock -->
       <div data-reveal style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:24px;grid-column:span 1">
-        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div><h3 style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Conexiones activas por app</h3></div>
-        <p style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">IP, puerto, país y proveedor de cada conexión. <span style="color:#7e93ab">GeoIP opcional.</span></p>
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div><h3 data-i18n="advanced.connTitle" style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Conexiones activas por app</h3></div>
+        <p data-i18n-html="advanced.connBody" style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">IP, puerto, país y proveedor de cada conexión. <span style="color:#7e93ab">GeoIP opcional.</span></p>
         <div style="background:#080d18;border:1px solid #14202f;border-radius:11px;overflow:hidden;font-family:'JetBrains Mono',monospace">
-          <div style="display:grid;grid-template-columns:1.4fr 1fr 0.9fr;gap:8px;padding:8px 12px;border-bottom:1px solid #14202f;font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.06em"><span>App · IP</span><span>Puerto</span><span>País</span></div>
+          <div data-i18n-html="advanced.connHeaders" style="display:grid;grid-template-columns:1.4fr 1fr 0.9fr;gap:8px;padding:8px 12px;border-bottom:1px solid #14202f;font-size:9.5px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.06em"><span>App · IP</span><span>Puerto</span><span>País</span></div>
           <div style="display:grid;grid-template-columns:1.4fr 1fr 0.9fr;gap:8px;padding:9px 12px;font-size:11px;color:#bcccde;border-bottom:1px solid #0e1726"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Chrome · 142.250…</span><span style="color:#7e93ab">443</span><span style="color:#34d399">US</span></div>
           <div style="display:grid;grid-template-columns:1.4fr 1fr 0.9fr;gap:8px;padding:9px 12px;font-size:11px;color:#bcccde;border-bottom:1px solid #0e1726"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Steam · 104.94…</span><span style="color:#7e93ab">27015</span><span style="color:#34d399">DE</span></div>
           <div style="display:grid;grid-template-columns:1.4fr 1fr 0.9fr;gap:8px;padding:9px 12px;font-size:11px;color:#bcccde"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Discord · 162.159…</span><span style="color:#7e93ab">443</span><span style="color:#34d399">US</span></div>
@@ -320,20 +325,20 @@
       </div>
       <!-- trust index -->
       <div data-reveal data-reveal-delay="70" style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:24px">
-        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div><h3 style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Índice de confianza</h3></div>
-        <p style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">Verifica la firma Authenticode de cada ejecutable. <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#7cc3f5;font-family:'JetBrains Mono',monospace;vertical-align:middle">⊞ Solo Windows</span></p>
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#22d3ee;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div><h3 data-i18n="advanced.trustTitle" style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Índice de confianza</h3></div>
+        <p data-i18n-html="advanced.trustBody" style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">Verifica la firma Authenticode de cada ejecutable. <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#7cc3f5;font-family:'JetBrains Mono',monospace;vertical-align:middle">⊞ Solo Windows</span></p>
         <div style="display:flex;flex-direction:column;gap:8px;font-family:'JetBrains Mono',monospace">
-          <div style="display:flex;align-items:center;justify-content:space-between;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:9px 12px"><span style="font-size:12px;color:#bcccde">chrome.exe</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#34d399"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Firmado</span></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:9px 12px"><span style="font-size:12px;color:#bcccde">unknown_app.exe</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fbbf24">⚠ Sin firma</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:9px 12px"><span style="font-size:12px;color:#bcccde">chrome.exe</span><span data-i18n-html="advanced.signed" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#34d399"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Firmado</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:9px 12px"><span style="font-size:12px;color:#bcccde">unknown_app.exe</span><span data-i18n="advanced.unsigned" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fbbf24">⚠ Sin firma</span></div>
         </div>
       </div>
       <!-- anomalies -->
       <div data-reveal data-reveal-delay="140" style="background:#0b1322;border:1px solid #18243c;border-radius:18px;padding:24px">
-        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.22);color:#fbbf24;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><h3 style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Alertas de anomalías</h3></div>
-        <p style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">Te avisa ante movimientos raros antes de que se hagan un problema.</p>
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:11px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.22);color:#fbbf24;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><h3 data-i18n="advanced.anomalyTitle" style="font-size:17px;font-weight:700;color:#eaf2fb;margin:0;letter-spacing:-.01em">Alertas de anomalías</h3></div>
+        <p data-i18n="advanced.anomalyBody" style="font-size:14px;line-height:1.55;color:#9db1c9;margin:0 0 16px">Te avisa ante movimientos raros antes de que se hagan un problema.</p>
         <div style="display:flex;flex-direction:column;gap:9px">
-          <div style="display:flex;gap:10px;align-items:center;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:10px 12px"><span style="color:#fbbf24;font-size:14px">⚡</span><span style="font-size:12.5px;color:#bcccde;line-height:1.4">Pico <b style="color:#fbbf24">≥3×</b> el promedio de una app</span></div>
-          <div style="display:flex;gap:10px;align-items:center;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:10px 12px"><span style="color:#fbbf24;font-size:14px">◎</span><span style="font-size:12.5px;color:#bcccde;line-height:1.4">App <b style="color:#fbbf24">nueva</b> usando la red</span></div>
+          <div style="display:flex;gap:10px;align-items:center;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:10px 12px"><span style="color:#fbbf24;font-size:14px">⚡</span><span data-i18n-html="advanced.anomaly1" style="font-size:12.5px;color:#bcccde;line-height:1.4">Pico <b style="color:#fbbf24">≥3×</b> el promedio de una app</span></div>
+          <div style="display:flex;gap:10px;align-items:center;background:#080d18;border:1px solid #14202f;border-radius:9px;padding:10px 12px"><span style="color:#fbbf24;font-size:14px">◎</span><span data-i18n-html="advanced.anomaly2" style="font-size:12.5px;color:#bcccde;line-height:1.4">App <b style="color:#fbbf24">nueva</b> usando la red</span></div>
         </div>
       </div>
     </div>
@@ -343,20 +348,20 @@
   <section style="border-top:1px solid #101827;background:#080d18">
     <div style="max-width:920px;margin:0 auto;padding:clamp(56px,8vw,100px) 24px">
       <div data-reveal style="text-align:center;max-width:680px;margin:0 auto 44px">
-        <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Comparativa</div>
-        <h2 style="font-size:clamp(26px,4vw,42px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Por qué NetGauge</h2>
+        <div data-i18n="compare.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Comparativa</div>
+        <h2 data-i18n="compare.title" style="font-size:clamp(26px,4vw,42px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Por qué NetGauge</h2>
       </div>
       <div data-reveal data-reveal-delay="80" style="border:1px solid #18243c;border-radius:18px;overflow:hidden;background:#0b1322">
         <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;background:#0a0f1a;border-bottom:1px solid #18243c">
           <div style="padding:16px 20px;font-size:13px;font-weight:700;color:#7e93ab"></div>
           <div style="padding:16px 14px;text-align:center;font-size:14px;font-weight:800;color:#22d3ee;border-left:1px solid #18243c;background:rgba(34,211,238,.05)">NetGauge</div>
-          <div style="padding:16px 14px;text-align:center;font-size:13.5px;font-weight:700;color:#7e93ab;border-left:1px solid #18243c">Otros monitores</div>
+          <div data-i18n="compare.others" style="padding:16px 14px;text-align:center;font-size:13.5px;font-weight:700;color:#7e93ab;border-left:1px solid #18243c">Otros monitores</div>
         </div>
-        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Precio</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Gratis</span></div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Pago o freemium</div></div>
-        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Código abierto</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Sí · MIT</span></div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Casi nunca</div></div>
-        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Telemetría</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Cero</span></div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">A veces</div></div>
-        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Windows + macOS</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Ambos</span></div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Según el caso</div></div>
-        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr"><div style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Desglose por aplicación</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Sí</span></div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Limitado</div></div>
+        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div data-i18n="compare.r1.label" style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Precio</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span data-i18n-html="compare.r1.us" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Gratis</span></div><div data-i18n="compare.r1.them" style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Pago o freemium</div></div>
+        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div data-i18n="compare.r2.label" style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Código abierto</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span data-i18n-html="compare.r2.us" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Sí · MIT</span></div><div data-i18n="compare.r2.them" style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Casi nunca</div></div>
+        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div data-i18n="compare.r3.label" style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Telemetría</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span data-i18n-html="compare.r3.us" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Cero</span></div><div data-i18n="compare.r3.them" style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">A veces</div></div>
+        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid #121c30"><div data-i18n="compare.r4.label" style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Windows + macOS</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span data-i18n-html="compare.r4.us" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Ambos</span></div><div data-i18n="compare.r4.them" style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Según el caso</div></div>
+        <div data-cmp style="display:grid;grid-template-columns:1.4fr 1fr 1fr"><div data-i18n="compare.r5.label" style="padding:15px 20px;font-size:14px;font-weight:600;color:#bcccde">Desglose por aplicación</div><div style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;background:rgba(34,211,238,.03)"><span data-i18n-html="compare.r5.us" style="display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#34d399"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>Sí</span></div><div data-i18n="compare.r5.them" style="padding:15px 14px;text-align:center;border-left:1px solid #121c30;font-size:13px;color:#62788f">Limitado</div></div>
       </div>
     </div>
   </section>
@@ -364,9 +369,9 @@
   <!-- ===================== DESCARGA ===================== -->
   <section id="descargar" style="max-width:1200px;margin:0 auto;padding:clamp(64px,9vw,118px) 24px">
     <div data-reveal style="text-align:center;max-width:760px;margin:0 auto 44px">
-      <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Descargar</div>
-      <h2 style="font-size:clamp(30px,4.4vw,52px);line-height:1.06;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;color:#f3f9ff">Descargá NetGauge — gratis.</h2>
-      <p style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Sin cuentas, sin pagos. Elegí tu sistema y listo.</p>
+      <div data-i18n="download.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Descargar</div>
+      <h2 data-i18n="download.title" style="font-size:clamp(30px,4.4vw,52px);line-height:1.06;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;color:#f3f9ff">Descargá NetGauge — gratis.</h2>
+      <p data-i18n="download.subtitle" style="font-size:clamp(15px,1.5vw,18px);line-height:1.6;color:#9db1c9;margin:0">Sin cuentas, sin pagos. Elegí tu sistema y listo.</p>
     </div>
     <!-- auto OS primary -->
     <div data-reveal data-reveal-delay="80" style="display:flex;justify-content:center;margin-bottom:14px">
@@ -377,24 +382,24 @@
     </div>
     <!-- explicit buttons -->
     <div data-reveal data-reveal-delay="140" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:18px">
-      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><span style="font-size:16px">⊞</span> Windows 10/11 <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">(x64)</span></a>
-      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c0 1.3-.5 2.5-1.3 3.4-.9 1-2.3 1.7-3.5 1.6-.1-1.3.5-2.6 1.3-3.4C13.3 1.6 14.8 1 16 1zM20 17c-.6 1.5-1 2.1-1.8 3.4-1.2 1.8-2.8 4-4.8 4-1.8 0-2.2-1.1-4.6-1.1S5.6 24.5 3.9 24.5c-2 0-3.5-2-4.7-3.8C-2 17.6-2.3 12.9-.6 10.4 .6 8.6 2.6 7.5 4.5 7.5c1.9 0 3.1 1.1 4.6 1.1 1.5 0 2.4-1.1 4.6-1.1 1.7 0 3.5.9 4.8 2.5-4.2 2.3-3.5 8.3 2 6.99z"/></svg> macOS <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">Apple Silicon</span></a>
-      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c0 1.3-.5 2.5-1.3 3.4-.9 1-2.3 1.7-3.5 1.6-.1-1.3.5-2.6 1.3-3.4C13.3 1.6 14.8 1 16 1zM20 17c-.6 1.5-1 2.1-1.8 3.4-1.2 1.8-2.8 4-4.8 4-1.8 0-2.2-1.1-4.6-1.1S5.6 24.5 3.9 24.5c-2 0-3.5-2-4.7-3.8C-2 17.6-2.3 12.9-.6 10.4 .6 8.6 2.6 7.5 4.5 7.5c1.9 0 3.1 1.1 4.6 1.1 1.5 0 2.4-1.1 4.6-1.1 1.7 0 3.5.9 4.8 2.5-4.2 2.3-3.5 8.3 2 6.99z"/></svg> macOS <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">Intel</span></a>
+      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><span style="font-size:16px">⊞</span> <span data-i18n-html="download.win">Windows 10/11 <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">(x64)</span></span></a>
+      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c0 1.3-.5 2.5-1.3 3.4-.9 1-2.3 1.7-3.5 1.6-.1-1.3.5-2.6 1.3-3.4C13.3 1.6 14.8 1 16 1zM20 17c-.6 1.5-1 2.1-1.8 3.4-1.2 1.8-2.8 4-4.8 4-1.8 0-2.2-1.1-4.6-1.1S5.6 24.5 3.9 24.5c-2 0-3.5-2-4.7-3.8C-2 17.6-2.3 12.9-.6 10.4 .6 8.6 2.6 7.5 4.5 7.5c1.9 0 3.1 1.1 4.6 1.1 1.5 0 2.4-1.1 4.6-1.1 1.7 0 3.5.9 4.8 2.5-4.2 2.3-3.5 8.3 2 6.99z"/></svg> <span data-i18n-html="download.macArm">macOS <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">Apple Silicon</span></span></a>
+      <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;background:#0c1322;border:1px solid #22324e;color:#e6f0fa;font-weight:700;font-size:14px;text-decoration:none;padding:13px 18px;border-radius:11px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:#0e1830"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c0 1.3-.5 2.5-1.3 3.4-.9 1-2.3 1.7-3.5 1.6-.1-1.3.5-2.6 1.3-3.4C13.3 1.6 14.8 1 16 1zM20 17c-.6 1.5-1 2.1-1.8 3.4-1.2 1.8-2.8 4-4.8 4-1.8 0-2.2-1.1-4.6-1.1S5.6 24.5 3.9 24.5c-2 0-3.5-2-4.7-3.8C-2 17.6-2.3 12.9-.6 10.4 .6 8.6 2.6 7.5 4.5 7.5c1.9 0 3.1 1.1 4.6 1.1 1.5 0 2.4-1.1 4.6-1.1 1.7 0 3.5.9 4.8 2.5-4.2 2.3-3.5 8.3 2 6.99z"/></svg> <span data-i18n-html="download.macIntel">macOS <span style="color:#62788f;font-family:'JetBrains Mono',monospace;font-size:12px">Intel</span></span></a>
     </div>
-    <div data-reveal data-reveal-delay="180" style="text-align:center;margin-bottom:30px"><a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="font-size:13.5px;font-weight:600;color:#7e93ab;text-decoration:none;border-bottom:1px solid #2a3a52;padding-bottom:1px" style-hover="color:#22d3ee;border-color:#22d3ee">Todas las versiones en GitHub Releases ↗</a></div>
+    <div data-reveal data-reveal-delay="180" style="text-align:center;margin-bottom:30px"><a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" data-i18n="download.allReleases" style="font-size:13.5px;font-weight:600;color:#7e93ab;text-decoration:none;border-bottom:1px solid #2a3a52;padding-bottom:1px" style-hover="color:#22d3ee;border-color:#22d3ee">Todas las versiones en GitHub Releases ↗</a></div>
     <!-- honest note -->
     <div data-reveal data-reveal-delay="220" style="max-width:680px;margin:0 auto">
       <details data-acc style="background:#0a0f1a;border:1px solid #1a2942;border-radius:14px;overflow:hidden">
         <summary style="display:flex;align-items:center;gap:12px;padding:17px 20px;font-size:14.5px;font-weight:700;color:#e6f0fa">
           <span style="width:26px;height:26px;border-radius:7px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:#fbbf24;display:flex;align-items:center;justify-content:center;flex:none;font-size:14px">!</span>
-          <span style="flex:1">¿Tu sistema muestra un aviso al instalar? Es esperable.</span>
-          <span style="color:#5b7290;font-size:13px;font-family:'JetBrains Mono',monospace">abrir ▾</span>
+          <span data-i18n="download.acc.summary" style="flex:1">¿Tu sistema muestra un aviso al instalar? Es esperable.</span>
+          <span data-i18n="download.acc.toggle" style="color:#5b7290;font-size:13px;font-family:'JetBrains Mono',monospace">abrir ▾</span>
         </summary>
         <div style="padding:4px 20px 20px 58px;color:#9db1c9;font-size:14px;line-height:1.6">
-          <p style="margin:0 0 14px">El instalador todavía <b style="color:#cdddee">no está firmado</b>, así que Windows o Mac pueden mostrar un aviso. Es por la falta de firma, <b style="color:#cdddee">no por riesgo</b>: el código es abierto y lo podés revisar.</p>
+          <p data-i18n-html="download.acc.body" style="margin:0 0 14px">El instalador todavía <b style="color:#cdddee">no está firmado</b>, así que Windows o Mac pueden mostrar un aviso. Es por la falta de firma, <b style="color:#cdddee">no por riesgo</b>: el código es abierto y lo podés revisar.</p>
           <div style="display:flex;gap:18px;flex-wrap:wrap">
-            <div style="flex:1 1 220px;background:#080d18;border:1px solid #14202f;border-radius:10px;padding:14px 16px"><div style="font-size:12px;font-weight:700;color:#7cc3f5;font-family:'JetBrains Mono',monospace;margin-bottom:8px">⊞ WINDOWS</div><div style="font-size:13.5px;color:#bcccde;line-height:1.5">"Más información" → <b style="color:#eaf2fb">Ejecutar de todas formas</b></div></div>
-            <div style="flex:1 1 220px;background:#080d18;border:1px solid #14202f;border-radius:10px;padding:14px 16px"><div style="font-size:12px;font-weight:700;color:#9db1c9;font-family:'JetBrains Mono',monospace;margin-bottom:8px"> macOS</div><div style="font-size:13.5px;color:#bcccde;line-height:1.5">Click derecho en la app → <b style="color:#eaf2fb">Abrir</b></div></div>
+            <div style="flex:1 1 220px;background:#080d18;border:1px solid #14202f;border-radius:10px;padding:14px 16px"><div style="font-size:12px;font-weight:700;color:#7cc3f5;font-family:'JetBrains Mono',monospace;margin-bottom:8px">⊞ WINDOWS</div><div data-i18n-html="download.acc.win" style="font-size:13.5px;color:#bcccde;line-height:1.5">"Más información" → <b style="color:#eaf2fb">Ejecutar de todas formas</b></div></div>
+            <div style="flex:1 1 220px;background:#080d18;border:1px solid #14202f;border-radius:10px;padding:14px 16px"><div style="font-size:12px;font-weight:700;color:#9db1c9;font-family:'JetBrains Mono',monospace;margin-bottom:8px"> macOS</div><div data-i18n-html="download.acc.mac" style="font-size:13.5px;color:#bcccde;line-height:1.5">Click derecho en la app → <b style="color:#eaf2fb">Abrir</b></div></div>
           </div>
         </div>
       </details>
@@ -405,33 +410,33 @@
   <section id="faq" style="border-top:1px solid #101827;background:linear-gradient(180deg,#080d18,#070b14)">
     <div style="max-width:780px;margin:0 auto;padding:clamp(56px,8vw,100px) 24px">
       <div data-reveal style="text-align:center;margin:0 auto 44px">
-        <div style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Preguntas</div>
-        <h2 style="font-size:clamp(26px,4vw,42px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Lo que te estás preguntando</h2>
+        <div data-i18n="faq.label" style="font-size:13px;font-weight:700;color:var(--acc,#22d3ee);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px">Preguntas</div>
+        <h2 data-i18n="faq.title" style="font-size:clamp(26px,4vw,42px);line-height:1.1;font-weight:800;letter-spacing:-.025em;margin:0;color:#f3f9ff">Lo que te estás preguntando</h2>
       </div>
       <div data-reveal data-reveal-delay="80" style="display:flex;flex-direction:column;gap:11px">
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Es gratis?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Sí, 100% gratis y de código abierto (licencia MIT). Sin cuentas, sin pagos y sin versión "pro".</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q1.q" style="flex:1">¿Es gratis?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n="faq.q1.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Sí, 100% gratis y de código abierto (licencia MIT). Sin cuentas, sin pagos y sin versión "pro".</div>
         </details>
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Manda mis datos a algún lado?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">No. Todo el historial vive local en tu equipo. Las únicas funciones que usan internet (reputación VirusTotal y geolocalización de IPs) son opcionales y vienen apagadas; si las prendés, solo viaja un hash o una IP, nunca tus archivos.</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q2.q" style="flex:1">¿Manda mis datos a algún lado?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n="faq.q2.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">No. Todo el historial vive local en tu equipo. Las únicas funciones que usan internet (reputación VirusTotal y geolocalización de IPs) son opcionales y vienen apagadas; si las prendés, solo viaja un hash o una IP, nunca tus archivos.</div>
         </details>
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Por qué me avisa el sistema al abrirlo?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Porque el instalador todavía no está firmado. Es por la falta de firma, no por riesgo: el código es abierto y lo podés revisar. En Windows: "Más información" → Ejecutar de todas formas. En Mac: click derecho → Abrir.</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q3.q" style="flex:1">¿Por qué me avisa el sistema al abrirlo?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n="faq.q3.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Porque el instalador todavía no está firmado. Es por la falta de firma, no por riesgo: el código es abierto y lo podés revisar. En Windows: "Más información" → Ejecutar de todas formas. En Mac: click derecho → Abrir.</div>
         </details>
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Necesito permisos de administrador?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Para leer el tráfico de red, en la primera ejecución puede pedir permisos elevados. Nada más que eso.</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q4.q" style="flex:1">¿Necesito permisos de administrador?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n="faq.q4.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Para leer el tráfico de red, en la primera ejecución puede pedir permisos elevados. Nada más que eso.</div>
         </details>
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Anda en Mac con chip M?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Sí. Hay un build nativo para Apple Silicon (M1–M4) y otro para Mac con Intel.</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q5.q" style="flex:1">¿Anda en Mac con chip M?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n="faq.q5.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">Sí. Hay un build nativo para Apple Silicon (M1–M4) y otro para Mac con Intel.</div>
         </details>
         <details data-acc style="background:#0b1322;border:1px solid #18243c;border-radius:13px;overflow:hidden">
-          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span style="flex:1">¿Corta el internet al llegar a la cuota?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
-          <div style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">No. La cuota te <b style="color:#cdddee">avisa</b> al 80% y al 100%, pero nunca bloquea ni corta la conexión. Vos decidís qué hacer.</div>
+          <summary style="display:flex;align-items:center;gap:14px;padding:18px 20px;font-size:15.5px;font-weight:700;color:#e6f0fa"><span data-i18n="faq.q6.q" style="flex:1">¿Corta el internet al llegar a la cuota?</span><span style="color:#22d3ee;font-size:18px;font-weight:400;flex:none">+</span></summary>
+          <div data-i18n-html="faq.q6.a" style="padding:0 20px 18px;font-size:14.5px;line-height:1.62;color:#9db1c9">No. La cuota te <b style="color:#cdddee">avisa</b> al 80% y al 100%, pero nunca bloquea ni corta la conexión. Vos decidís qué hacer.</div>
         </details>
       </div>
     </div>
@@ -444,11 +449,11 @@
         <svg width="100%" height="100%" viewBox="0 0 1200 300" preserveAspectRatio="none" style="display:block"><g style="animation:tmScroll 18s linear infinite"><path d="M0,200 C100,150 200,250 300,200 S500,150 600,200 S800,250 900,200 S1100,150 1200,200" fill="none" stroke="rgba(34,211,238,.18)" stroke-width="2"/><path d="M0,200 C100,150 200,250 300,200 S500,150 600,200 S800,250 900,200 S1100,150 1200,200" transform="translate(1200,0)" fill="none" stroke="rgba(34,211,238,.18)" stroke-width="2"/></g></svg>
       </div>
       <div style="position:relative">
-        <h2 style="font-size:clamp(30px,4.6vw,54px);line-height:1.05;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;color:#f3f9ff">Tomá el control de tu red.<br><span style="color:var(--acc,#22d3ee)">Gratis.</span></h2>
-        <p style="font-size:clamp(15px,1.6vw,18px);line-height:1.6;color:#9db1c9;margin:0 auto 32px;max-width:520px">Open source, sin telemetría y 100% local. Lo instalás en un minuto.</p>
+        <h2 data-i18n-html="cta.title" style="font-size:clamp(30px,4.6vw,54px);line-height:1.05;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;color:#f3f9ff">Tomá el control de tu red.<br><span style="color:var(--acc,#22d3ee)">Gratis.</span></h2>
+        <p data-i18n="cta.subtitle" style="font-size:clamp(15px,1.6vw,18px);line-height:1.6;color:#9db1c9;margin:0 auto 32px;max-width:520px">Open source, sin telemetría y 100% local. Lo instalás en un minuto.</p>
         <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
-          <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:11px;background:var(--acc,#22d3ee);color:#04141b;font-weight:800;font-size:16px;text-decoration:none;padding:16px 28px;border-radius:13px;box-shadow:0 0 0 1px rgba(34,211,238,.35),0 18px 44px -12px rgba(34,211,238,.65);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-2px);box-shadow:0 0 0 1px rgba(34,211,238,.5),0 24px 54px -12px rgba(34,211,238,.85)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>Descargar gratis</a>
-          <a href="https://github.com/gabiMaglia/NetGauge" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid #2a3a52;color:#e6f0fa;font-weight:700;font-size:15.5px;text-decoration:none;padding:16px 24px;border-radius:13px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:rgba(255,255,255,.07)"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.7c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>Ver en GitHub</a>
+          <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:11px;background:var(--acc,#22d3ee);color:#04141b;font-weight:800;font-size:16px;text-decoration:none;padding:16px 28px;border-radius:13px;box-shadow:0 0 0 1px rgba(34,211,238,.35),0 18px 44px -12px rgba(34,211,238,.65);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-2px);box-shadow:0 0 0 1px rgba(34,211,238,.5),0 24px 54px -12px rgba(34,211,238,.85)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg><span data-i18n="cta.download">Descargar gratis</span></a>
+          <a href="https://github.com/gabiMaglia/NetGauge" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid #2a3a52;color:#e6f0fa;font-weight:700;font-size:15.5px;text-decoration:none;padding:16px 24px;border-radius:13px;transition:border-color .2s,background .2s" style-hover="border-color:#3a5070;background:rgba(255,255,255,.07)"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.7c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg><span data-i18n="cta.github">Ver en GitHub</span></a>
         </div>
       </div>
     </div>
@@ -462,29 +467,29 @@
           <span style="width:30px;height:30px;border-radius:9px;background:var(--acc,#22d3ee);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></span>
           <span style="font-size:18px;font-weight:800;letter-spacing:-.02em;color:#e6f0fa">Net<span style="color:var(--acc,#22d3ee)">Gauge</span></span>
         </div>
-        <p style="font-size:13.5px;line-height:1.55;color:#7e93ab;margin:0 0 14px;max-width:320px">El monitor de consumo de red por aplicación. Gratis, open source y privado.</p>
-        <div style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#5b7290;font-family:'JetBrains Mono',monospace"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#34d399"></span>Sin telemetría</span><span>·</span><span>100% local</span></div>
+        <p data-i18n="footer.tagline" style="font-size:13.5px;line-height:1.55;color:#7e93ab;margin:0 0 14px;max-width:320px">El monitor de consumo de red por aplicación. Gratis, open source y privado.</p>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#5b7290;font-family:'JetBrains Mono',monospace"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#34d399"></span><span data-i18n="footer.noTelemetry">Sin telemetría</span></span><span>·</span><span data-i18n="footer.local">100% local</span></div>
       </div>
       <div style="display:flex;gap:56px;flex-wrap:wrap">
         <div>
-          <div style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Proyecto</div>
+          <div data-i18n="footer.project" style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Proyecto</div>
           <div style="display:flex;flex-direction:column;gap:11px">
             <a href="https://github.com/gabiMaglia/NetGauge" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">GitHub</a>
-            <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Releases</a>
-            <a href="https://github.com/gabiMaglia/NetGauge/blob/main/LICENSE" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Licencia MIT</a>
+            <a href="https://github.com/gabiMaglia/NetGauge/releases/latest" target="_blank" rel="noopener" data-i18n="footer.releases" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Releases</a>
+            <a href="https://github.com/gabiMaglia/NetGauge/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer.license" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Licencia MIT</a>
           </div>
         </div>
         <div>
-          <div style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Más</div>
+          <div data-i18n="footer.more" style="font-size:12px;font-weight:700;color:#5b7290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Más</div>
           <div style="display:flex;flex-direction:column;gap:11px">
-            <a href="#privacidad" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Privacidad</a>
-            <a href="#faq" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">FAQ</a>
-            <a href="https://ko-fi.com/gabrielmaglia" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;color:#fbbf24;text-decoration:none" style-hover="color:#fcd34d">☕ Invitar un café</a>
+            <a href="#privacidad" data-i18n="footer.privacy" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">Privacidad</a>
+            <a href="#faq" data-i18n="footer.faq" style="font-size:14px;font-weight:600;color:#9db1c9;text-decoration:none" style-hover="color:#22d3ee">FAQ</a>
+            <a href="https://ko-fi.com/gabrielmaglia" target="_blank" rel="noopener" data-i18n="footer.kofi" style="font-size:14px;font-weight:600;color:#fbbf24;text-decoration:none" style-hover="color:#fcd34d">☕ Invitar un café</a>
           </div>
         </div>
       </div>
     </div>
-    <div style="border-top:1px solid #101827"><div style="max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:#5b7290">© 2026 NetGauge · Licencia MIT</span><span style="font-size:12.5px;color:#5b7290;font-family:'JetBrains Mono',monospace">Hecho con software libre (Qt / PySide6)</span></div></div>
+    <div style="border-top:1px solid #101827"><div style="max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;align-items:center"><span data-i18n="footer.copyright" style="font-size:12.5px;color:#5b7290">© 2026 NetGauge · Licencia MIT</span><span data-i18n="footer.madeWith" style="font-size:12.5px;color:#5b7290;font-family:'JetBrains Mono',monospace">Hecho con software libre (Qt / PySide6)</span></div></div>
   </footer>
 
 </div>

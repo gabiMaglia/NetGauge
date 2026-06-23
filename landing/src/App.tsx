@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
 import landingHtml from './landing.html?raw';
+import {
+  applyLang,
+  bindLangSwitcher,
+  detectInitialLang,
+  osLabels,
+  persistLang,
+  type Lang,
+} from './i18n';
 
 /**
  * Landing NetGauge — render pixel-perfect del diseño hi-fi
@@ -7,7 +15,9 @@ import landingHtml from './landing.html?raw';
  *
  * El markup se inyecta verbatim (extraído byte a byte del diseño) y este
  * componente porta el comportamiento del runtime original: detección de SO,
- * contadores, reveal al entrar y hover (atributo `style-hover`).
+ * contadores, reveal al entrar y hover (atributo `style-hover`), más el
+ * runtime de i18n (T-020): aplica el diccionario ES/EN/PT sobre los nodos
+ * `data-i18n`/`data-i18n-html` y reacciona al switcher del header.
  */
 
 /** ¿Mac con Apple Silicon? Heurística por renderer de WebGL (igual que el diseño). */
@@ -26,8 +36,8 @@ function isAppleSilicon(): boolean {
   }
 }
 
-/** Ajusta el botón de descarga al SO detectado (sin ocultar los explícitos). */
-function detectOS(root: HTMLElement): void {
+/** Detecta el SO actual (heurística, sin ocultar nunca los botones explícitos). */
+function detectOSKey(): string {
   let os = 'other';
   try {
     const ua = navigator.userAgent || '';
@@ -39,14 +49,12 @@ function detectOS(root: HTMLElement): void {
   } catch {
     /* noop */
   }
-  const map: Record<string, { label: string; sub: string }> = {
-    windows: { label: 'Descargar para Windows', sub: 'Windows 10/11 · 64-bit' },
-    'mac-arm': { label: 'Descargar para macOS', sub: 'Apple Silicon · M1–M4' },
-    'mac-intel': { label: 'Descargar para macOS', sub: 'Mac con Intel' },
-    linux: { label: 'Descargar gratis', sub: 'Windows y macOS' },
-    other: { label: 'Descargar gratis', sub: 'Windows y macOS' },
-  };
-  const m = map[os] || map.other;
+  return os;
+}
+
+/** Aplica el label/sub del botón de descarga auto-detectado, en el idioma activo. */
+function applyOSLabel(root: HTMLElement, osKey: string, lang: Lang): void {
+  const m = osLabels[lang][osKey] || osLabels[lang].other;
   root.querySelectorAll<HTMLElement>('[data-os-label]').forEach((el) => {
     el.textContent = m.label;
   });
@@ -114,10 +122,22 @@ export default function App() {
     const init = root as HTMLElement & { __init?: boolean };
     if (init.__init) return; // evita doble binding bajo StrictMode (dev)
     init.__init = true;
-    detectOS(root);
+
+    const osKey = detectOSKey();
+    let lang = detectInitialLang();
+
+    const setLang = (next: Lang) => {
+      lang = next;
+      persistLang(lang);
+      applyLang(root, lang);
+      applyOSLabel(root, osKey, lang);
+    };
+
+    setLang(lang);
     runCounters(root);
     runReveal(root);
     bindHovers(root);
+    bindLangSwitcher(root, setLang);
   }, []);
 
   return <div ref={ref} dangerouslySetInnerHTML={{ __html: landingHtml }} />;
