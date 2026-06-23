@@ -4,8 +4,8 @@
   <header style="position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(7,11,20,.72);border-bottom:1px solid #121c30">
     <div style="max-width:1200px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:24px">
       <a href="#inicio" style="display:flex;align-items:center;gap:11px;text-decoration:none;flex:none">
-        <span style="width:34px;height:34px;border-radius:10px;background:var(--acc,#22d3ee);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px -2px rgba(34,211,238,.6)">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg>
+        <span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px -2px rgba(34,211,238,.6);overflow:hidden">
+          <svg width="34" height="34" viewBox="0 0 64 64" role="img" aria-label="NetGauge"><defs><linearGradient id="ngBarsHeader" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#1e1e2e"/><rect x="12" y="38" width="10" height="14" rx="2" fill="url(#ngBarsHeader)"/><rect x="27" y="24" width="10" height="28" rx="2" fill="url(#ngBarsHeader)"/><rect x="42" y="12" width="10" height="40" rx="2" fill="url(#ngBarsHeader)"/></svg>
         </span>
         <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:#e6f0fa">Net<span style="color:var(--acc,#22d3ee)">Gauge</span></span>
       </a>
@@ -59,7 +59,7 @@
           <!-- titlebar -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid #121b30;background:#0a0f1c">
             <div style="display:flex;align-items:center;gap:10px;min-width:0">
-              <div style="width:24px;height:24px;border-radius:7px;background:#0e2433;border:1px solid #1d4a5e;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <div style="width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden"><svg width="24" height="24" viewBox="0 0 64 64" role="img" aria-label="NetGauge"><defs><linearGradient id="ngBarsTitlebar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#1e1e2e"/><rect x="12" y="38" width="10" height="14" rx="2" fill="url(#ngBarsTitlebar)"/><rect x="27" y="24" width="10" height="28" rx="2" fill="url(#ngBarsTitlebar)"/><rect x="42" y="12" width="10" height="40" rx="2" fill="url(#ngBarsTitlebar)"/></svg></div>
               <span style="font-size:13px;font-weight:700;color:#dbe5f0;white-space:nowrap">Net<span style="color:#22d3ee">Gauge</span></span>
               <span style="font-size:10px;color:#3f5573;font-weight:700;letter-spacing:.12em;font-family:'JetBrains Mono',monospace">LIVE</span>
               <span style="width:6px;height:6px;border-radius:50%;background:#22d3ee;box-shadow:0 0 8px #22d3ee;flex:none;animation:tmBlink 1.6s ease-in-out infinite"></span>
@@ -261,7 +261,7 @@
           <!-- tray mock -->
           <div style="display:flex;align-items:center;gap:9px;background:#0a0f1a;border:1px solid #14202f;border-radius:11px;padding:9px 11px;width:max-content;max-width:100%">
             <div style="display:flex;align-items:center;gap:6px;border-right:1px solid #14202f;padding-right:9px">
-              <div style="width:22px;height:22px;border-radius:6px;background:#0e2433;border:1px solid #1d4a5e;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></div>
+              <div style="width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden"><svg width="22" height="22" viewBox="0 0 64 64" role="img" aria-label="NetGauge"><defs><linearGradient id="ngBarsTray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#1e1e2e"/><rect x="12" y="38" width="10" height="14" rx="2" fill="url(#ngBarsTray)"/><rect x="27" y="24" width="10" height="28" rx="2" fill="url(#ngBarsTray)"/><rect x="42" y="12" width="10" height="40" rx="2" fill="url(#ngBarsTray)"/></svg></div>
               <svg width="44" height="20" viewBox="0 0 44 20"><path d="M0,15 L8,16 L14,11 L20,14 L26,5 L32,12 L38,8 L44,13" fill="none" stroke="#34d399" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#9db1c9">↓2.1 ↑0.3 MB/s</span>
@@ -464,7 +464,7 @@
     <div style="max-width:1200px;margin:0 auto;padding:46px 24px 40px;display:flex;gap:32px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start">
       <div style="flex:1 1 280px;min-width:0">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <span style="width:30px;height:30px;border-radius:9px;background:var(--acc,#22d3ee);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#04141b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15l4-5 4 3 5-7 3 4"/></svg></span>
+          <span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;overflow:hidden"><svg width="30" height="30" viewBox="0 0 64 64" role="img" aria-label="NetGauge"><defs><linearGradient id="ngBarsFooter" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#1e1e2e"/><rect x="12" y="38" width="10" height="14" rx="2" fill="url(#ngBarsFooter)"/><rect x="27" y="24" width="10" height="28" rx="2" fill="url(#ngBarsFooter)"/><rect x="42" y="12" width="10" height="40" rx="2" fill="url(#ngBarsFooter)"/></svg></span>
           <span style="font-size:18px;font-weight:800;letter-spacing:-.02em;color:#e6f0fa">Net<span style="color:var(--acc,#22d3ee)">Gauge</span></span>
         </div>
         <p data-i18n="footer.tagline" style="font-size:13.5px;line-height:1.55;color:#7e93ab;margin:0 0 14px;max-width:320px">El monitor de consumo de red por aplicación. Gratis, open source y privado.</p>
