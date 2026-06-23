@@ -8,6 +8,7 @@ from __future__ import annotations
 import atexit
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -28,32 +29,80 @@ from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerat
 from src.presentation.qt.app import QtNotifier, run
 
 
-def _data_dir() -> Path:
-    """Directorio de datos por plataforma (logs, DB, settings, reportes).
+_APP_NAME = "NetLeak"
+_LEGACY_APP_NAME = "trafficMe"  # nombre previo al rename (T-016); migrar su historial.
 
-    Windows: %LOCALAPPDATA%\\NetLeak (con fallback a ~/AppData/Local si la
-    env var no está seteada, igual que antes). macOS: ~/Library/Application
-    Support/NetLeak, convención estándar de la plataforma. Resto (Linux/CI):
-    ~/.NetLeak.
+# Qué llevar de la carpeta vieja a la nueva al actualizar desde trafficMe.
+_MIGRATE_FILES = ("usage.db", "settings.json", "monitor.log")
+_MIGRATE_DIRS = ("reports",)
+
+
+def _base_for(app_name: str) -> Path:
+    """Ruta del directorio de datos por plataforma para `app_name` (sin crearlo).
+
+    Windows: %LOCALAPPDATA%\\<app> (fallback a ~/AppData/Local). macOS:
+    ~/Library/Application Support/<app>. Resto (Linux/CI): ~/.<app>.
     """
     if sys.platform == "win32":
         local = os.environ.get("LOCALAPPDATA")
-        base = Path(local) / "NetLeak" if local else \
-            Path.home() / "AppData" / "Local" / "NetLeak"
-    elif sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support" / "NetLeak"
-    else:
-        base = Path.home() / ".NetLeak"
+        return Path(local) / app_name if local else \
+            Path.home() / "AppData" / "Local" / app_name
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / app_name
+    return Path.home() / f".{app_name}"
+
+
+def _migrate_legacy_data(new_base: Path, legacy_base: Path) -> bool:
+    """Copia el historial de la instalación previa (trafficMe) a la nueva (NetLeak).
+
+    Idempotente y conservador: solo migra si la instalación nueva está "limpia"
+    (sin `usage.db`) y la vieja tiene datos. Copia (no mueve): la carpeta vieja
+    queda intacta como respaldo. Devuelve True si migró algo.
+    """
+    if new_base == legacy_base:
+        return False
+    if (new_base / "usage.db").exists():  # ya hay datos nuevos: no tocar
+        return False
+    if not (legacy_base / "usage.db").exists():  # nada que migrar
+        return False
+    new_base.mkdir(parents=True, exist_ok=True)
+    for name in _MIGRATE_FILES:
+        src = legacy_base / name
+        if src.is_file() and not (new_base / name).exists():
+            shutil.copy2(src, new_base / name)
+    for name in _MIGRATE_DIRS:
+        src = legacy_base / name
+        if src.is_dir() and not (new_base / name).exists():
+            shutil.copytree(src, new_base / name)
+    return True
+
+
+def _data_dir() -> Path:
+    """Directorio de datos de NetLeak por plataforma (logs, DB, settings, reportes)."""
+    base = _base_for(_APP_NAME)
     base.mkdir(parents=True, exist_ok=True)
     return base
 
 
 def main() -> None:
+    data_dir = _data_dir()
+
+    # Migración única desde la instalación previa "trafficMe" (rename T-016): si el
+    # usuario actualiza, traemos su historial para que no "desaparezca". Antes de
+    # configurar logging para que el monitor.log viejo también se preserve.
+    migrated = False
+    try:
+        migrated = _migrate_legacy_data(data_dir, _base_for(_LEGACY_APP_NAME))
+    except Exception:  # noqa: BLE001 — la migración nunca debe impedir el arranque
+        pass
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        filename=str(_data_dir() / "monitor.log"),
+        filename=str(data_dir / "monitor.log"),
     )
+    if migrated:
+        logging.info("Historial migrado desde la instalación previa (trafficMe).")
 
     capture, per_process = create_capture_service(prefer_etw=True)
     repository = SqliteUsageRepository(_data_dir() / "usage.db")
