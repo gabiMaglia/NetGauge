@@ -30,7 +30,7 @@ def check_latest(owner: str, repo: str, current: str) -> tuple[str, str] | None:
     req = urllib.request.Request(
         _API.format(owner=owner, repo=repo),
         headers={"Accept": "application/vnd.github+json",
-                 "User-Agent": "trafficMe-updater"})
+                 "User-Agent": "NetLeak-updater"})
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))

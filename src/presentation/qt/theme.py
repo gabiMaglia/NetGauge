@@ -1,4 +1,4 @@
-"""Tokens de diseño (trafficMe · Panel) + generador de QSS para PySide6.
+"""Tokens de diseño (NetLeak · Panel) + generador de QSS para PySide6.
 
 Vendoreado desde design_handoff_traficMe_panel/palette.py para que la app
 no dependa de la carpeta de handoff. Tema claro y oscuro.

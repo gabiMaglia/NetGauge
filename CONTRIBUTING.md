@@ -1,12 +1,12 @@
-# Contribuir a trafficMe
+# Contribuir a NetLeak
 
 ¡Gracias por el interés! Es un proyecto chico y se agradecen issues y PRs.
 
 ## Setup
 
 ```powershell
-git clone https://github.com/gabiMaglia/trafficMe
-cd trafficMe
+git clone https://github.com/gabiMaglia/NetLeak
+cd NetLeak
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt

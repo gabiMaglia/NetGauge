@@ -7,7 +7,7 @@ import styles from './Hero.module.css';
 /** HERO (sección 2): copy exacto del brief, CTA primario/secundario y screenshot placeholder. */
 export function Hero() {
   return (
-    <section id="top" className={styles.hero} aria-label="Presentación de trafficMe">
+    <section id="top" className={styles.hero} aria-label="Presentación de NetLeak">
       <div className={`container ${styles.grid}`}>
         <div className={styles.copy}>
           <Sparkline className={styles.sparkline} width={280} height={64} />
@@ -42,7 +42,7 @@ export function Hero() {
 
         <ScreenshotPlaceholder
           className={styles.screenshot}
-          alt="Ventana principal de trafficMe en modo oscuro, mostrando el consumo de red por aplicación"
+          alt="Ventana principal de NetLeak en modo oscuro, mostrando el consumo de red por aplicación"
           tabs={['Global', 'Por aplicación', 'Conexiones']}
         />
       </div>

@@ -6,7 +6,7 @@ import sys
 # Windows agrupa la app en la barra de tareas por este ID; sin él, usa el ícono
 # del proceso host (genérico) en vez del de la ventana. Debe ir ANTES de crear
 # cualquier ventana.
-_APP_ID = "GabrielMaglia.trafficMe.NetworkMonitor"
+_APP_ID = "GabrielMaglia.NetLeak.NetworkMonitor"
 
 
 def _set_app_user_model_id() -> None:
@@ -103,7 +103,7 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     window.setWindowIcon(app_icon)
 
     tray = QSystemTrayIcon(app_icon, app)
-    tray.setToolTip("trafficMe")
+    tray.setToolTip("NetLeak")
     notifier.bind_tray(tray)
 
     menu = QMenu()
@@ -116,11 +116,11 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
         try:
             path = monitor.generate_session_report(fmt)
         except Exception as exc:  # noqa: BLE001 — dependencia faltante / I/O
-            tray.showMessage("trafficMe", t("tray.report_error", err=str(exc)),
+            tray.showMessage("NetLeak", t("tray.report_error", err=str(exc)),
                              QSystemTrayIcon.MessageIcon.Warning, 6000)
             return
         msg = t("tray.report_saved", path=path) if path else t("tray.report_empty")
-        tray.showMessage("trafficMe", msg,
+        tray.showMessage("NetLeak", msg,
                          QSystemTrayIcon.MessageIcon.Information, 5000)
 
     for label, fmt in (("CSV", "csv"), ("Excel (.xlsx)", "xlsx"), ("PDF", "pdf")):
@@ -173,7 +173,7 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
         session = monitor.session_usage()
         top = session[0].app_name if session else "—"
         tray.setToolTip(
-            f"trafficMe\n↓ {human_bytes(down)}/s   ↑ {human_bytes(up)}/s\n{top}")
+            f"NetLeak\n↓ {human_bytes(down)}/s   ↑ {human_bytes(up)}/s\n{top}")
     tray_timer = QTimer(window)
     tray_timer.timeout.connect(update_tray)
     tray_timer.start(2000)

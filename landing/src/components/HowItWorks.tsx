@@ -5,7 +5,7 @@ import styles from './HowItWorks.module.css';
 /** Cómo funciona (sección 6): 3 pasos. */
 export function HowItWorks() {
   return (
-    <Section id="como-funciona" ariaLabel="Cómo funciona trafficMe" className={styles.section}>
+    <Section id="como-funciona" ariaLabel="Cómo funciona NetLeak" className={styles.section}>
       <div className="container">
         <h2 className={styles.heading}>Cómo funciona</h2>
         <ol className={styles.steps}>

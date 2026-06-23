@@ -7,10 +7,10 @@ export function Comparison() {
   return (
     <Section ariaLabel="Comparativa" className={styles.section}>
       <div className="container">
-        <h2 className={styles.heading}>trafficMe en números simples</h2>
+        <h2 className={styles.heading}>NetLeak en números simples</h2>
         <table className={styles.table}>
           <caption className="visually-hidden">
-            Características principales de trafficMe
+            Características principales de NetLeak
           </caption>
           <tbody>
             {COMPARISON_ROWS.map((row) => (

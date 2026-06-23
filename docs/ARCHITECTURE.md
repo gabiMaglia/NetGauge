@@ -1,6 +1,6 @@
 # Arquitectura
 
-trafficMe sigue **Clean Architecture**: el código se organiza en capas
+NetLeak sigue **Clean Architecture**: el código se organiza en capas
 concéntricas y las dependencias apuntan SIEMPRE hacia el dominio. El dominio no
 sabe que existen PySide6, SQLite ni ETW; son detalles intercambiables.
 
@@ -87,5 +87,5 @@ ETW / psutil ──TrafficSample──▶ MonitorService ──UsageRecord──
                                       └──▶ consultas por período ──▶ UI (tablas)
 ```
 
-Datos persistidos en `%LOCALAPPDATA%\trafficMe\`:
+Datos persistidos en `%LOCALAPPDATA%\NetLeak\`:
 `usage.db`, `settings.json`, `monitor.log`, `reports\`.

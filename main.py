@@ -31,19 +31,19 @@ from src.presentation.qt.app import QtNotifier, run
 def _data_dir() -> Path:
     """Directorio de datos por plataforma (logs, DB, settings, reportes).
 
-    Windows: %LOCALAPPDATA%\\trafficMe (con fallback a ~/AppData/Local si la
+    Windows: %LOCALAPPDATA%\\NetLeak (con fallback a ~/AppData/Local si la
     env var no está seteada, igual que antes). macOS: ~/Library/Application
-    Support/trafficMe, convención estándar de la plataforma. Resto (Linux/CI):
-    ~/.trafficMe.
+    Support/NetLeak, convención estándar de la plataforma. Resto (Linux/CI):
+    ~/.NetLeak.
     """
     if sys.platform == "win32":
         local = os.environ.get("LOCALAPPDATA")
-        base = Path(local) / "trafficMe" if local else \
-            Path.home() / "AppData" / "Local" / "trafficMe"
+        base = Path(local) / "NetLeak" if local else \
+            Path.home() / "AppData" / "Local" / "NetLeak"
     elif sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support" / "trafficMe"
+        base = Path.home() / "Library" / "Application Support" / "NetLeak"
     else:
-        base = Path.home() / ".trafficMe"
+        base = Path.home() / ".NetLeak"
     base.mkdir(parents=True, exist_ok=True)
     return base
 

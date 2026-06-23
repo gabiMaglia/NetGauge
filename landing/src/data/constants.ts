@@ -4,7 +4,7 @@
  * NO hardcodear URLs de assets de release: no están confirmadas (ver ADR-001 / handoff T-015).
  */
 export const GITHUB_OWNER = 'gabiMaglia';
-export const GITHUB_REPO = 'trafficMe';
+export const GITHUB_REPO = 'NetLeak';
 export const GITHUB_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`;
 export const RELEASES_LATEST_URL = `${GITHUB_URL}/releases/latest`;
 export const KOFI_URL = 'https://ko-fi.com/gabrielmaglia';

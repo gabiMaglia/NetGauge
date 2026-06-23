@@ -1,4 +1,4 @@
-"""Ventana principal trafficMe (frameless, redondeada, con barra de título propia)."""
+"""Ventana principal NetLeak (frameless, redondeada, con barra de título propia)."""
 from __future__ import annotations
 
 import ipaddress
@@ -72,7 +72,7 @@ class MainWindow(QWidget):
         self._native = False
         self._native_applied = False
 
-        self.setWindowTitle("trafficMe")
+        self.setWindowTitle("NetLeak")
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(786, 720)

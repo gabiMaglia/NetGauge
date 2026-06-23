@@ -10,7 +10,7 @@ from typing import Callable
 
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-_KEY = "trafficMe.single-instance.v1"
+_KEY = "NetLeak.single-instance.v1"
 _PING = b"show"
 
 

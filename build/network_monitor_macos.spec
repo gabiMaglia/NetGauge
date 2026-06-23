@@ -61,7 +61,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="trafficMe",
+    name="NetLeak",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -77,17 +77,17 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name="trafficMe",
+    name="NetLeak",
 )
 
 app = BUNDLE(
     coll,
-    name="trafficMe.app",
+    name="NetLeak.app",
     icon="../assets/icon.icns",
-    bundle_identifier="com.gabrielmaglia.trafficme",
+    bundle_identifier="com.gabrielmaglia.netleak",
     info_plist={
-        "CFBundleName": "trafficMe",
-        "CFBundleDisplayName": "trafficMe",
+        "CFBundleName": "NetLeak",
+        "CFBundleDisplayName": "NetLeak",
         "CFBundleShortVersionString": "1.7.1",
         "CFBundleVersion": "1.7.1",
         "NSHighResolutionCapable": True,

@@ -1,4 +1,4 @@
-# Architecture — trafficMe
+# Architecture — NetLeak
 
 ## Stack
 | Capa | Tech | Versión | ADR |

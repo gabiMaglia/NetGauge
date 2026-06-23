@@ -14,8 +14,8 @@ versionado [SemVer](https://semver.org/lang/es/).
 - Metadata del editor embebida en el `.exe` (CompanyName/FileDescription).
 - CI con GitHub Actions (pytest en windows-latest en cada push/PR).
 ### Changed
-- App renombrada a **trafficMe** de punta a punta (exe, carpeta de instalación,
-  tarea programada, carpeta de datos `%LOCALAPPDATA%\trafficMe`).
+- App renombrada a **NetLeak** de punta a punta (exe, carpeta de instalación,
+  tarea programada, carpeta de datos `%LOCALAPPDATA%\NetLeak`).
 ### Fixed
 - Flecha (chevron) de los dropdowns rota.
 - El gráfico de ancho de banda no se ocultaba en ventanas de poco alto.

@@ -48,7 +48,7 @@ export interface Step {
 
 export const STEPS: Step[] = [
   { number: '1', title: 'Descargá e instalá', description: 'Elegí tu sistema operativo y corré el instalador.' },
-  { number: '2', title: 'Vive en tu bandeja', description: 'trafficMe queda discreto en la bandeja del sistema, midiendo en segundo plano.' },
+  { number: '2', title: 'Vive en tu bandeja', description: 'NetLeak queda discreto en la bandeja del sistema, midiendo en segundo plano.' },
   { number: '3', title: 'Mirá, controlá y exportá', description: 'Abrí la ventana cuando quieras ver el detalle o exportar un informe.' },
 ];
 
@@ -96,7 +96,7 @@ export const TRUST_BADGES: string[] = [
 export const FAQ_ITEMS: AccordionItemData[] = [
   {
     question: '¿Es gratis?',
-    answer: 'Sí, trafficMe es gratis y de código abierto (licencia MIT). No hay versión paga ni funciones bloqueadas.',
+    answer: 'Sí, NetLeak es gratis y de código abierto (licencia MIT). No hay versión paga ni funciones bloqueadas.',
   },
   {
     question: '¿Manda mis datos?',

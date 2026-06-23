@@ -19,7 +19,7 @@ export function DownloadButtons({ variant = 'full' }: DownloadButtonsProps) {
     <div
       className={variant === 'compact' ? styles.compactGroup : styles.group}
       role="group"
-      aria-label="Descargar trafficMe"
+      aria-label="Descargar NetLeak"
     >
       {DOWNLOAD_OPTIONS.map((option) => {
         const isDetected = option.id === detected;

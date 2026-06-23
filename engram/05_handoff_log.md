@@ -1,10 +1,16 @@
-# Handoff Log — trafficMe
+# Handoff Log — NetLeak
 
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
-> el Orquestador mueve las más viejas a ~/.nerv/archive/trafficMe-handoffs-[fecha].md
+> el Orquestador mueve las más viejas a ~/.nerv/archive/NetLeak-handoffs-[fecha].md
+
+### 2026-06-23 nerv-orquestador (rename) T-016
+- Hecho: rename trafficMe → NetLeak en 46 archivos trackeados (sed 2 pasadas sobre `git ls-files`; excluido `.venv` falso positivo), carpeta skill `run-trafficme`→`run-netleak`. Cubre src/, build, workflows, landing, engram, docs, URLs (→ gabiMaglia/NetLeak). Rama `feature/T-016-rename-netleak` stackeada sobre T-015.
+- Verificado: cero leftovers, landing `npm run build` OK, `compileall` OK, **pytest 52 verde (5 skip)**. Detalle/criterios en §T-016.
+- Pendiente: commit; QA Strong (T-015 + T-016); PO renombra repo en GitHub; actualizar remoto local y registry; PRs encadenados.
+- Caveats: migración dir de datos (historial viejo no migra); cambia identidad de app (app_id/bundle_id/single-instance).
 
 ### 2026-06-22 nerv-orquestador→nerv-web T-015
-- Entrega: construir la landing one-page de trafficMe (React+Vite, en `/landing`). Brief completo, decisiones PO, identidad visual, 13 secciones, reglas de contenido y criterios de aceptación: §T-015 en `engram/03_backlog.md`. Niv QA: Strong (>400 líneas).
+- Entrega: construir la landing one-page de NetLeak (React+Vite, en `/landing`). Brief completo, decisiones PO, identidad visual, 13 secciones, reglas de contenido y criterios de aceptación: §T-015 en `engram/03_backlog.md`. Niv QA: Strong (>400 líneas).
 - Verdades verificadas contra el código (usar tal cual, NO inventar): MIT (LICENSE raíz); features reales en `src/` (connections, virustotal opt-in, geoip, trust/Authenticode solo-Windows, quota, anomalía 3×, reportes CSV/Excel/PDF); build sin firmar (ADR-001). Links: ver §T-015.
 - Restricciones: solo crear archivos bajo `/landing`; NO tocar `src/`, workflows ni instaladores. Descargas → `releases/latest`. 3 botones siempre visibles. Respetar reglas de contenido (cuota avisa NO bloquea; privacidad exacta; confianza=Windows).
 - Pendientes: screenshots reales no existen → usar placeholders. `npm run build` debe correr limpio antes de devolver el control.

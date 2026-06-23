@@ -13,9 +13,9 @@ export function Download() {
   const panelId = useId();
 
   return (
-    <Section id="descargar" ariaLabel="Descargar trafficMe">
+    <Section id="descargar" ariaLabel="Descargar NetLeak">
       <div className="container">
-        <h2 className={styles.heading}>Descargá trafficMe</h2>
+        <h2 className={styles.heading}>Descargá NetLeak</h2>
         <p className={styles.subheading}>
           Elegí tu sistema. El navegador detecta el tuyo y lo resalta, pero los tres
           siempre están disponibles.

@@ -54,8 +54,8 @@ jobs:
       - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trafficMe-windows-exe
-          path: build/Output/trafficMe-Setup-*-x64.exe
+          name: NetLeak-windows-exe
+          path: build/Output/NetLeak-Setup-*-x64.exe
           if-no-files-found: error
 
   macos:
@@ -108,7 +108,7 @@ jobs:
       - name: Upload .dmg artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trafficMe-macos-${{ matrix.arch }}
+          name: NetLeak-macos-${{ matrix.arch }}
           path: dist/*.dmg
           if-no-files-found: error
 
@@ -119,19 +119,19 @@ jobs:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: trafficMe-windows-exe
+          name: NetLeak-windows-exe
           path: release-assets
 
       - name: Download macOS x86_64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: trafficMe-macos-x86_64
+          name: NetLeak-macos-x86_64
           path: release-assets
 
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: trafficMe-macos-arm64
+          name: NetLeak-macos-arm64
           path: release-assets
 
       - name: Publish to GitHub Release

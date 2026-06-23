@@ -5,7 +5,7 @@ import styles from './Features.module.css';
 /** Features (sección 5): grid de 6 con ícono, copy verificado contra src/. */
 export function Features() {
   return (
-    <Section id="funciones" ariaLabel="Funciones de trafficMe">
+    <Section id="funciones" ariaLabel="Funciones de NetLeak">
       <div className="container">
         <h2 className={styles.heading}>Todo lo que necesitás para entender tu red</h2>
         <ul className={styles.grid}>

@@ -1,22 +1,22 @@
-; Inno Setup script para trafficMe (Windows x64).
+; Inno Setup script para NetLeak (Windows x64).
 ; Compilar con: ISCC.exe build\installer.iss
 ; (requiere Inno Setup 6+: https://jrsoftware.org/isdl.php)
 
-#define AppName "trafficMe"
+#define AppName "NetLeak"
 ; Permite inyectar la versión desde CI sin tocar este archivo:
 ;   ISCC.exe build\installer.iss /DAppVersion=1.9.0
 ; Sin ese define (build local), se usa el default de abajo.
 #ifndef AppVersion
 #define AppVersion "1.8.1"
 #endif
-#define AppExe "trafficMe.exe"
+#define AppExe "NetLeak.exe"
 
 [Setup]
 AppName={#AppName}
 AppVersion={#AppVersion}
-DefaultDirName={autopf}\trafficMe
+DefaultDirName={autopf}\NetLeak
 DefaultGroupName={#AppName}
-OutputBaseFilename=trafficMe-Setup-{#AppVersion}-x64
+OutputBaseFilename=NetLeak-Setup-{#AppVersion}-x64
 Compression=lzma2
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -31,7 +31,7 @@ UninstallDisplayIcon={app}\{#AppExe}
 LicenseFile=..\LICENSE
 
 [Files]
-; Salida one-file de PyInstaller (dist\trafficMe.exe):
+; Salida one-file de PyInstaller (dist\NetLeak.exe):
 Source: "..\dist\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

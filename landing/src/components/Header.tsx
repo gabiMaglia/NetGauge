@@ -13,9 +13,9 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={`container ${styles.inner}`}>
-        <a href="#top" className={styles.logo} aria-label="trafficMe — ir al inicio">
+        <a href="#top" className={styles.logo} aria-label="NetLeak — ir al inicio">
           <img src="/favicon.svg" alt="" width={28} height={28} aria-hidden="true" />
-          <span>trafficMe</span>
+          <span>NetLeak</span>
         </a>
 
         <nav className={styles.nav} aria-label="Navegación principal">
