@@ -3,7 +3,7 @@ import landingHtml from './landing.html?raw';
 
 /**
  * Landing NetGauge — render pixel-perfect del diseño hi-fi
- * `design_handoff_netLeak_panel/NetGauge Landing.dc.html` (T-018).
+ * `design_handoff_netLeak_panel/NetLeak Landing.dc.html` (T-018).
  *
  * El markup se inyecta verbatim (extraído byte a byte del diseño) y este
  * componente porta el comportamiento del runtime original: detección de SO,
