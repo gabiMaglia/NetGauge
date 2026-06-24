@@ -86,6 +86,16 @@ barras rx=2 fill=gradiente: (x12 y38 w10 h14) (x27 y24 w10 h28) (x42 y12 w10 h40
 3. Asegurar **fallback de fuente** en la UI que cubra scripts no-latinos comunes (sin romper la identidad visual): que un nombre con caracteres no-latinos se vea legible, no como cajas.
 4. **Multiplataforma:** la solución no debe degradar Windows; idealmente mejora ambos. Tests del parseo/normalización de nombres. Suite verde.
 
+## Sprint 4 — Tipografía bundleada
+| ID | Ext (ADO/Jira) | Tarea | Asignado | Estado | Niv | Criterios de aceptación | Rama |
+|----|----------------|-------|----------|--------|-----|--------------------------|------|
+| T-026 | — | Bundlear "Plus Jakarta Sans" con la app (no instalada en macOS → Qt usaba fallback) | nerv-orquestador | En revisión QA | A | Fuente cargada en runtime (no depende del SO); warning Qt de fuente faltante desaparece; bundleada en specs Win+macOS; multiplataforma | feature/T-026-bundle-font (sobre main) |
+
+## §T-026 · Bundlear Plus Jakarta Sans
+**Estado:** En revisión QA · **Hecho por:** nerv-orquestador · Reportado por PO (warning `Qt: missing font family "Plus Jakarta Sans"` al abrir la app en su Mac; la UI usaba fallback del sistema).
+**Hecho:** 4 TTF estáticos OFL (Regular/SemiBold/Bold/ExtraBold — pesos 400/600/700/800 que usa la UI) + `OFL.txt` en `assets/fonts/`. `theme.load_app_fonts()` los registra vía `QFontDatabase.addApplicationFont` al crear la QApplication (resuelve ruta dev y empaquetado `_MEIPASS`); llamado desde `app.run()`. Specs Win+macOS bundlean `assets/fonts → assets/fonts`. Verificado: la familia "Plus Jakarta Sans" se registra (offscreen) y el warning desaparece al reabrir la app en la Mac del PO.
+**Criterios:** (1) la fuente carga sin depender del SO; (2) sin warning de fuente faltante; (3) bundleada en ambos instaladores; (4) multiplataforma (Windows ya la tenía instalada o ahora bundleada; mismo loader). Licencia OFL incluida.
+
 ## Veredictos QA
 | Tarea | Veredicto | Defectos (si rechazo) | Fecha |
 |-------|-----------|------------------------|-------|

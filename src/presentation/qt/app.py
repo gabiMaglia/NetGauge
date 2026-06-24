@@ -30,6 +30,7 @@ from ...version import APP_VERSION, GITHUB_OWNER, GITHUB_REPO
 from .i18n import t
 from .main_window import MainWindow
 from .single_instance import SingleInstance
+from .theme import load_app_fonts
 from .widgets import make_app_qicon, make_sparkline_icon
 
 
@@ -88,6 +89,7 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     _set_app_user_model_id()
     _fix_dpi_rounding_policy()
     app = QApplication(sys.argv)
+    load_app_fonts()  # registrar Plus Jakarta Sans bundleada (no depende del SO)
     app.setQuitOnLastWindowClosed(False)  # cerrar la ventana NO cierra la app
     app_icon = make_app_qicon()
     app.setWindowIcon(app_icon)  # ícono de marca en diálogos (About, Cuota)

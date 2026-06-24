@@ -15,6 +15,9 @@ hiddenimports = (
 
 # reportlab trae fuentes/recursos que hay que bundlear o falla el export PDF.
 datas = collect_data_files("reportlab")
+# Fuente de marca bundleada (Plus Jakarta Sans) -> assets/fonts en el bundle;
+# la carga load_app_fonts() en runtime para no depender del SO.
+datas += [("..\\assets\\fonts", "assets/fonts")]
 
 a = Analysis(
     ["..\\main.py"],

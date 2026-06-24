@@ -33,6 +33,9 @@ hiddenimports = (
 )
 
 datas = collect_data_files("reportlab")
+# Fuente de marca bundleada (Plus Jakarta Sans) -> assets/fonts en el bundle;
+# la carga load_app_fonts() en runtime para no depender del SO.
+datas += [("../assets/fonts", "assets/fonts")]
 
 # Arquitectura objetivo del bundle. PyInstaller no cross-compila: esto solo
 # documenta/valida qué se está generando, no cambia el intérprete usado.

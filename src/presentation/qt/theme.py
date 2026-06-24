@@ -212,3 +212,26 @@ def app_qss(t: dict) -> str:
     }}
     QPushButton#PrimaryBtn:hover {{ background: {t['accent_strong']}; }}
     """
+
+
+def load_app_fonts() -> None:
+    """Registra las fuentes bundleadas (Plus Jakarta Sans) en runtime para no
+    depender de que el SO las tenga instaladas (en macOS no vienen de fábrica).
+
+    Best-effort: si el directorio de fuentes no está, no rompe el arranque.
+    Llamar UNA vez después de crear la QApplication y antes de aplicar el QSS.
+    Resuelve la ruta tanto en dev (repo) como empaquetado (PyInstaller _MEIPASS).
+    """
+    import sys
+    from pathlib import Path
+
+    base = getattr(sys, "_MEIPASS", None)
+    fonts_dir = (
+        Path(base) / "assets" / "fonts" if base
+        else Path(__file__).resolve().parents[3] / "assets" / "fonts"
+    )
+    if not fonts_dir.is_dir():
+        return
+    from PySide6.QtGui import QFontDatabase
+    for ttf in sorted(fonts_dir.glob("PlusJakartaSans-*.ttf")):
+        QFontDatabase.addApplicationFont(str(ttf))
