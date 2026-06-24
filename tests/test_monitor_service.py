@@ -108,6 +108,18 @@ def test_live_rate_smooths_0_2x_aliasing():
         assert 0.5 * x <= v <= 1.5 * x
 
 
+def test_internal_helper_excluded_from_apps(settings, notifier):
+    """T-024: el helper de captura (nettop) no debe figurar como una app del
+    usuario ni sumar su tráfico a totales/tasa; una app real sí."""
+    from src.domain.models import TrafficSample
+    m = make_monitor(settings, notifier)
+    m._on_sample(TrafficSample(1, "nettop", bytes_sent=1000, bytes_recv=2000))
+    m._on_sample(TrafficSample(2, "Chrome", bytes_sent=10, bytes_recv=20))
+    assert "nettop" not in m._session and "nettop" not in m._pending
+    assert "Chrome" in m._session
+    assert m._rate_sent == 10 and m._rate_recv == 20  # nettop no sumó a la tasa
+
+
 def test_live_rate_smoothing_does_not_affect_totals(settings, notifier):
     """El suavizado solo debe tocar _live_up/_live_down. Los totales por
     app (_session/_pending) deben reflejar exactamente los bytes recibidos

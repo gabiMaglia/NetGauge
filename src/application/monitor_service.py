@@ -38,6 +38,18 @@ _SPIKE_FLOOR = 3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
 _SPIKE_FACTOR = 3.0                # x veces el promedio reciente
 _NEW_APP_BYTES = 5 * 1024 * 1024   # 5 MB enviados para considerar app "nueva en red"
 
+# T-024: nombres de helpers INTERNOS de la propia app que NO deben aparecer
+# en "Por aplicación" ni contar como una app del usuario (es infraestructura
+# de captura, no algo que el usuario abrió). Hoy solo `nettop` en macOS
+# (NettopCaptureService lo reporta a sí mismo dentro de su propia salida);
+# en Windows el helper es ETW in-process y no genera una fila propia, pero
+# el set queda genérico/extensible para futuros helpers de cualquier OS.
+_INTERNAL_HELPER_NAMES = frozenset({"nettop"})
+
+
+def _is_internal_helper(app_name: str) -> bool:
+    return app_name.lower() in _INTERNAL_HELPER_NAMES
+
 
 class MonitorService:
     def __init__(
@@ -129,6 +141,8 @@ class MonitorService:
 
     # ---- captura -------------------------------------------------------
     def _on_sample(self, sample: TrafficSample) -> None:
+        if _is_internal_helper(sample.app_name):
+            return  # T-024: el helper de captura (nettop) no es una app del usuario
         with self._lock:
             for bucket in (self._session, self._pending):
                 usage = bucket.setdefault(sample.app_name, AppUsage(sample.app_name))
