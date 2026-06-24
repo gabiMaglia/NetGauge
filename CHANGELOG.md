@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.0.1] - 2026-06-24
+### Fixed
+- **macOS:** los procesos `nettop` ya no quedan huérfanos al cerrar la app de
+  forma no-limpia (se acumulaban en la lista de procesos). Se limpian al
+  arrancar y ante SIGTERM/SIGINT.
+- **macOS:** los nombres de apps con caracteres raros o "rectángulos vacíos"
+  (nombres que `nettop` truncaba) ahora se muestran completos.
+- La barra de título y el "Acerca de" decían "trafficMe" (residuo del rebrand);
+  ahora dicen **NetGauge**.
+### Changed
+- El helper interno (`nettop`) ya no aparece en la lista "Por aplicación".
+- Se **bundlea la tipografía Plus Jakarta Sans** con la app, así se ve igual sin
+  depender de que el sistema la tenga instalada.
+
 ## [2.0.0] - 2026-06-23
 ### Changed
 - **Rebrand completo: la app ahora se llama NetGauge.** Cambian el ejecutable,
