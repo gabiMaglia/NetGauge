@@ -196,6 +196,10 @@ class NettopCaptureService(CaptureService):
         self._master_fd: int | None = None
         # pid -> (bytes_in, bytes_out, ticks_ausente_consecutivos)
         self._prev: dict[int, tuple[int, int, int]] = {}
+        # pid -> nombre real resuelto (T-025): nettop trunca el nombre a un
+        # ancho fijo; cacheamos el nombre completo por PID para no resolver
+        # en cada bloque.
+        self._name_cache: dict[int, str] = {}
 
     @staticmethod
     def is_available() -> bool:
@@ -276,6 +280,7 @@ class NettopCaptureService(CaptureService):
         cmd = self._build_command()
         self._stop_event.clear()
         self._prev = {}
+        self._name_cache = {}
 
         # Lanzar nettop bajo un PTY (en vez de un pipe simple) para que vea
         # su stdout como un TTY y use line-buffering: así entrega cada
@@ -312,7 +317,15 @@ class NettopCaptureService(CaptureService):
             for block in split_into_blocks(lines):
                 if self._stop_event.is_set():
                     break
-                self._emit_deltas(parse_nettop_block(block), on_sample)
+                parsed = parse_nettop_block(block)
+                # Resolver el nombre real por PID (T-025) antes de los deltas:
+                # nettop trunca el nombre a un ancho fijo (y puede partir un
+                # carácter multibyte -> U+FFFD/"cajas" en la UI).
+                resolved = {
+                    pid: (self._resolve_name(pid, name), bin_, bout)
+                    for pid, (name, bin_, bout) in parsed.items()
+                }
+                self._emit_deltas(resolved, on_sample)
         except Exception as exc:  # noqa: BLE001
             log.warning("nettop: error leyendo salida (%s).", exc)
 
@@ -354,10 +367,36 @@ class NettopCaptureService(CaptureService):
             missing += 1
             if missing <= self._MAX_MISSING_TICKS:
                 new_prev[pid] = (bytes_in, bytes_out, missing)
+            else:
+                # proceso terminado de verdad: limpiar también la caché de
+                # nombre para no servir un nombre viejo si el PID se recicla.
+                self._name_cache.pop(pid, None)
             # si supera el límite, se purga (no se copia a new_prev) y un
             # futuro reaparición se trata como primer sample, no como reset.
 
         self._prev = new_prev
+
+    def _resolve_name(self, pid: int, fallback: str) -> str:
+        """Devuelve el nombre REAL del proceso por PID (T-025).
+
+        `nettop` trunca el nombre a un ancho fijo (~15 chars); si el corte cae
+        en medio de un carácter multibyte, los bytes parciales decodean a
+        U+FFFD ("cajas" en la UI). `psutil.Process(pid).name()` da el nombre
+        completo y bien codificado. Se cachea por PID; si psutil no puede
+        resolver (proceso ya terminado / sin permisos), cae al nombre de
+        nettop SIN cachear, para reintentar en el próximo bloque.
+        """
+        cached = self._name_cache.get(pid)
+        if cached is not None:
+            return cached
+        try:
+            import psutil
+            real = psutil.Process(pid).name()
+        except Exception:  # noqa: BLE001 — best-effort, nunca romper la captura
+            return fallback
+        name = real or fallback
+        self._name_cache[pid] = name
+        return name
 
     def stop(self) -> None:
         self._stop_event.set()

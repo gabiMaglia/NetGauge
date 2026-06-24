@@ -442,3 +442,37 @@ def test_start_calls_reap_orphans_before_launching(monkeypatch):
         pass
 
     assert calls == ["reap", "popen"]
+
+
+# --- T-025: resolución del nombre real por PID (nettop trunca a ~15 chars) ---
+
+def test_resolve_name_usa_nombre_completo_de_psutil(monkeypatch):
+    """nettop entrega 'Google Chrome H' (truncado); _resolve_name debe devolver
+    el nombre completo de psutil y cachearlo por PID."""
+    import psutil
+
+    class _FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def name(self):
+            return "Google Chrome Helper"
+
+    monkeypatch.setattr(psutil, "Process", _FakeProc)
+    svc = NettopCaptureService()
+    assert svc._resolve_name(811, "Google Chrome H") == "Google Chrome Helper"
+    assert svc._name_cache[811] == "Google Chrome Helper"  # cacheado
+
+
+def test_resolve_name_cae_al_fallback_sin_cachear(monkeypatch):
+    """Si psutil no puede resolver (proceso terminado/sin permisos), devuelve el
+    nombre de nettop SIN cachearlo, para reintentar en el próximo bloque."""
+    import psutil
+
+    def _boom(pid):
+        raise psutil.NoSuchProcess(pid)
+
+    monkeypatch.setattr(psutil, "Process", _boom)
+    svc = NettopCaptureService()
+    assert svc._resolve_name(999, "truncad") == "truncad"
+    assert 999 not in svc._name_cache
