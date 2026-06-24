@@ -54,9 +54,9 @@ barras rx=2 fill=gradiente: (x12 y38 w10 h14) (x27 y24 w10 h28) (x42 y12 w10 h40
 ## Sprint 3 — Robustez de captura macOS + nombres
 | ID | Ext (ADO/Jira) | Tarea | Asignado | Estado | Niv | Criterios de aceptación | Rama |
 |----|----------------|-------|----------|--------|-----|--------------------------|------|
-| T-023 | — | Leak de procesos `nettop` huérfanos (se acumulan tras cierres no-limpios) | nerv-desktop | To Do | S | Ver §T-023 | feature/T-023-capture-robustness (sobre main) |
-| T-024 | — | Ocultar el helper propio (`nettop`) de la lista "Por aplicación" | nerv-desktop | To Do | A | Ver §T-024 | feature/T-023-capture-robustness |
-| T-025 | — | Nombres de apps con caracteres raros / rectángulos vacíos (tofu / U+FFFD) | nerv-desktop | To Do | S | Ver §T-025 | feature/T-023-capture-robustness |
+| T-023 | — | Leak de procesos `nettop` huérfanos (se acumulan tras cierres no-limpios) | nerv-desktop | En revisión QA | S | Ver §T-023 | feature/T-023-capture-robustness (sobre main) |
+| T-024 | — | Ocultar el helper propio (`nettop`) de la lista "Por aplicación" | nerv-orquestador | En revisión QA | A | Ver §T-024 | feature/T-023-capture-robustness |
+| T-025 | — | Nombres de apps con caracteres raros / rectángulos vacíos (tofu / U+FFFD) | nerv-orquestador | En revisión QA | S | Ver §T-025 | feature/T-023-capture-robustness |
 
 ## §T-023 · Leak de `nettop` huérfanos
 **Estado:** To Do · **Tech Lead:** nerv-desktop · **Niv QA:** Strong (path de captura + manejo de procesos) · Reportado por PO (vio `nettop` ×4 en la lista de procesos del sistema).

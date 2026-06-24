@@ -3,6 +3,12 @@
 > Entradas nuevas ARRIBA. Máx. 6 líneas por entrada. Al superar 30 entradas,
 > el Orquestador mueve las más viejas a ~/.nerv/archive/NetGauge-handoffs-[fecha].md
 
+### 2026-06-23 nerv-desktop/orquestador (retorno) T-023 + T-024 + T-025
+- T-023 (nerv-desktop, commit 53d329e): reap_orphans por firma exacta (SIGTERM→SIGKILL) + handlers SIGTERM/SIGINT solo macOS; Windows/ETW intacto. +tests. El agente cortó por session-limit antes de terminar.
+- T-024 (orquestador, 2905fd3): completé el cableado del filtro `_is_internal_helper` en `_on_sample` (nettop no entra a session/pending ni suma a la tasa) + test.
+- T-025 (orquestador, 3c2c03b): causa CONFIRMADA en vivo = nettop trunca el nombre (pid 811 "Google Chrome H" vs real "Google Chrome Helper") → U+FFFD/cajas al partir multibyte. Fix: resolver nombre por PID (psutil, cacheado, fallback) en `_loop`; `_emit_deltas` queda puro. Verificado end-to-end (nombres completos). NOTA: la causa era truncamiento, NO la fuente; el fallback de fuente para nombres genuinamente no-latinos queda como follow-up opcional (sin repro).
+- Verificado: pytest 68 verde (5 skip), compileall OK. Pendiente: QA Strong + merge a main.
+
 ### 2026-06-23 nerv-orquestador→nerv-desktop T-023 + T-024 + T-025
 - Entrega: tres fixes de captura macOS en `feature/T-023-capture-robustness` (sobre main). T-023 leak de nettop huérfanos (Strong, diagnóstico CONFIRMADO: orphan tras cierre no-limpio, ppid=1); T-024 ocultar helper nettop de la lista (Advisory); T-025 nombres con caracteres raros/cajas (Strong). Specs y criterios: §T-023/§T-024/§T-025 en backlog.
 - ÉNFASIS PO: **compatibilidad multiplataforma** — todo macOS-scoped; el path Windows/ETW debe quedar IDÉNTICO; guardar las diferencias de señales en Windows.

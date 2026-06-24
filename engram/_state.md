@@ -2,7 +2,8 @@
 
 **Marca final:** NetGauge (dos renames: trafficMe → NetLeak → NetGauge; NetLeak nunca se publicó).
 **Sprint:** 2 — Landing polish (i18n + ícono + accent) · (Sprint 1 cerró con RELEASE v2.0.0 pusheado)
-**Landing en main (origin/main 65dd8c8):** T-020 i18n ES/EN/PT + switcher · T-021 ícono unificado (3 barras) · T-022 accent azul #458bf8. Validado a ojo por el PO ("perfecto") y pusheado. QA Strong formal pendiente (no bloqueante por decisión PO).
+**Landing en main (origin/main 65dd8c8):** T-020 i18n ES/EN/PT + switcher · T-021 ícono unificado (3 barras) · T-022 accent azul #458bf8. Pusheado.
+**Sprint 3 — robustez captura macOS (rama `feature/T-023-capture-robustness`, sobre main, NO pusheada):** T-023 fix leak nettop huérfanos (reap + señales, macOS-only) · T-024 ocultar helper nettop de la lista · T-025 nombres truncados→completos por PID (psutil). 3 commits, pytest 68 verde. Pendiente QA Strong + merge a main.
 **Rama objetivo:** main (en `origin/main`, commit 2467d5c) · repo GitHub renombrado a **gabiMaglia/NetGauge** · remoto local actualizado.
 **Release:** tag **v2.0.0** pusheado → workflow `release.yml` corriendo (run 28050985263). Pendiente: confirmar que publique los 3 assets (NetGauge-Setup-x64.exe + 2 .dmg, sin firmar).
 **Mergeado a main (ff) y pusheado:** T-015 (landing v1) · T-016/T-019 (rename→NetGauge) · T-017 (migración historial) · T-018 (landing pixel-perfect) · release prep (version 2.0.0 + changelog).
