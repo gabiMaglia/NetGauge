@@ -3,7 +3,8 @@
 **Marca final:** NetGauge (dos renames: trafficMe → NetLeak → NetGauge; NetLeak nunca se publicó).
 **Sprint:** 2 — Landing polish (i18n + ícono + accent) · (Sprint 1 cerró con RELEASE v2.0.0 pusheado)
 **Landing en main (origin/main 65dd8c8):** T-020 i18n ES/EN/PT + switcher · T-021 ícono unificado (3 barras) · T-022 accent azul #458bf8. Pusheado.
-**Sprint 3 — robustez captura macOS (rama `feature/T-023-capture-robustness`, sobre main, NO pusheada):** T-023 fix leak nettop huérfanos (reap + señales, macOS-only) · T-024 ocultar helper nettop de la lista · T-025 nombres truncados→completos por PID (psutil). 3 commits, pytest 68 verde. Pendiente QA Strong + merge a main.
+**Sprint 3 EN MAIN (origin/main 0264f9d):** T-023 fix leak nettop huérfanos (reap + señales, macOS-only; cleanup SIGTERM validado en vivo) · T-024 ocultar helper nettop · T-025 nombres truncados→completos por PID (psutil). + **fix de marca**: la barra de título y el "Acerca de" decían "trafficMe" por marca partida `traffic<span>Me</span>` (mismo bug que el logo landing; el sed no la alcanzó) → corregido a `Net<span>Gauge</span>`. pytest 68 verde. App reabierta y verificada en la Mac del PO (dice NetGauge, 1 nettop).
+**Follow-up conocido:** fuente "Plus Jakarta Sans" NO instalada en la Mac del PO (Qt usa fallback) → bundlear/instalar la fuente.
 **Rama objetivo:** main (en `origin/main`, commit 2467d5c) · repo GitHub renombrado a **gabiMaglia/NetGauge** · remoto local actualizado.
 **Release:** tag **v2.0.0** pusheado → workflow `release.yml` corriendo (run 28050985263). Pendiente: confirmar que publique los 3 assets (NetGauge-Setup-x64.exe + 2 .dmg, sin firmar).
 **Mergeado a main (ff) y pusheado:** T-015 (landing v1) · T-016/T-019 (rename→NetGauge) · T-017 (migración historial) · T-018 (landing pixel-perfect) · release prep (version 2.0.0 + changelog).
