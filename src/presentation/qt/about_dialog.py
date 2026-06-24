@@ -35,7 +35,7 @@ class AboutDialog(QDialog):
         head.addWidget(BarsLogo(40, 11))
         name_box = QVBoxLayout()
         name_box.setSpacing(2)
-        name = QLabel('traffic<span style="color:#3b82f6;">Me</span>')
+        name = QLabel('Net<span style="color:#3b82f6;">Gauge</span>')
         name.setObjectName("DlgTitle")
         ver = QLabel(t("about.version", v=APP_VERSION))
         ver.setObjectName("FieldLabel")

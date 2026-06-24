@@ -122,7 +122,7 @@ class MainWindow(QWidget):
 
         lay.addWidget(BarsLogo(26, 8))
 
-        brand = QLabel('traffic<span style="color:#3b82f6;">Me</span>')
+        brand = QLabel('Net<span style="color:#3b82f6;">Gauge</span>')
         brand.setObjectName("BrandName")
         lay.addWidget(brand)
         self._sub = QLabel(t("brand.sub"))
