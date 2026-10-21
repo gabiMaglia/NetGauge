@@ -139,6 +139,13 @@ def _setup_catalog_api() -> None:
 _WINDIR = os.environ.get("SystemRoot", "c:\\windows").lower().replace("/", "\\")
 
 
+def _is_under(path: str, root: str) -> bool:
+    """True si `path` es `root` o cuelga de `root` (compara con separador)."""
+    p = path.lower().replace("/", "\\")
+    r = root.lower().replace("/", "\\").rstrip("\\")
+    return bool(r) and (p == r or p.startswith(r + "\\"))
+
+
 def _verify_catalog(path: str, algo: str | None = None) -> bool:
     """True si el archivo está firmado por un catálogo del sistema (.cat).
 
@@ -297,7 +304,7 @@ def _location_ok(path: str) -> tuple[bool, bool]:
     ]
     suspicious_marks = ["\\temp\\", "\\appdata\\local\\temp\\",
                         "\\downloads\\", "\\tmp\\"]
-    ok = any(p.startswith(r) for r in normal_roots if r)
+    ok = any(_is_under(p, r) for r in normal_roots if r)
     bad = any(m in p for m in suspicious_marks)
     return ok, bad
 
@@ -327,7 +334,7 @@ class WindowsTrustEvaluator(TrustEvaluator):
         loc_ok, loc_bad = _location_ok(exe_path)
         has_meta = _file_description(exe_path) is not None
 
-        is_system = exe_path.lower().replace("/", "\\").startswith(_WINDIR)
+        is_system = _is_under(exe_path, _WINDIR)
         reasons: list[str] = []
         risk = 0
         if signed and valid:
