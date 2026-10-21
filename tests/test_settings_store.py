@@ -1,6 +1,8 @@
 """JsonSettingsStore: escritura atómica y load() robusto ante archivos dañados."""
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from src.domain.models import Settings
@@ -48,3 +50,29 @@ def test_failed_save_keeps_previous_file_intact(tmp_path, monkeypatch):
 
     assert path.read_bytes() == before
     assert not (tmp_path / "settings.json.tmp").exists()
+
+
+@pytest.mark.parametrize("content", [
+    '{"monthly_quota_gb": 50',                 # truncado (crash a mitad de write)
+    '{"monthly_quota_gb": null}',              # TypeError en float(None)
+    '[1, 2, 3]',                               # AttributeError: list.get
+    'null',                                    # AttributeError: None.get
+    '{"alert_thresholds": 5}',                 # TypeError en tuple(5)
+])
+def test_unreadable_settings_return_defaults_and_keep_backup(tmp_path, content, caplog):
+    path = tmp_path / "settings.json"
+    path.write_text(content, encoding="utf-8")
+
+    loaded = JsonSettingsStore(path).load()
+
+    assert loaded == Settings()
+    assert (tmp_path / "settings.json.bak").read_text("utf-8") == content
+    assert "settings.json" in caplog.text
+
+
+def test_valid_settings_do_not_create_backup(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"monthly_quota_gb": 10}), encoding="utf-8")
+
+    assert JsonSettingsStore(path).load().monthly_quota_gb == 10.0
+    assert not (tmp_path / "settings.json.bak").exists()
