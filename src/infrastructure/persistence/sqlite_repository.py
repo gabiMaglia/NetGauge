@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 import threading
 from datetime import datetime
@@ -60,16 +61,36 @@ class SqliteUsageRepository(UsageRepository):
         self._path = Path(db_path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
-        self._conn = self._open()
+        try:
+            self._conn = self._open()
+        except sqlite3.DatabaseError as exc:
+            code = getattr(exc, "sqlite_errorcode", None)
+            if code not in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+                raise  # p.ej. "database is locked": no es corrupción, no tocar
+            self._quarantine(exc)
+            self._conn = self._open()
 
     def _open(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self._path), check_same_thread=False)
         try:
+            conn.execute("PRAGMA journal_mode = WAL")
+            conn.execute("PRAGMA synchronous = NORMAL")
+            conn.execute("PRAGMA busy_timeout = 5000")
             self._migrate(conn)
         except BaseException:
-            conn.close()
+            conn.close()  # en Windows no se puede renombrar con la conexión abierta
             raise
         return conn
+
+    def _quarantine(self, exc: sqlite3.DatabaseError) -> None:
+        """Aparta la DB corrupta (y su WAL/SHM) para arrancar con una limpia."""
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        for suffix in ("", "-wal", "-shm"):
+            src = Path(f"{self._path}{suffix}")
+            if src.exists():
+                os.replace(src, f"{self._path}.corrupt-{stamp}{suffix}")
+        _log.warning("%s corrupta (%s): renombrada a %s.corrupt-%s y recreada.",
+                     self._path.name, exc, self._path.name, stamp)
 
     @staticmethod
     def _migrate(conn: sqlite3.Connection) -> None:

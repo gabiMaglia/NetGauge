@@ -171,3 +171,38 @@ def test_reopening_v2_db_does_not_touch_data(tmp_path):
     SqliteUsageRepository(path).close()
 
     assert _rows(path) == [("chrome", "2026-10-21T10:15", "2026-10-21T10:15:00", 1, 2)]
+
+
+# ---- Task 2: WAL + recuperación de DB corrupta ---------------------------
+
+def test_db_runs_in_wal_mode(repo, tmp_path):
+    assert _pragma(tmp_path / "usage.db", "journal_mode") == "wal"
+
+
+def test_corrupt_db_is_renamed_and_recreated(tmp_path, caplog):
+    path = tmp_path / "usage.db"
+    path.write_bytes(b"esto no es una base sqlite" * 200)
+
+    repo = SqliteUsageRepository(path)
+    try:
+        repo.save_batch([UsageRecord("chrome", 1, 2, T0)])
+        assert len(repo.usage_between(T0 - timedelta(hours=1), T0 + timedelta(hours=1))) == 1
+    finally:
+        repo.close()
+
+    backups = list(tmp_path.glob("usage.db.corrupt-*"))
+    assert len(backups) == 1
+    assert backups[0].read_bytes().startswith(b"esto no es una base sqlite")
+    assert "corrupta" in caplog.text
+
+
+def test_non_corruption_errors_are_not_swallowed(tmp_path, monkeypatch):
+    def locked(_conn):
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(SqliteUsageRepository, "_migrate", staticmethod(locked))
+    path = tmp_path / "usage.db"
+
+    with pytest.raises(sqlite3.OperationalError):
+        SqliteUsageRepository(path)
+    assert not list(tmp_path.glob("usage.db.corrupt-*"))
