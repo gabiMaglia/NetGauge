@@ -6,7 +6,11 @@ de parseo y la lógica de deltas/fallback con fakes.
 from __future__ import annotations
 
 import os
+import sys
 import threading
+import types
+
+import pytest
 
 from src.infrastructure.capture.nettop_capture import (
     NettopCaptureService,
@@ -15,6 +19,15 @@ from src.infrastructure.capture.nettop_capture import (
     parse_nettop_block,
     split_into_blocks,
 )
+
+
+@pytest.fixture
+def fake_pty(monkeypatch):
+    """`pty` no existe en Windows: lo suplantamos con pipes (mismo contrato de
+    fd crudo) para testear la lógica de `start()` en cualquier plataforma."""
+    mod = types.ModuleType("pty")
+    mod.openpty = os.pipe
+    monkeypatch.setitem(sys.modules, "pty", mod)
 
 
 def test_parse_nettop_block_basic():
@@ -70,6 +83,10 @@ def test_split_into_blocks_groups_by_header_with_carriage_return():
     assert parse_nettop_block(blocks[1]) == {1: ("A", 15, 25), 2: ("B", 5, 5)}
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="select() sobre pipes no existe en Windows; el backend nettop es solo macOS",
+)
 def test_iter_lines_from_fd_yields_decoded_lines_until_eof():
     """Simula el extremo maestro de un PTY: escribe en el extremo write de un
     pipe os.pipe() (mismo contrato de fd crudo que un PTY) con "\\r\\n" y
@@ -236,7 +253,7 @@ def test_build_command_raises_when_nettop_missing(monkeypatch):
         pass
 
 
-def test_start_raises_capture_unavailable_when_popen_fails(monkeypatch):
+def test_start_raises_capture_unavailable_when_popen_fails(monkeypatch, fake_pty):
     """Si Popen falla, start() degrada a CaptureUnavailable (no a un OSError
     crudo por doble-close del slave_fd) para que la factory caiga a psutil.
     Regresión T-011 (defecto QA: except + finally cerraban slave_fd dos veces)."""
@@ -414,7 +431,7 @@ def test_reap_orphans_is_safe_without_psutil(monkeypatch):
     assert mod.NettopCaptureService.reap_orphans() == 0
 
 
-def test_start_calls_reap_orphans_before_launching(monkeypatch):
+def test_start_calls_reap_orphans_before_launching(monkeypatch, fake_pty):
     """start() debe reapear huérfanos ANTES de lanzar el nuevo nettop (T-023)."""
     calls: list[str] = []
 

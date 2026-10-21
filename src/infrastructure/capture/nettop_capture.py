@@ -64,7 +64,6 @@ from __future__ import annotations
 
 import logging
 import os
-import pty
 import select
 import shutil
 import subprocess
@@ -286,6 +285,9 @@ class NettopCaptureService(CaptureService):
         # su stdout como un TTY y use line-buffering: así entrega cada
         # bloque ~1/s en vez de bufferear varios y volcarlos en ráfaga
         # (causa raíz de T-011, verificado empíricamente en este Mac).
+        # `pty` (termios) no existe en Windows: import perezoso, solo macOS lo usa.
+        import pty
+
         try:
             master_fd, slave_fd = pty.openpty()
         except OSError as exc:
