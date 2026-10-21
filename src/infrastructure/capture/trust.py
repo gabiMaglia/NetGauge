@@ -12,6 +12,7 @@ from __future__ import annotations
 import ctypes
 import os
 from ctypes import wintypes
+from types import SimpleNamespace
 
 from ...domain.models import (
     TRUST_CAUTION,
@@ -136,6 +137,37 @@ def _setup_catalog_api() -> None:
     _catalog_api_ready = True
 
 
+_api_cache: SimpleNamespace | None = None
+
+
+def _proto(fn, restype, argtypes) -> None:
+    """Fija el prototipo de una función Win32 (obligatorio en 64-bit)."""
+    fn.restype = restype
+    fn.argtypes = argtypes
+
+
+def _api() -> SimpleNamespace:
+    """DLLs DEDICADAS con prototipos. No tocamos el singleton `ctypes.windll`:
+    los prototipos viven en el objeto WinDLL, y mutarlo afectaría a cualquier
+    otro módulo que use la misma DLL."""
+    global _api_cache
+    if _api_cache is not None:
+        return _api_cache
+    c32 = ctypes.WinDLL("crypt32")
+    V, D, B = ctypes.c_void_p, wintypes.DWORD, wintypes.BOOL
+    # CryptQueryObject(tipo, objeto, contentFlags, formatFlags, flags,
+    #                  pdwEnc, pdwContent, pdwFormat, phStore, phMsg, ppvCtx)
+    _proto(c32.CryptQueryObject, B, [D, V, D, D, D, V, V, V, V, V, V])
+    _proto(c32.CryptMsgGetParam, B, [V, D, D, V, V])
+    _proto(c32.CertEnumCertificatesInStore, V, [V, V])
+    _proto(c32.CertGetNameStringW, D, [V, D, D, V, V, D])
+    _proto(c32.CertFreeCertificateContext, B, [V])
+    _proto(c32.CertCloseStore, B, [V, D])
+    _proto(c32.CryptMsgClose, B, [V])
+    _api_cache = SimpleNamespace(c32=c32)
+    return _api_cache
+
+
 _WINDIR = os.environ.get("SystemRoot", "c:\\windows").lower().replace("/", "\\")
 
 
@@ -254,42 +286,45 @@ def _signer_name(path: str) -> str | None:
     CMSG_SIGNER_INFO_PARAM = 6
     CERT_NAME_SIMPLE_DISPLAY_TYPE = 4
     try:
-        crypt32 = ctypes.windll.crypt32
-        h_store = wintypes.HANDLE()
-        h_msg = wintypes.HANDLE()
+        crypt32 = _api().c32
+        h_store = ctypes.c_void_p()
+        h_msg = ctypes.c_void_p()
         ok = crypt32.CryptQueryObject(
-            CERT_QUERY_OBJECT_FILE, wintypes.LPCWSTR(path),
+            CERT_QUERY_OBJECT_FILE, ctypes.c_wchar_p(path),
             CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0,
             None, None, None, ctypes.byref(h_store), ctypes.byref(h_msg), None)
         if not ok:
             return None
         try:
             size = wintypes.DWORD()
-            if not ctypes.windll.crypt32.CryptMsgGetParam(
+            if not crypt32.CryptMsgGetParam(
                     h_msg, CMSG_SIGNER_INFO_PARAM, 0, None, ctypes.byref(size)):
                 return None
             buf = ctypes.create_string_buffer(size.value)
-            if not ctypes.windll.crypt32.CryptMsgGetParam(
+            if not crypt32.CryptMsgGetParam(
                     h_msg, CMSG_SIGNER_INFO_PARAM, 0, buf, ctypes.byref(size)):
                 return None
             # El primer cert del store suele ser el del firmante.
             ctx = crypt32.CertEnumCertificatesInStore(h_store, None)
             if not ctx:
                 return None
-            n = crypt32.CertGetNameStringW(
-                ctx, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, None, None, 0)
-            if n <= 1:
-                return None
-            out = ctypes.create_unicode_buffer(n)
-            crypt32.CertGetNameStringW(
-                ctx, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, None, out, n)
-            name = out.value.strip()
-            return name or None
+            try:
+                n = crypt32.CertGetNameStringW(
+                    ctx, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, None, None, 0)
+                if n <= 1:
+                    return None
+                out = ctypes.create_unicode_buffer(n)
+                crypt32.CertGetNameStringW(
+                    ctx, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, None, out, n)
+                name = out.value.strip()
+                return name or None
+            finally:
+                crypt32.CertFreeCertificateContext(ctx)  # antes se filtraba
         finally:
             if h_store:
                 crypt32.CertCloseStore(h_store, 0)
             if h_msg:
-                ctypes.windll.crypt32.CryptMsgClose(h_msg)
+                crypt32.CryptMsgClose(h_msg)
     except Exception:  # noqa: BLE001
         return None
 

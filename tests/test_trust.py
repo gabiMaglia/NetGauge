@@ -30,3 +30,43 @@ def test_location_ok_no_confia_en_prefijos_hermanos(monkeypatch):
     assert trust._location_ok("C:\\Windows.old\\a.exe") == (False, False)
     assert trust._location_ok("C:\\Program Files-evil\\a.exe") == (False, False)
     assert trust._location_ok("C:\\Users\\x\\Downloads\\a.exe") == (False, True)
+
+
+# --- prototipos ctypes crypt32 -----------------------------------------------
+
+@win_only
+def test_crypt32_prototipos_configurados():
+    """En 64-bit, sin restype/argtypes ctypes trunca punteros a int de 32 bits
+    (access violation intermitente). El crash es no determinista: verificamos
+    la configuración, que sí lo es."""
+    import ctypes
+
+    c32 = trust._api().c32
+    assert c32.CertEnumCertificatesInStore.restype == ctypes.c_void_p
+    assert c32.CertEnumCertificatesInStore.argtypes == [ctypes.c_void_p, ctypes.c_void_p]
+    assert c32.CertGetNameStringW.argtypes is not None
+    for nombre in ("CryptQueryObject", "CryptMsgGetParam", "CertGetNameStringW",
+                   "CertFreeCertificateContext", "CertCloseStore", "CryptMsgClose"):
+        assert getattr(c32, nombre).argtypes is not None, nombre
+
+
+@win_only
+def test_crypt32_no_muta_windll():
+    """Usamos un WinDLL dedicado: el singleton `ctypes.windll` queda intacto."""
+    import ctypes
+
+    trust._api()
+    assert ctypes.windll.crypt32.CertEnumCertificatesInStore.restype != ctypes.c_void_p
+
+
+@win_only
+def test_signer_name_explorer_estable_en_loop():
+    """Red de seguridad: el access violation original aparecía a las pocas
+    iteraciones. 200 llamadas seguidas no deben crashear ni variar."""
+    import os
+
+    path = os.path.join(os.environ["SystemRoot"], "explorer.exe")
+    nombres = {trust._signer_name(path) for _ in range(200)}
+    assert len(nombres) == 1
+    (nombre,) = nombres
+    assert nombre and "Microsoft" in nombre
