@@ -256,3 +256,25 @@ def test_vt_disabled_returns_untouched(settings, notifier):
 def test_trust_for_unknown_without_evaluator(settings, notifier):
     m = make_monitor(settings, notifier)  # sin trust_evaluator
     assert m.trust_for("Cualquiera").level == TRUST_UNKNOWN
+
+
+
+class _SpyRepo(FakeRepo):
+    def __init__(self) -> None:
+        super().__init__()
+        self.starts: list[datetime] = []
+
+    def totals_by_app(self, start, end):
+        self.starts.append(start)
+        return []
+
+
+def test_week_period_starts_exactly_at_monday_midnight(settings, notifier):
+    repo = _SpyRepo()
+    m = make_monitor(settings, notifier, repo)
+
+    m.usage_for_period("week")
+
+    start = repo.starts[-1]
+    assert start.weekday() == 0
+    assert (start.hour, start.minute, start.second, start.microsecond) == (0, 0, 0, 0)

@@ -336,8 +336,8 @@ class MonitorService:
         now = datetime.now()
         start = {
             "day": now.replace(hour=0, minute=0, second=0, microsecond=0),
-            "week": now - timedelta(days=now.weekday(), hours=now.hour,
-                                    minutes=now.minute, seconds=now.second),
+            "week": (now - timedelta(days=now.weekday())).replace(
+                hour=0, minute=0, second=0, microsecond=0),
             "month": now.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
         }.get(period, now - timedelta(days=1))
         return self._repo.totals_by_app(start, now + timedelta(seconds=1))
