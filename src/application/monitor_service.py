@@ -162,22 +162,26 @@ class MonitorService:
         self._rate_timer.start()
 
     def _rate_tick(self) -> None:
-        with self._lock:
-            raw_up = float(self._rate_sent)
-            raw_down = float(self._rate_recv)
-            self._rate_sent = 0
-            self._rate_recv = 0
-            # Suavizado (T-012): promedio móvil sobre las últimas
-            # _RATE_WINDOW lecturas crudas de 1s. Solo afecta lo MOSTRADO
-            # (_live_up/_live_down); los totales/persistencia ya quedaron
-            # actualizados en _on_sample y no se tocan aquí.
-            self._raw_up_history.append(raw_up)
-            self._raw_down_history.append(raw_down)
-            self._live_up = sum(self._raw_up_history) / len(self._raw_up_history)
-            self._live_down = sum(self._raw_down_history) / len(self._raw_down_history)
-            smoothed_total = self._live_up + self._live_down
-        self._check_spike(smoothed_total)
-        self._schedule_rate()
+        try:
+            with self._lock:
+                raw_up = float(self._rate_sent)
+                raw_down = float(self._rate_recv)
+                self._rate_sent = 0
+                self._rate_recv = 0
+                # Suavizado (T-012): promedio móvil sobre las últimas
+                # _RATE_WINDOW lecturas crudas de 1s. Solo afecta lo MOSTRADO
+                # (_live_up/_live_down); los totales/persistencia ya quedaron
+                # actualizados en _on_sample y no se tocan aquí.
+                self._raw_up_history.append(raw_up)
+                self._raw_down_history.append(raw_down)
+                self._live_up = sum(self._raw_up_history) / len(self._raw_up_history)
+                self._live_down = sum(self._raw_down_history) / len(self._raw_down_history)
+                smoothed_total = self._live_up + self._live_down
+            self._check_spike(smoothed_total)
+        except Exception:  # noqa: BLE001
+            log.exception("Fallo en el tick de velocidad; sigo")
+        finally:
+            self._schedule_rate()  # la velocidad en vivo nunca se congela
 
     # ---- i18n de avisos -----------------------------------------------
     def set_translator(self, translator: Callable[[str], str]) -> None:
@@ -238,11 +242,18 @@ class MonitorService:
         self._flush_timer.start()
 
     def _tick(self) -> None:
-        self._flush()
-        self._check_quota_alerts()
-        self._check_new_apps()
-        self._purge_if_due()
-        self._schedule_flush()
+        try:
+            # Cada paso aislado: si falla el flush (DB bloqueada) igual corren
+            # cuotas, apps nuevas y purga; el batch queda pendiente (Task 1).
+            for step in (self._flush, self._check_quota_alerts,
+                         self._check_new_apps, self._purge_if_due):
+                try:
+                    step()
+                except Exception:  # noqa: BLE001
+                    log.exception("Fallo en %s; se reintenta en el próximo tick",
+                                  step.__name__)
+        finally:
+            self._schedule_flush()  # la cadena de timers nunca se corta
 
     def _purge_if_due(self) -> None:
         days = self.settings.retention_days

@@ -318,3 +318,59 @@ def test_flush_failure_keeps_batch_for_retry(settings, notifier):
     m._on_sample(TrafficSample(1, "A", bytes_sent=1, bytes_recv=2))
     m._flush()
     assert _totals(repo.saved) == {"A": (101, 202)}
+
+
+@pytest.fixture
+def running_monitor(settings, notifier):
+    """MonitorService marcado como corriendo, sin start() (sin captura ni
+    timers iniciales). Los timers que reprogramen los ticks se cancelan en
+    stop(); intervalo de flush enorme para que ninguno dispare durante el test."""
+    made = []
+
+    def _make(repo=None, notifier_=None):
+        m = make_monitor(settings, notifier_ or notifier, repo)
+        m._flush_interval = 3600.0
+        m._running = True
+        made.append(m)
+        return m
+
+    yield _make
+    for m in made:
+        m.stop()
+
+
+class BoomNotifier(FakeNotifier):
+    def notify(self, title, message):
+        raise RuntimeError("toast caído")
+
+
+def test_tick_survives_save_error_and_retries(running_monitor):
+    repo = FlakyRepo(failures=1)
+    m = running_monitor(repo)
+    m._on_sample(TrafficSample(1, "A", bytes_sent=100, bytes_recv=200))
+    m._tick()                             # save_batch revienta: no debe propagar
+    assert m._flush_timer is not None     # la cadena de timers sigue viva
+    assert repo.saved == []
+    m._tick()                             # reintento: persiste lo pendiente
+    assert _totals(repo.saved) == {"A": (100, 200)}
+
+
+def test_tick_notifier_error_does_not_skip_purge(settings, running_monitor):
+    settings.monthly_quota_gb = 0.0
+    settings.daily_quota_gb = 1.0 / (1024**3) * 1000   # ~1000 bytes -> 100%
+    settings.retention_days = 30
+    repo = FakeRepo([UsageRecord("A", 500, 500, datetime.now())])
+    m = running_monitor(repo, BoomNotifier())
+    m._tick()                             # la alerta de cuota revienta en notify
+    assert repo.purged_before is not None  # pero la purga igual corrió
+    assert m._flush_timer is not None
+
+
+def test_rate_tick_survives_notifier_error_and_reschedules(running_monitor):
+    m = running_monitor(notifier_=BoomNotifier())
+    for _ in range(12):
+        m._check_spike(100_000)           # historial estable, sin pico
+    m._rate_sent = 50_000_000             # pico -> notify revienta
+    m._rate_tick()
+    assert m.live_rate()[0] == 50_000_000
+    assert m._rate_timer is not None      # la velocidad en vivo no se congela
