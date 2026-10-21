@@ -35,7 +35,7 @@ class AppUsage:
 
 @dataclass
 class UsageRecord:
-    """Fila histórica persistida (una por app por intervalo de flush)."""
+    """Fila histórica persistida (una por app por minuto)."""
 
     app_name: str
     bytes_sent: int

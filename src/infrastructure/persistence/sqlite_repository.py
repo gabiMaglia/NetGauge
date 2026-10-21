@@ -1,6 +1,7 @@
 """Repositorio SQLite. Thread-safe vía lock; agrega por (app, minuto)."""
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 from datetime import datetime
@@ -10,59 +11,109 @@ from typing import Iterable
 from ...domain.models import UsageRecord
 from ...domain.ports import UsageRepository
 
-_SCHEMA = """
-CREATE TABLE IF NOT EXISTS usage (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+_log = logging.getLogger(__name__)
+
+# v2: una fila por (app, minuto). `minute` = 'YYYY-MM-DDTHH:MM' (clave del UPSERT);
+# `recorded_at` = el mismo minuto en ISO completo ('...:00'), lo usan las queries.
+_TABLE_V2 = """
+CREATE TABLE {name} (
+    id          INTEGER PRIMARY KEY,
     app_name    TEXT    NOT NULL,
-    bytes_sent  INTEGER NOT NULL,
-    bytes_recv  INTEGER NOT NULL,
-    recorded_at TEXT    NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_usage_recorded_at ON usage(recorded_at);
-CREATE INDEX IF NOT EXISTS idx_usage_app ON usage(app_name);
+    minute      TEXT    NOT NULL,
+    recorded_at TEXT    NOT NULL,
+    bytes_sent  INTEGER NOT NULL DEFAULT 0,
+    bytes_recv  INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (app_name, minute)
+)
 """
+_INDEX_V2 = (
+    "CREATE INDEX IF NOT EXISTS idx_usage_recorded_app "
+    "ON usage(recorded_at, app_name)"
+)
 
-_SCHEMA_VERSION = 1  # subir y agregar una entrada en _MIGRATIONS al cambiar esquema
+_SCHEMA_VERSION = 2  # subir y agregar una entrada en _MIGRATIONS al cambiar esquema
 
-# Migraciones idempotentes por versión destino. Ej: 2: ("ALTER TABLE ...",)
-_MIGRATIONS: dict[int, tuple[str, ...]] = {}
+# Migraciones por versión destino; cada una corre en una sola transacción.
+_MIGRATIONS: dict[int, tuple[str, ...]] = {
+    # v1 → v2: consolida las filas por flush (cada 10 s) en una por (app, minuto).
+    2: (
+        "DROP TABLE IF EXISTS usage_v2",
+        _TABLE_V2.format(name="usage_v2"),
+        "INSERT INTO usage_v2 (app_name, minute, recorded_at, bytes_sent, bytes_recv) "
+        "SELECT app_name, substr(recorded_at, 1, 16), "
+        "substr(recorded_at, 1, 16) || ':00', SUM(bytes_sent), SUM(bytes_recv) "
+        "FROM usage GROUP BY app_name, substr(recorded_at, 1, 16)",
+        "DROP TABLE usage",
+        "ALTER TABLE usage_v2 RENAME TO usage",
+        _INDEX_V2,
+    ),
+}
+
+
+def _minute_key(dt: datetime) -> str:
+    """'YYYY-MM-DDTHH:MM': mismo corte que substr(recorded_at, 1, 16) en SQL."""
+    return dt.isoformat()[:16]
 
 
 class SqliteUsageRepository(UsageRepository):
     def __init__(self, db_path: str | Path) -> None:
-        self._path = str(db_path)
-        Path(self._path).parent.mkdir(parents=True, exist_ok=True)
+        self._path = Path(db_path)
+        self._path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        self._conn.executescript(_SCHEMA)
-        self._conn.commit()
-        self._migrate()
+        self._conn = self._open()
 
-    def _migrate(self) -> None:
-        """Aplica migraciones pendientes según PRAGMA user_version."""
-        current = self._conn.execute("PRAGMA user_version").fetchone()[0]
-        if current == 0:
-            # DB nueva (o pre-versionado): el esquema ya está al día.
-            self._conn.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
-            self._conn.commit()
+    def _open(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(str(self._path), check_same_thread=False)
+        try:
+            self._migrate(conn)
+        except BaseException:
+            conn.close()
+            raise
+        return conn
+
+    @staticmethod
+    def _migrate(conn: sqlite3.Connection) -> None:
+        """Crea el esquema o aplica migraciones pendientes según PRAGMA user_version."""
+        has_table = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'usage'"
+        ).fetchone() is not None
+        if not has_table:  # DB nueva: esquema actual directo
+            conn.execute(_TABLE_V2.format(name="usage"))
+            conn.execute(_INDEX_V2)
+            conn.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
+            conn.commit()
+            return
+        # user_version 0 con tabla = DB pre-versionado, que ya tenía el esquema v1.
+        current = conn.execute("PRAGMA user_version").fetchone()[0] or 1
+        if current >= _SCHEMA_VERSION:
             return
         for target in range(current + 1, _SCHEMA_VERSION + 1):
-            for stmt in _MIGRATIONS.get(target, ()):
-                self._conn.execute(stmt)
-            self._conn.execute(f"PRAGMA user_version = {target}")
-            self._conn.commit()
+            _log.info("Migrando usage.db a esquema v%d...", target)
+            conn.execute("BEGIN")
+            try:
+                for stmt in _MIGRATIONS.get(target, ()):
+                    conn.execute(stmt)
+                conn.execute(f"PRAGMA user_version = {target}")
+                conn.commit()
+            except BaseException:
+                conn.rollback()
+                raise
+            _log.info("usage.db migrada a v%d.", target)
 
     def save_batch(self, records: Iterable[UsageRecord]) -> None:
-        rows = [
-            (r.app_name, r.bytes_sent, r.bytes_recv, r.recorded_at.isoformat())
-            for r in records
-        ]
+        rows = []
+        for r in records:
+            minute = _minute_key(r.recorded_at)
+            rows.append((r.app_name, minute, minute + ":00", r.bytes_sent, r.bytes_recv))
         if not rows:
             return
         with self._lock:
             self._conn.executemany(
-                "INSERT INTO usage (app_name, bytes_sent, bytes_recv, recorded_at) "
-                "VALUES (?, ?, ?, ?)",
+                "INSERT INTO usage (app_name, minute, recorded_at, bytes_sent, bytes_recv) "
+                "VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT (app_name, minute) DO UPDATE SET "
+                "bytes_sent = bytes_sent + excluded.bytes_sent, "
+                "bytes_recv = bytes_recv + excluded.bytes_recv",
                 rows,
             )
             self._conn.commit()
