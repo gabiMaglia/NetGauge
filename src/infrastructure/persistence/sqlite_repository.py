@@ -50,6 +50,8 @@ _MIGRATIONS: dict[int, tuple[str, ...]] = {
     ),
 }
 
+_PURGE_CHUNK = 5000  # filas por DELETE: no bloquea save_batch mucho tiempo
+
 
 def _minute_key(dt: datetime) -> str:
     """'YYYY-MM-DDTHH:MM': mismo corte que substr(recorded_at, 1, 16) en SQL."""
@@ -73,6 +75,8 @@ class SqliteUsageRepository(UsageRepository):
     def _open(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self._path), check_same_thread=False)
         try:
+            # auto_vacuum solo aplica a DBs sin tablas (o tras VACUUM): va primero.
+            conn.execute("PRAGMA auto_vacuum = INCREMENTAL")
             conn.execute("PRAGMA journal_mode = WAL")
             conn.execute("PRAGMA synchronous = NORMAL")
             conn.execute("PRAGMA busy_timeout = 5000")
@@ -120,6 +124,8 @@ class SqliteUsageRepository(UsageRepository):
                 conn.rollback()
                 raise
             _log.info("usage.db migrada a v%d.", target)
+        # La tabla se recreó: VACUUM devuelve el espacio y activa auto_vacuum.
+        conn.execute("VACUUM")
 
     def save_batch(self, records: Iterable[UsageRecord]) -> None:
         rows = []
@@ -165,12 +171,25 @@ class SqliteUsageRepository(UsageRepository):
             ]
 
     def purge_older_than(self, cutoff: datetime) -> int:
-        with self._lock:
-            cur = self._conn.execute(
-                "DELETE FROM usage WHERE recorded_at < ?", (cutoff.isoformat(),)
-            )
-            self._conn.commit()
-            return cur.rowcount or 0
+        total = 0
+        while True:
+            with self._lock:  # lock por lote: save_batch puede intercalarse
+                cur = self._conn.execute(
+                    "DELETE FROM usage WHERE id IN "
+                    "(SELECT id FROM usage WHERE recorded_at < ? LIMIT ?)",
+                    (cutoff.isoformat(), _PURGE_CHUNK),
+                )
+                self._conn.commit()
+            deleted = cur.rowcount or 0
+            total += deleted
+            if deleted < _PURGE_CHUNK:
+                break
+        if total:
+            with self._lock:
+                # fetchall: el PRAGMA libera páginas de a un paso por fila.
+                self._conn.execute("PRAGMA incremental_vacuum").fetchall()
+                self._conn.commit()
+        return total
 
     def close(self) -> None:
         with self._lock:

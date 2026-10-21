@@ -206,3 +206,45 @@ def test_non_corruption_errors_are_not_swallowed(tmp_path, monkeypatch):
     with pytest.raises(sqlite3.OperationalError):
         SqliteUsageRepository(path)
     assert not list(tmp_path.glob("usage.db.corrupt-*"))
+
+
+# ---- Task 3: purga por lotes + vacuum incremental ------------------------
+
+def test_fresh_db_uses_incremental_auto_vacuum(repo, tmp_path):
+    assert _pragma(tmp_path / "usage.db", "auto_vacuum") == 2  # INCREMENTAL
+
+
+def test_migrated_db_switches_to_incremental_auto_vacuum(tmp_path):
+    path = tmp_path / "usage.db"
+    _build_v1(path, 1)
+    assert _pragma(path, "auto_vacuum") == 0
+
+    SqliteUsageRepository(path).close()
+
+    assert _pragma(path, "auto_vacuum") == 2
+
+
+def test_purge_deletes_in_chunks_and_counts_all(repo, monkeypatch):
+    monkeypatch.setattr(sr, "_PURGE_CHUNK", 3)
+    base = datetime(2026, 1, 1)
+    repo.save_batch([UsageRecord("app", 1, 1, base + timedelta(minutes=i)) for i in range(10)])
+    cutoff = base + timedelta(minutes=7)
+
+    assert repo.purge_older_than(cutoff) == 7
+    left = repo.usage_between(base, base + timedelta(days=1))
+    assert [r.recorded_at for r in left] == [base + timedelta(minutes=i) for i in (7, 8, 9)]
+
+
+def test_purge_releases_free_pages(repo, tmp_path):
+    base = datetime(2026, 1, 1)
+    repo.save_batch([UsageRecord(f"app-{i:05d}" * 4, 1, 1, base) for i in range(5000)])
+    path = tmp_path / "usage.db"
+
+    assert repo.purge_older_than(base + timedelta(days=1)) == 5000
+
+    conn = sqlite3.connect(path)
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        assert conn.execute("PRAGMA freelist_count").fetchone()[0] == 0
+    finally:
+        conn.close()
