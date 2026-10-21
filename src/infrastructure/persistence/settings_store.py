@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from ...domain.models import Settings
@@ -22,6 +23,14 @@ class JsonSettingsStore(SettingsStore):
             return Settings()
 
     def save(self, settings: Settings) -> None:
-        self._path.write_text(
-            json.dumps(settings.to_dict(), indent=2), encoding="utf-8"
-        )
+        # Escritura atómica: tmp + os.replace. Un crash a mitad deja el archivo viejo.
+        tmp = self._path.with_name(self._path.name + ".tmp")
+        try:
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(settings.to_dict(), fh, indent=2)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, self._path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
