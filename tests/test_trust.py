@@ -70,3 +70,45 @@ def test_signer_name_explorer_estable_en_loop():
     assert len(nombres) == 1
     (nombre,) = nombres
     assert nombre and "Microsoft" in nombre
+
+
+# --- prototipos ctypes wintrust / kernel32 -----------------------------------
+
+@win_only
+def test_wintrust_y_kernel32_prototipos_configurados():
+    import ctypes
+    from ctypes import wintypes
+
+    api = trust._api()
+    for nombre in ("WinVerifyTrust", "CryptCATAdminAcquireContext",
+                   "CryptCATAdminAcquireContext2", "CryptCATAdminCalcHashFromFileHandle",
+                   "CryptCATAdminCalcHashFromFileHandle2",
+                   "CryptCATAdminEnumCatalogFromHash", "CryptCATCatalogInfoFromContext",
+                   "CryptCATAdminReleaseCatalogContext", "CryptCATAdminReleaseContext"):
+        assert getattr(api.wt, nombre).argtypes is not None, nombre
+    for nombre in ("CreateFileW", "CloseHandle"):
+        assert getattr(api.k32, nombre).argtypes is not None, nombre
+    # Devuelven HANDLE: sin restype ctypes los trunca a int de 32 bits.
+    assert api.wt.CryptCATAdminEnumCatalogFromHash.restype == wintypes.HANDLE
+    assert api.k32.CreateFileW.restype == wintypes.HANDLE
+    assert api.wt.WinVerifyTrust.restype == ctypes.c_long
+
+
+@win_only
+def test_verify_signature_embebida_y_catalogo():
+    import os
+
+    root = os.environ["SystemRoot"]
+    # explorer.exe: firma embebida; svchost.exe: según build puede ir por catálogo.
+    assert trust._verify_signature(os.path.join(root, "explorer.exe")) == (True, True)
+    assert trust._verify_signature(os.path.join(root, "System32", "svchost.exe")) == (True, True)
+
+
+@win_only
+def test_verify_catalog_en_loop_no_crashea():
+    import os
+
+    path = os.path.join(os.environ["SystemRoot"], "System32", "svchost.exe")
+    for _ in range(100):
+        trust._verify_catalog(path, "SHA256")
+        trust._verify_catalog(path, None)

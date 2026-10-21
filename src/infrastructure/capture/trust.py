@@ -111,7 +111,7 @@ def _verify_embedded(path: str) -> int:
     data.dwUnionChoice = _WTD_CHOICE_FILE
     data.pFile = ctypes.pointer(file_info)
     data.dwStateAction = _WTD_STATEACTION_VERIFY
-    wt = ctypes.windll.wintrust
+    wt = _api().wt
     ret = wt.WinVerifyTrust(None, ctypes.byref(_ACTION), ctypes.byref(data)) & 0xFFFFFFFF
     data.dwStateAction = _WTD_STATEACTION_CLOSE
     wt.WinVerifyTrust(None, ctypes.byref(_ACTION), ctypes.byref(data))
@@ -119,22 +119,6 @@ def _verify_embedded(path: str) -> int:
 
 
 _INVALID_HANDLE = ctypes.c_void_p(-1).value
-_catalog_api_ready = False
-
-
-def _setup_catalog_api() -> None:
-    """Fija restype/argtypes: en 64-bit, sin esto ctypes trunca los HANDLE."""
-    global _catalog_api_ready
-    if _catalog_api_ready:
-        return
-    wt = ctypes.windll.wintrust
-    k32 = ctypes.windll.kernel32
-    k32.CreateFileW.restype = wintypes.HANDLE
-    k32.CreateFileW.argtypes = [
-        wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
-        wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
-    wt.CryptCATAdminEnumCatalogFromHash.restype = wintypes.HANDLE
-    _catalog_api_ready = True
 
 
 _api_cache: SimpleNamespace | None = None
@@ -164,7 +148,23 @@ def _api() -> SimpleNamespace:
     _proto(c32.CertFreeCertificateContext, B, [V])
     _proto(c32.CertCloseStore, B, [V, D])
     _proto(c32.CryptMsgClose, B, [V])
-    _api_cache = SimpleNamespace(c32=c32)
+    wt = ctypes.WinDLL("wintrust")
+    k32 = ctypes.WinDLL("kernel32")
+    H, P = wintypes.HANDLE, ctypes.POINTER
+    # WinVerifyTrust(hwnd, GUID*, WINTRUST_DATA*) -> LONG
+    _proto(wt.WinVerifyTrust, ctypes.c_long, [H, V, V])
+    _proto(wt.CryptCATAdminAcquireContext, B, [P(H), V, D])
+    _proto(wt.CryptCATAdminAcquireContext2, B, [P(H), V, wintypes.LPCWSTR, V, D])
+    _proto(wt.CryptCATAdminCalcHashFromFileHandle, B, [H, P(D), V, D])
+    _proto(wt.CryptCATAdminCalcHashFromFileHandle2, B, [H, H, P(D), V, D])
+    _proto(wt.CryptCATAdminEnumCatalogFromHash, H, [H, V, D, D, V])
+    _proto(wt.CryptCATCatalogInfoFromContext, B, [H, V, D])
+    _proto(wt.CryptCATAdminReleaseCatalogContext, B, [H, H, D])
+    _proto(wt.CryptCATAdminReleaseContext, B, [H, D])
+    _proto(k32.CreateFileW, H,
+           [wintypes.LPCWSTR, D, D, V, D, D, H])
+    _proto(k32.CloseHandle, B, [H])
+    _api_cache = SimpleNamespace(c32=c32, wt=wt, k32=k32)
     return _api_cache
 
 
@@ -183,9 +183,8 @@ def _verify_catalog(path: str, algo: str | None = None) -> bool:
 
     `algo` = 'SHA256' usa AcquireContext2 (Win8+); None usa el clásico (SHA-1).
     """
-    _setup_catalog_api()
-    wt = ctypes.windll.wintrust
-    k32 = ctypes.windll.kernel32
+    api = _api()
+    wt, k32 = api.wt, api.k32
     h_cat_admin = wintypes.HANDLE()
     if algo:
         ok = wt.CryptCATAdminAcquireContext2(
