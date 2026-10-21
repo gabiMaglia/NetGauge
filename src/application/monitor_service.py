@@ -4,6 +4,7 @@ Incluye features comerciales: velocidad en vivo, cuota mensual y alertas.
 """
 from __future__ import annotations
 
+import logging
 import threading
 from collections import deque
 from dataclasses import replace
@@ -34,7 +35,9 @@ from ..domain.ports import (
     UsageRepository,
 )
 
-_SPIKE_FLOOR = 3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
+log = logging.getLogger(__name__)
+
+_SPIKE_FLOOR =3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
 _SPIKE_FACTOR = 3.0                # x veces el promedio reciente
 _NEW_APP_BYTES = 5 * 1024 * 1024   # 5 MB enviados para considerar app "nueva en red"
 
@@ -259,13 +262,22 @@ class MonitorService:
         with self._lock:
             if not self._pending:
                 return
+            batch, self._pending = self._pending, {}
             now = datetime.now()
             records = [
                 UsageRecord(u.app_name, u.bytes_sent, u.bytes_recv, now)
-                for u in self._pending.values()
+                for u in batch.values()
             ]
-            self._pending.clear()
-        self._repo.save_batch(records)
+        try:
+            self._repo.save_batch(records)
+        except Exception:
+            # No perder el batch: vuelve a pendientes, SUMADO a lo que haya
+            # llegado mientras tanto; se reintenta en el próximo tick.
+            with self._lock:
+                for name, usage in batch.items():
+                    pending = self._pending.setdefault(name, AppUsage(name))
+                    pending.add(usage.bytes_sent, usage.bytes_recv)
+            raise
 
     # ---- cuota mensual -------------------------------------------------
     def _cycle_start(self) -> datetime:

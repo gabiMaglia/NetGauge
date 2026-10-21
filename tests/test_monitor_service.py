@@ -1,9 +1,14 @@
 """Tests de la lógica de aplicación: cuotas, anomalías, retención, VT."""
+import sqlite3
+import threading
 from datetime import datetime, timedelta
 
-from conftest import FakeRepo, make_monitor
+import pytest
+
+from conftest import FakeNotifier, FakeRepo, make_monitor
 from src.domain.models import (
-    TRUST_SUSPICIOUS, TRUST_TRUSTED, TRUST_UNKNOWN, TrustInfo, UsageRecord,
+    TRUST_SUSPICIOUS, TRUST_TRUSTED, TRUST_UNKNOWN, TrafficSample, TrustInfo,
+    UsageRecord,
 )
 
 
@@ -278,3 +283,38 @@ def test_week_period_starts_exactly_at_monday_midnight(settings, notifier):
     start = repo.starts[-1]
     assert start.weekday() == 0
     assert (start.hour, start.minute, start.second, start.microsecond) == (0, 0, 0, 0)
+
+
+# ---- resiliencia de persistencia (plan 03) --------------------------------
+class FlakyRepo(FakeRepo):
+    """save_batch falla `failures` veces (p.ej. 'database is locked') y después anda."""
+
+    def __init__(self, failures: int = 1) -> None:
+        super().__init__()
+        self.failures = failures
+
+    def save_batch(self, records):
+        if self.failures > 0:
+            self.failures -= 1
+            raise sqlite3.OperationalError("database is locked")
+        super().save_batch(records)
+
+
+def _totals(records) -> dict[str, tuple[int, int]]:
+    out: dict[str, tuple[int, int]] = {}
+    for r in records:
+        sent, recv = out.get(r.app_name, (0, 0))
+        out[r.app_name] = (sent + r.bytes_sent, recv + r.bytes_recv)
+    return out
+
+
+def test_flush_failure_keeps_batch_for_retry(settings, notifier):
+    repo = FlakyRepo(failures=1)
+    m = make_monitor(settings, notifier, repo)
+    m._on_sample(TrafficSample(1, "A", bytes_sent=100, bytes_recv=200))
+    with pytest.raises(sqlite3.OperationalError):
+        m._flush()
+    # Llegan más bytes mientras la DB estaba caída: se suman al batch pendiente.
+    m._on_sample(TrafficSample(1, "A", bytes_sent=1, bytes_recv=2))
+    m._flush()
+    assert _totals(repo.saved) == {"A": (101, 202)}
