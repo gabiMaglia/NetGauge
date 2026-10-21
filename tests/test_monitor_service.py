@@ -374,3 +374,46 @@ def test_rate_tick_survives_notifier_error_and_reschedules(running_monitor):
     m._rate_tick()
     assert m.live_rate()[0] == 50_000_000
     assert m._rate_timer is not None      # la velocidad en vivo no se congela
+
+
+def test_tick_after_stop_does_not_touch_repository(settings, notifier):
+    repo = FakeRepo()
+    m = make_monitor(settings, notifier, repo)
+    m.start()
+    m._on_sample(TrafficSample(1, "A", bytes_sent=10, bytes_recv=10))
+    m.stop()                               # flush final: 1 registro
+    saved_at_stop = len(repo.saved)
+    m._on_sample(TrafficSample(1, "A", bytes_sent=5, bytes_recv=5))  # muestra tardía
+    m._tick()                              # un Timer que ya había disparado
+    assert len(repo.saved) == saved_at_stop
+    assert m._flush_timer is None
+
+
+def test_stop_waits_for_in_progress_tick(settings, notifier):
+    entered, release = threading.Event(), threading.Event()
+
+    class SlowRepo(FakeRepo):
+        def save_batch(self, records):
+            entered.set()
+            release.wait(5)
+            super().save_batch(records)
+
+    repo = SlowRepo()
+    m = make_monitor(settings, notifier, repo)
+    m.start()
+    m._on_sample(TrafficSample(1, "A", bytes_sent=10, bytes_recv=10))
+    ticker = threading.Thread(target=m._tick)
+    ticker.start()
+    assert entered.wait(5)                 # el tick está adentro de save_batch
+    stopper = threading.Thread(target=m.stop)
+    stopper.start()
+    stopper.join(0.3)
+    try:
+        assert stopper.is_alive(), "stop() debe esperar al tick en curso"
+    finally:
+        release.set()
+        ticker.join(5)
+        stopper.join(5)
+    assert not stopper.is_alive()
+    assert m._flush_timer is None          # el tick terminó sin reprogramarse
+    assert _totals(repo.saved) == {"A": (10, 10)}

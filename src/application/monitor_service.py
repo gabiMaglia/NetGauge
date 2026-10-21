@@ -91,6 +91,12 @@ class MonitorService:
         self._baseline_done = False
 
         self._lock = threading.Lock()
+        # _sched_lock: protege _running y los timers (start/stop vs. ticks).
+        # _tick_lock: serializa _tick con el flush final de stop(), para que
+        # nada toque el repositorio después de que stop() retorna.
+        # Orden: nunca tomar _sched_lock teniendo _tick_lock.
+        self._sched_lock = threading.Lock()
+        self._tick_lock = threading.Lock()
         self._session: dict[str, AppUsage] = {}
         self._pending: dict[str, AppUsage] = {}
         self._flush_timer: threading.Timer | None = None
@@ -125,22 +131,33 @@ class MonitorService:
 
     # ---- ciclo de vida -------------------------------------------------
     def start(self) -> None:
-        self._running = True
+        with self._sched_lock:
+            self._running = True
         self._capture.start(self._on_sample)
         self._schedule_flush()
         self._schedule_rate()
 
     def stop(self) -> None:
-        if not self._running:
-            return  # idempotente: stop() puede llegar desde quit_app y atexit
-        self._running = False
-        for t in (self._flush_timer, self._rate_timer):
+        with self._sched_lock:
+            if not self._running:
+                return  # idempotente: stop() puede llegar desde quit_app y atexit
+            self._running = False
+            timers = (self._flush_timer, self._rate_timer)
+            self._flush_timer = None
+            self._rate_timer = None
+        for t in timers:
             if t is not None:
                 t.cancel()
-        self._flush_timer = None
-        self._rate_timer = None
-        self._capture.stop()
-        self._flush()
+        try:
+            self._capture.stop()
+        except Exception:  # noqa: BLE001
+            log.exception("Fallo deteniendo la captura")
+        # Espera un _tick en curso y hace el flush final.
+        with self._tick_lock:
+            try:
+                self._flush()
+            except Exception:  # noqa: BLE001
+                log.exception("Fallo en el flush final al detener el monitor")
 
     # ---- captura -------------------------------------------------------
     def _on_sample(self, sample: TrafficSample) -> None:
@@ -155,11 +172,12 @@ class MonitorService:
 
     # ---- velocidad en vivo (cada 1s) ----------------------------------
     def _schedule_rate(self) -> None:
-        if not self._running:
-            return
-        self._rate_timer = threading.Timer(1.0, self._rate_tick)
-        self._rate_timer.daemon = True
-        self._rate_timer.start()
+        with self._sched_lock:
+            if not self._running:
+                return
+            self._rate_timer = threading.Timer(1.0, self._rate_tick)
+            self._rate_timer.daemon = True
+            self._rate_timer.start()
 
     def _rate_tick(self) -> None:
         try:
@@ -235,25 +253,29 @@ class MonitorService:
 
     # ---- flush periódico ----------------------------------------------
     def _schedule_flush(self) -> None:
-        if not self._running:
-            return
-        self._flush_timer = threading.Timer(self._flush_interval, self._tick)
-        self._flush_timer.daemon = True
-        self._flush_timer.start()
+        with self._sched_lock:
+            if not self._running:
+                return
+            self._flush_timer = threading.Timer(self._flush_interval, self._tick)
+            self._flush_timer.daemon = True
+            self._flush_timer.start()
 
     def _tick(self) -> None:
         try:
-            # Cada paso aislado: si falla el flush (DB bloqueada) igual corren
-            # cuotas, apps nuevas y purga; el batch queda pendiente (Task 1).
-            for step in (self._flush, self._check_quota_alerts,
-                         self._check_new_apps, self._purge_if_due):
-                try:
-                    step()
-                except Exception:  # noqa: BLE001
-                    log.exception("Fallo en %s; se reintenta en el próximo tick",
-                                  step.__name__)
+            with self._tick_lock:
+                if not self._running:
+                    return  # stop() ya corrió: no tocar el repositorio
+                # Cada paso aislado: si falla el flush (DB bloqueada) igual corren
+                # cuotas, apps nuevas y purga; el batch queda pendiente.
+                for step in (self._flush, self._check_quota_alerts,
+                             self._check_new_apps, self._purge_if_due):
+                    try:
+                        step()
+                    except Exception:  # noqa: BLE001
+                        log.exception("Fallo en %s; se reintenta en el próximo tick",
+                                      step.__name__)
         finally:
-            self._schedule_flush()  # la cadena de timers nunca se corta
+            self._schedule_flush()  # fuera de _tick_lock; no-op si ya no corre
 
     def _purge_if_due(self) -> None:
         days = self.settings.retention_days
