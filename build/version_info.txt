@@ -1,10 +1,11 @@
-# Recurso de versión embebido en NetGauge.exe (metadata del editor).
+# Recurso de version embebido en NetGauge.exe (metadata del editor).
+# GENERADO por build/gen_version_info.py desde src/version.py. NO editar a mano.
 # Lo consume PyInstaller (EXE(version=...)) y lo lee Windows/Explorer y el
-# índice de confianza de la app. Mantener en sync con src/version.py.
+# indice de confianza de la app.
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 7, 1, 0),
-    prodvers=(1, 7, 1, 0),
+    filevers=(2, 0, 1, 0),
+    prodvers=(2, 0, 1, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +18,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'Gabriel Maglia'),
         StringStruct('FileDescription', 'NetGauge - Monitor de consumo de red'),
-        StringStruct('FileVersion', '1.7.1.0'),
+        StringStruct('FileVersion', '2.0.1.0'),
         StringStruct('InternalName', 'NetGauge'),
         StringStruct('LegalCopyright', '(c) 2026 Gabriel Maglia. Licencia MIT.'),
         StringStruct('OriginalFilename', 'NetGauge.exe'),
         StringStruct('ProductName', 'NetGauge'),
-        StringStruct('ProductVersion', '1.7.1.0')
+        StringStruct('ProductVersion', '2.0.1.0')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
