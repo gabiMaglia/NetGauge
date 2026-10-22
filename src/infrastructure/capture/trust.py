@@ -31,6 +31,9 @@ _WTD_CHOICE_FILE = 1
 _WTD_STATEACTION_VERIFY = 1
 _WTD_STATEACTION_CLOSE = 2
 _TRUST_E_NOSIGNATURE = 0x800B0100  # archivo sin firma
+_TRUST_E_BAD_DIGEST = 0x80096010
+_TRUST_E_EXPLICIT_DISTRUST = 0x800B0111
+_TRUST_E_CERT_SIGNATURE = 0x80096004
 
 
 class _GUID(ctypes.Structure):
@@ -283,8 +286,17 @@ def _verify_catalog(path: str, algo: str | None = None) -> bool:
         wt.CryptCATAdminReleaseContext(h_cat_admin, 0)
 
 
-def _verify_signature(path: str) -> tuple[bool, bool]:
-    """(firmado, firma_válida). Chequea firma embebida y, si falta, catálogo."""
+def _is_invalid_signature(ret: int) -> bool:
+    """Códigos que significan 'hay firma pero NO es válida' (alterado, revocado,
+    expirado, cadena no confiable)."""
+    return (ret in (_TRUST_E_BAD_DIGEST, _TRUST_E_EXPLICIT_DISTRUST,
+                    _TRUST_E_CERT_SIGNATURE)
+            or (ret & 0xFFFFFF00) == 0x800B0100)   # CERT_E_* (0x800B01xx)
+
+
+def _verify_signature(path: str) -> tuple[bool, bool] | None:
+    """(firmado, firma_válida), o None si el resultado es indeterminado (error
+    de IO/permisos: no es evidencia de nada). Chequea firma embebida y catálogo."""
     ret = _verify_embedded(path)
     if ret == 0:
         return True, True                 # firma embebida válida
@@ -298,7 +310,9 @@ def _verify_signature(path: str) -> tuple[bool, bool]:
             except Exception:  # noqa: BLE001
                 pass
         return False, False               # realmente sin firma
-    return True, False                    # firmado pero inválido (alterado/expirado)
+    if _is_invalid_signature(ret):
+        return True, False                # firmado pero inválido (alterado/expirado)
+    return None                           # CRYPT_E_FILE_ERROR, acceso denegado, etc.
 
 
 def _signer_name(path: str) -> str | None:
@@ -378,25 +392,39 @@ def _location_ok(path: str) -> tuple[bool, bool]:
 
 
 class WindowsTrustEvaluator(TrustEvaluator):
-    """Evalúa confianza en Windows. Cachea por ruta (la firma no cambia en vivo)."""
+    """Evalúa confianza en Windows. Cachea por (ruta, mtime_ns, tamaño): si el
+    archivo cambia se re-evalúa. Los resultados indeterminados (UNKNOWN) no se
+    cachean para que un error transitorio no quede fijado."""
 
     def __init__(self) -> None:
-        self._cache: dict[str, TrustInfo] = {}
+        self._cache: dict[str, tuple[tuple[int, int], TrustInfo]] = {}
 
     def evaluate(self, exe_path: str) -> TrustInfo:
         if not exe_path:
             return TrustInfo(level=TRUST_UNKNOWN)
-        if exe_path in self._cache:
-            return self._cache[exe_path]
+        try:
+            st = os.stat(exe_path)
+        except OSError:
+            return TrustInfo(level=TRUST_UNKNOWN, exe_path=exe_path)
+        key = (st.st_mtime_ns, st.st_size)
+        hit = self._cache.get(exe_path)
+        if hit is not None and hit[0] == key:
+            return hit[1]
         info = self._evaluate(exe_path)
-        self._cache[exe_path] = info
+        if info.level != TRUST_UNKNOWN:
+            self._cache[exe_path] = (key, info)
+        else:
+            self._cache.pop(exe_path, None)
         return info
 
     def _evaluate(self, exe_path: str) -> TrustInfo:
         try:
-            signed, valid = _verify_signature(exe_path)
+            result = _verify_signature(exe_path)
         except Exception:  # noqa: BLE001
             return TrustInfo(level=TRUST_UNKNOWN, exe_path=exe_path)
+        if result is None:
+            return TrustInfo(level=TRUST_UNKNOWN, exe_path=exe_path)
+        signed, valid = result
 
         signer = _signer_name(exe_path) if signed and valid else None
         loc_ok, loc_bad = _location_ok(exe_path)

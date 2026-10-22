@@ -126,3 +126,63 @@ def test_signer_name_es_el_firmante_no_la_ca():
     py = trust._signer_name(sys.executable)
     if py is not None:  # python.exe puede no estar firmado en todos los entornos
         assert "PCA" not in py and "Timestamp" not in py
+
+
+@win_only
+@pytest.mark.parametrize("code,expected", [
+    (0x80096010, (True, False)),   # TRUST_E_BAD_DIGEST
+    (0x800B0111, (True, False)),   # TRUST_E_EXPLICIT_DISTRUST
+    (0x800B0101, (True, False)),   # CERT_E_EXPIRED
+    (0x80096004, (True, False)),   # TRUST_E_CERT_SIGNATURE
+    (0x80092003, None),            # CRYPT_E_FILE_ERROR: error de IO, indeterminado
+    (0x80070005, None),            # acceso denegado
+])
+def test_verify_signature_clasifica_errores(monkeypatch, code, expected):
+    monkeypatch.setattr(trust, "_verify_embedded", lambda p: code)
+    assert trust._verify_signature("x.exe") == expected
+
+
+@win_only
+def test_verify_signature_sin_firma(monkeypatch):
+    monkeypatch.setattr(trust, "_verify_embedded", lambda p: 0x800B0100)
+    monkeypatch.setattr(trust, "_verify_catalog", lambda p, a=None: False)
+    assert trust._verify_signature("x.exe") == (False, False)
+
+
+@win_only
+def test_evaluate_ruta_inexistente_es_unknown_y_no_se_cachea():
+    from src.domain.models import TRUST_UNKNOWN
+
+    ev = trust.WindowsTrustEvaluator()
+    info = ev.evaluate(r"C:\no\existe\nada.exe")
+    assert info.level == TRUST_UNKNOWN
+    assert ev._cache == {}
+
+
+@win_only
+def test_evaluate_indeterminado_no_se_cachea(monkeypatch, tmp_path):
+    from src.domain.models import TRUST_UNKNOWN
+
+    f = tmp_path / "a.exe"
+    f.write_bytes(b"MZ")
+    monkeypatch.setattr(trust, "_verify_embedded", lambda p: 0x80092003)
+    ev = trust.WindowsTrustEvaluator()
+    assert ev.evaluate(str(f)).level == TRUST_UNKNOWN
+    assert ev._cache == {}
+
+
+@win_only
+def test_evaluate_cache_se_invalida_si_cambia_el_archivo(monkeypatch, tmp_path):
+    f = tmp_path / "a.exe"
+    f.write_bytes(b"MZ")
+    calls = []
+    ev = trust.WindowsTrustEvaluator()
+    orig = ev._evaluate
+    monkeypatch.setattr(ev, "_evaluate", lambda p: (calls.append(p), orig(p))[1])
+    monkeypatch.setattr(trust, "_verify_embedded", lambda p: 0)
+    ev.evaluate(str(f))
+    ev.evaluate(str(f))
+    assert len(calls) == 1
+    f.write_bytes(b"MZ-modificado")
+    ev.evaluate(str(f))
+    assert len(calls) == 2
