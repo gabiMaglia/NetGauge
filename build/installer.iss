@@ -30,11 +30,14 @@ SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\{#AppExe}
 ; Muestra la licencia MIT durante la instalación.
 LicenseFile=..\LICENSE
+; Muestra la política de privacidad (PRIVACY.md) durante la instalación.
+InfoBeforeFile=..\PRIVACY.md
 
 [Files]
 ; Salida one-file de PyInstaller (dist\NetGauge.exe):
 Source: "..\dist\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"

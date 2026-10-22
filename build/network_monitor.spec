@@ -30,7 +30,7 @@ datas = collect_data_files("reportlab")
 # la carga load_app_fonts() en runtime para no depender del SO.
 datas += [("..\\assets\\fonts", "assets/fonts")]
 # Avisos legales (LGPL de PySide6, etc.) dentro del bundle.
-datas += [("..\\THIRD_PARTY_LICENSES.md", ".")]
+datas += [("..\\THIRD_PARTY_LICENSES.md", "."), ("..\\PRIVACY.md", ".")]
 
 a = Analysis(
     ["..\\main.py"],
