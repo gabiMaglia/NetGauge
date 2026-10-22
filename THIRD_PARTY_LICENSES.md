@@ -19,11 +19,13 @@ build (ver `requirements.txt` y el release correspondiente).
 | reportlab | Exportar informes PDF | BSD | https://www.reportlab.com/opensource/ |
 | openpyxl | Exportar informes Excel | MIT | https://foss.heptapod.net/openpyxl/openpyxl |
 | Plus Jakarta Sans (fuentes) | Tipografía de la interfaz | SIL OFL 1.1 | https://github.com/tokotype/PlusJakartaSans |
+| JetBrains Mono (fuentes) | Cifras monoespaciadas de la interfaz | SIL OFL 1.1 | https://github.com/JetBrains/JetBrainsMono |
 | PyInstaller (solo build) | Empaquetado | GPL v2+ con excepción de bootloader | https://pyinstaller.org |
 | Python (intérprete embebido) | Runtime | PSF License | https://docs.python.org/3/license.html |
 
 La licencia completa de Plus Jakarta Sans está en `assets/fonts/OFL.txt`
 (se distribuye junto a las fuentes dentro del bundle).
+La de JetBrains Mono está en `assets/fonts/OFL-JetBrainsMono.txt`.
 
 ## PySide6 / Qt — aviso LGPL v3
 

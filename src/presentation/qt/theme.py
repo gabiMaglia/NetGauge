@@ -13,7 +13,8 @@ LIGHT = {
     "border": "#e7ebf0", "hairline": "#eef1f5", "input_border": "#e3e8ef",
     "grid_line": "#eef1f5", "track": "#eef1f5",
     "text": "#0f172a", "text_strong": "#1e293b", "text_muted": "#64748b",
-    "text_faint": "#94a3b8",
+    "text_faint": "#94a3b8", "text_secondary": "#475569",
+    "down": "#2563eb", "selected_bg": "#eff5ff", "selected_bd": "#dbe8ff",
     "accent": "#3b82f6", "accent_strong": "#2563eb", "accent_soft_bg": "#eff5ff",
     "accent_soft_bd": "#dbe8ff", "upload": "#10b981", "warning": "#f59e0b",
     "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff",
@@ -23,17 +24,18 @@ LIGHT = {
 
 DARK = {
     "is_dark": True,
-    "app_bg": "#0b1220", "window_bg": "#0d1117", "titlebar_bg": "#10161f",
-    "card_bg": "#141a22", "chart_bg": "#10151c", "input_bg": "#0d1117",
-    "segment_bg": "#161b22", "row_hover_bg": "#141a22",
-    "border": "#1e2530", "hairline": "#1b222d", "input_border": "#1e2530",
-    "grid_line": "#1a212b", "track": "#1a212b",
-    "text": "#e6edf6", "text_strong": "#e6edf6", "text_muted": "#93a4b8",
-    "text_faint": "#5b6b80",
-    "accent": "#60a5fa", "accent_strong": "#3b82f6", "accent_soft_bg": "#16263f",
-    "accent_soft_bd": "#244468", "upload": "#34d399", "warning": "#f59e0b",
-    "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff",
-    "total_grad_a": "#15233a", "total_grad_b": "#142036", "total_grad_bd": "#244468",
+    "app_bg": "#0b0f17", "window_bg": "#0b0f17", "titlebar_bg": "#0b0f17",
+    "card_bg": "#111826", "chart_bg": "#111826", "input_bg": "#111826",
+    "segment_bg": "#111826", "row_hover_bg": "#111826",
+    "border": "#1c2740", "hairline": "#1c2740", "input_border": "#1c2740",
+    "grid_line": "#1c2740", "track": "#0b0f17",
+    "text": "#eaf1fb", "text_strong": "#eaf1fb", "text_muted": "#93a6c1",
+    "text_faint": "#93a6c1", "text_secondary": "#c3d0e2",
+    "accent": "#458bf8", "accent_strong": "#458bf8", "accent_soft_bg": "#13233f",
+    "accent_soft_bd": "#2a4a85", "down": "#5aa9ff", "upload": "#34d5a3",
+    "warning": "#f5b942", "warning_2": "#f5b942", "danger": "#ef4444",
+    "on_accent": "#06101f", "selected_bg": "#13233f", "selected_bd": "#2a4a85",
+    "total_grad_a": "#13233f", "total_grad_b": "#13233f", "total_grad_bd": "#2a4a85",
     "shadow_rgba": "rgba(2,6,23,0.6)",
 }
 
@@ -45,7 +47,9 @@ APP_ICONS = {
     "Discord": {"bg": "#ecebfe", "fg": "#6366f1", "letter": "D"},
 }
 
-FONT_FAMILY = '"Plus Jakarta Sans", "Segoe UI", sans-serif'
+# Sin "Segoe UI": en macOS Qt avisa del alias; en Windows sans-serif lo resuelve.
+FONT_FAMILY = '"Plus Jakarta Sans", "Helvetica Neue", sans-serif'
+MONO_FAMILY = '"JetBrains Mono", "Menlo", "Consolas", monospace'
 
 RADIUS = {"window": 18, "card": 14, "input": 10, "button": 10,
           "segment": 11, "chip": 8, "app_icon": 9, "bar": 6}
@@ -215,7 +219,7 @@ def app_qss(t: dict) -> str:
 
 
 def load_app_fonts() -> None:
-    """Registra las fuentes bundleadas (Plus Jakarta Sans) en runtime para no
+    """Registra las fuentes bundleadas (Plus Jakarta Sans, JetBrains Mono) en runtime para no
     depender de que el SO las tenga instaladas (en macOS no vienen de fábrica).
 
     Best-effort: si el directorio de fuentes no está, no rompe el arranque.
@@ -233,5 +237,6 @@ def load_app_fonts() -> None:
     if not fonts_dir.is_dir():
         return
     from PySide6.QtGui import QFontDatabase
-    for ttf in sorted(fonts_dir.glob("PlusJakartaSans-*.ttf")):
-        QFontDatabase.addApplicationFont(str(ttf))
+    for pattern in ("PlusJakartaSans-*.ttf", "JetBrainsMono-*.ttf"):
+        for ttf in sorted(fonts_dir.glob(pattern)):
+            QFontDatabase.addApplicationFont(str(ttf))
