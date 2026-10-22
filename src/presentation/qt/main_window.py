@@ -4,7 +4,7 @@ from __future__ import annotations
 import ipaddress
 import sys
 
-from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -50,6 +50,10 @@ def _fmt(num: float, unit: str) -> tuple[str, str]:
 
 
 class MainWindow(QWidget):
+    # Aviso del worker de MonitorService: "hay snapshot nuevo". Se emite desde
+    # OTRO hilo; la conexión encolada garantiza que _refresh corre en el GUI.
+    snapshot_ready = Signal()
+
     def __init__(self, monitor: MonitorService, per_process: bool) -> None:
         super().__init__()
         self._monitor = monitor
@@ -64,7 +68,6 @@ class MainWindow(QWidget):
         self._drag_pos: QPoint | None = None
         self._app_rows: dict[str, AppRow] = {}   # filas reutilizadas por nombre
         self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
-        self._data_ticks = 0
         self._period_chips: list[tuple[QPushButton, str]] = []
         self._legends: list[tuple[QLabel, str]] = []
         self._maximized = False
@@ -86,6 +89,10 @@ class MainWindow(QWidget):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         self._timer.start(1000)
+        # Los datos pesados (SQLite, psutil, firma de .exe) los calcula el
+        # worker de MonitorService; acá sólo se repinta cuando avisa.
+        self.snapshot_ready.connect(self._refresh, Qt.ConnectionType.QueuedConnection)
+        monitor.set_snapshot_listener(self.snapshot_ready.emit)
         self._refresh()
 
     # ---- construcción --------------------------------------------------
@@ -485,9 +492,6 @@ class MainWindow(QWidget):
         self._speed_down.setText(f"↓ {loc_bytes(down)}/s")
         self._speed_up.setText(f"↑ {loc_bytes(up)}/s")
         self._peak_chip.setText(t("chart.peak", v=loc_bytes(self._chart.peak())))
-        self._data_ticks += 1
-        if self._data_ticks % 2 == 0:
-            self._refresh()
 
     # ---- acciones ------------------------------------------------------
     def _set_period(self, value: str) -> None:
