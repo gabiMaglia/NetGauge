@@ -231,6 +231,7 @@ class AppRow(QFrame):
         center = QVBoxLayout()
         center.setSpacing(6)
         self._nm = QLabel(name)
+        self._nm.setTextFormat(Qt.TextFormat.PlainText)  # el nombre viene del SO
         self._nm.setObjectName("AppName")
         center.addWidget(self._nm)
         self._bar = QuotaBar(theme)
@@ -340,10 +341,12 @@ class ConnRow(QFrame):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(10, 6, 12, 6)
         lay.setSpacing(10)
-        name = QLabel(app_name)
-        name.setObjectName("AppName")
-        lay.addWidget(name)
+        self._app = QLabel(app_name)
+        self._app.setTextFormat(Qt.TextFormat.PlainText)  # el nombre viene del SO
+        self._app.setObjectName("AppName")
+        lay.addWidget(self._app)
         self._geo = QLabel("")
+        self._geo.setTextFormat(Qt.TextFormat.PlainText)  # texto de ip-api: no confiable
         self._geo.setObjectName("AppSplit")
         lay.addWidget(self._geo)
         lay.addStretch()
