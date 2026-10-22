@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements de NetGauge.app para firma Developer ID con hardened runtime
+  (codesign -options runtime), requisito de la notarización de Apple.
+
+  Solo se relajan las dos protecciones que una app PyInstaller + PySide6
+  necesita; todo lo demás del hardened runtime queda activo. Sin App Sandbox
+  (no se distribuye por la Mac App Store y `nettop` como subproceso no correría
+  dentro del sandbox). Sin entitlement de JIT: ni CPython ni Qt Widgets usan MAP_JIT.
+  La app solo hace conexiones salientes (VirusTotal, GeoIP, chequeo de
+  actualizaciones), que fuera del sandbox no requieren entitlements.
+-->
+<plist version="1.0">
+<dict>
+    <!--
+      ctypes/libffi (usado por Python, PySide6/shiboken y keyring) genera
+      trampolines de código en memoria escribible+ejecutable sin firmar; con
+      hardened runtime y sin esta excepción esos callbacks abortan la app.
+    -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!--
+      El bootloader de PyInstaller carga Python.framework y las extensiones
+      .so/.dylib empaquetadas (PySide6/Qt, psutil, reportlab...). Algunas
+      vienen firmadas por terceros (wheels) o ad-hoc y no con nuestro Team ID;
+      la library validation del hardened runtime rechazaría cargarlas.
+    -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

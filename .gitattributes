@@ -1,0 +1,2 @@
+# Scripts de shell siempre con LF (bash en macOS/Linux no tolera CRLF).
+*.sh text eol=lf

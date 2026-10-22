@@ -12,8 +12,13 @@
 #   TARGET_ARCH=arm64  pyinstaller build/network_monitor_macos.spec --noconfirm
 # Sin la env var, se autodetecta con platform.machine() (build nativo).
 #
-# Importante: NO firma ni notariza (ver ADR-001, T-005 diferido a v2). El
-# .app/.dmg resultante están sin firmar; Gatekeeper mostrará advertencia.
+# Firma opcional (Developer ID): si está definida la env var
+# NETGAUGE_CODESIGN_IDENTITY (p.ej. "Developer ID Application: Nombre (TEAMID)"),
+# PyInstaller firma el bundle con esa identidad, hardened runtime y
+# build/entitlements.plist. Sin la env var, comportamiento de siempre: firma
+# ad-hoc de PyInstaller, .app sin firma de desarrollador (Gatekeeper avisa).
+# La firma definitiva (inside-out + verificación) y la notarización las hace
+# build/make_dmg.sh; ver build/README_macos.md, "Firma y notarización".
 import os
 import platform
 import sys
@@ -27,6 +32,14 @@ from gen_version_info import read_app_version  # noqa: E402
 APP_VERSION = read_app_version()
 
 block_cipher = None
+
+# Firma Developer ID opcional (opt-in). None = sin firma de desarrollador.
+_codesign_identity = os.environ.get("NETGAUGE_CODESIGN_IDENTITY") or None
+_entitlements_file = (
+    os.path.join(SPECPATH, "entitlements.plist")  # noqa: F821
+    if _codesign_identity
+    else None
+)
 
 hiddenimports = (
     collect_submodules("PySide6")
@@ -81,6 +94,8 @@ exe = EXE(
     upx=True,
     console=False,           # app de bandeja: sin terminal
     target_arch=_target_arch,
+    codesign_identity=_codesign_identity,
+    entitlements_file=_entitlements_file,
 )
 
 coll = COLLECT(
