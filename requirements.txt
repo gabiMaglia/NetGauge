@@ -1,4 +1,4 @@
-psutil>=5.9,<8
+psutil>=7.2.2,<8
 # PySide6 (LGPL): apta para distribución gratuita y comercial/closed-source.
 # (Se migró desde PyQt6, que es GPL/comercial y no servía para vender.)
 PySide6>=6.6,<7
