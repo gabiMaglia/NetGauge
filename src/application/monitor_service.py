@@ -128,6 +128,7 @@ class MonitorService:
         self._alerts_fired: set[int] = set()
         self._alert_cycle: datetime | None = None
         self._daily_alerts_fired: set[int] = set()
+        self._alert_settings_key = self._alert_key(self.settings)
         self._alert_day: datetime | None = None
 
         # ---- snapshot para la UI (plan 04) ------------------------------
@@ -426,11 +427,22 @@ class MonitorService:
                              used=human_bytes(status.used_bytes),
                              limit=human_bytes(status.limit_bytes)))
 
+    @staticmethod
+    def _alert_key(s: Settings) -> tuple:
+        return (s.monthly_quota_gb, s.daily_quota_gb, s.billing_cycle_start_day,
+                tuple(s.alert_thresholds))
+
     def update_settings(self, settings: Settings) -> None:
         self.settings = settings
         self._settings_store.save(settings)
-        self._alerts_fired.clear()  # re-evaluar con la nueva cuota
-        self._daily_alerts_fired.clear()
+        # Rearmar avisos sólo si cambió algo que los afecta: guardar la geometría
+        # al ocultar la ventana no debe repetir los toasts 80/100 %. Se compara
+        # contra una copia (los llamadores mutan el mismo objeto Settings).
+        key = self._alert_key(settings)
+        if key != self._alert_settings_key:
+            self._alert_settings_key = key
+            self._alerts_fired.clear()
+            self._daily_alerts_fired.clear()
         self._refresher.trigger()  # límites/flags nuevos: refrescar ya
 
     # ---- snapshot para la UI (worker de fondo, plan 04) ----------------

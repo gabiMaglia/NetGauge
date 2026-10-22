@@ -419,3 +419,31 @@ def test_stop_waits_for_in_progress_tick(settings, notifier):
     assert not stopper.is_alive()
     assert m._flush_timer is None          # el tick terminó sin reprogramarse
     assert _totals(repo.saved) == {"A": (10, 10)}
+
+
+# ---- update_settings no re-dispara alertas (re-auditoría A2) ---------------
+def _fired_monitor(settings, notifier):
+    settings.daily_quota_gb = 1.0 / (1024**3) * 1000
+    repo = FakeRepo([UsageRecord("A", 500, 500, datetime.now())])
+    m = make_monitor(settings, notifier, repo)
+    m._check_quota_alerts()
+    assert len(notifier.messages) == 2
+    return m
+
+
+def test_update_settings_unrelated_change_keeps_fired_alerts(settings, notifier):
+    import dataclasses
+    m = _fired_monitor(settings, notifier)
+    m.update_settings(dataclasses.replace(m.settings, window_geometry="1,2,3,4",
+                                          preferred_unit="MB"))
+    m._check_quota_alerts()
+    assert len(notifier.messages) == 2
+
+
+def test_update_settings_quota_change_rearms_alerts(settings, notifier):
+    import dataclasses
+    m = _fired_monitor(settings, notifier)
+    m.update_settings(dataclasses.replace(
+        m.settings, daily_quota_gb=m.settings.daily_quota_gb * 0.9))
+    m._check_quota_alerts()
+    assert len(notifier.messages) == 4
