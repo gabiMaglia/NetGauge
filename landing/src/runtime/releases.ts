@@ -7,7 +7,7 @@ export interface ReleaseLinks {
 const API = 'https://api.github.com/repos/gabiMaglia/NetGauge/releases/latest';
 const DOWNLOAD_PREFIX = 'https://github.com/gabiMaglia/NetGauge/releases/download/';
 const CACHE_KEY = 'ng-release-links';
-const CACHE_MS = 60 * 60 * 1000;
+const CACHE_MS = 5 * 60 * 1000;
 
 interface Asset {
   name: string;
