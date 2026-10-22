@@ -20,8 +20,8 @@ def _set_app_user_model_id() -> None:
 import threading
 from collections import deque
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QGuiApplication
+from PySide6.QtCore import QObject, Qt, QTimer, QUrl, Signal
+from PySide6.QtGui import QAction, QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from ...application.monitor_service import MonitorService
@@ -34,6 +34,8 @@ from .single_instance import SingleInstance
 from .theme import load_app_fonts
 from .widgets import make_app_qicon, make_sparkline_icon
 
+_UPDATE_CHECK_MS = 24 * 60 * 60 * 1000  # re-chequear releases cada 24 h
+
 
 class QtNotifier(QObject):
     """Notifier thread-safe (implementa el puerto Notifier por duck typing).
@@ -45,23 +47,36 @@ class QtNotifier(QObject):
     El monitor llama notify() desde un hilo de fondo; la señal marshalea al
     hilo GUI para mostrar el toast del tray de forma segura."""
 
-    _signal = Signal(str, str)
+    _signal = Signal(str, str, str)   # título, mensaje, url (vacía = sin link)
 
     def __init__(self) -> None:
         super().__init__()
         self._tray: QSystemTrayIcon | None = None
+        self._click_url: str | None = None
         self._signal.connect(self._show)
 
     def bind_tray(self, tray: QSystemTrayIcon) -> None:
         self._tray = tray
+        tray.messageClicked.connect(self._on_clicked)
 
     def notify(self, title: str, message: str) -> None:
-        self._signal.emit(title, message)
+        self._signal.emit(title, message, "")
 
-    def _show(self, title: str, message: str) -> None:
+    def notify_link(self, title: str, message: str, url: str) -> None:
+        """Como notify(), pero el clic en el toast abre `url` (solo https)."""
+        self._signal.emit(title, message, url)
+
+    def _show(self, title: str, message: str, url: str = "") -> None:
+        # El toast más reciente manda: pisa (o limpia) el link del anterior.
+        self._click_url = url if url.startswith("https://") else None
         if self._tray is not None:
             self._tray.showMessage(title, message,
                                    QSystemTrayIcon.MessageIcon.Information, 6000)
+
+    def _on_clicked(self) -> None:
+        url, self._click_url = self._click_url, None
+        if url:
+            QDesktopServices.openUrl(QUrl(url))
 
 
 def _fix_dpi_rounding_policy() -> None:
@@ -185,14 +200,25 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     tray_timer.timeout.connect(update_tray)
     tray_timer.start(2000)
 
-    # Chequeo de actualización contra GitHub Releases (en segundo plano).
+    # Chequeo de actualización contra GitHub Releases (en segundo plano) al
+    # arrancar y luego cada 24 h; avisa una sola vez por versión.
+    announced: set[str] = set()
+
     def check_updates() -> None:
         found = check_latest(GITHUB_OWNER, GITHUB_REPO, APP_VERSION)
-        if found:
+        if found and found[0] not in announced:
             ver, url = found
-            notifier.notify(t("alert.update.title"),
-                            t("alert.update.body", v=ver, url=url))
-    threading.Thread(target=check_updates, daemon=True).start()
+            announced.add(ver)
+            notifier.notify_link(t("alert.update.title"),
+                                 t("alert.update.body", v=ver, url=url), url)
+
+    def start_update_check() -> None:
+        threading.Thread(target=check_updates, daemon=True).start()
+
+    start_update_check()
+    update_timer = QTimer(window)
+    update_timer.timeout.connect(start_update_check)
+    update_timer.start(_UPDATE_CHECK_MS)
 
     tray.show()
     monitor.start()
