@@ -52,6 +52,8 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_led.ok": "Conexión con VirusTotal: clave válida",
         "dlg.settings.vt_led.error": "Conexión con VirusTotal: clave inválida o sin conexión",
         "dlg.settings.geoip": "GeoIP: país/proveedor de IPs remotas (ip-api.com)",
+        "dlg.settings.geoip_hint": "Las IPs se envían por HTTP sin cifrar a ip-api.com "
+                                   "(plan gratuito, solo uso no comercial).",
         "dlg.settings.anomaly": "Alertas de anomalías (picos / apps nuevas en red)",
         "dlg.settings.privacy": "Privacidad: VirusTotal envía solo el hash SHA-256 "
                                 "del ejecutable; GeoIP envía la IP remota a ip-api.com. "
@@ -131,6 +133,8 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_led.ok": "VirusTotal connection: key valid",
         "dlg.settings.vt_led.error": "VirusTotal connection: invalid key or connection error",
         "dlg.settings.geoip": "GeoIP: country/provider of remote IPs (ip-api.com)",
+        "dlg.settings.geoip_hint": "IPs are sent over unencrypted HTTP to ip-api.com "
+                                   "(free plan, non-commercial use only).",
         "dlg.settings.anomaly": "Anomaly alerts (spikes / new apps on network)",
         "dlg.settings.privacy": "Privacy: VirusTotal sends only the executable's "
                                 "SHA-256 hash; GeoIP sends the remote IP to ip-api.com. "
@@ -210,6 +214,8 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.vt_led.ok": "Conexão com o VirusTotal: chave válida",
         "dlg.settings.vt_led.error": "Conexão com o VirusTotal: chave inválida ou sem conexão",
         "dlg.settings.geoip": "GeoIP: país/provedor de IPs remotas (ip-api.com)",
+        "dlg.settings.geoip_hint": "Os IPs são enviados por HTTP sem criptografia ao ip-api.com "
+                                   "(plano gratuito, somente uso não comercial).",
         "dlg.settings.anomaly": "Alertas de anomalias (picos / apps novos na rede)",
         "dlg.settings.privacy": "Privacidade: o VirusTotal envia só o hash SHA-256 "
                                 "do executável; o GeoIP envia o IP remoto ao ip-api.com. "

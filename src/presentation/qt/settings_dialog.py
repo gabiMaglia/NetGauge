@@ -146,6 +146,11 @@ class SettingsDialog(QDialog):
         self._geoip.setChecked(settings.geoip_enabled)
         root.addWidget(self._geoip)
 
+        geoip_hint = QLabel(t("dlg.settings.geoip_hint"))
+        geoip_hint.setObjectName("FieldLabel")
+        geoip_hint.setWordWrap(True)
+        root.addWidget(geoip_hint)
+
         self._anomaly = QCheckBox(t("dlg.settings.anomaly"))
         self._anomaly.setChecked(settings.anomaly_alerts_enabled)
         root.addWidget(self._anomaly)
