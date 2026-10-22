@@ -53,6 +53,10 @@ _MIGRATIONS: dict[int, tuple[str, ...]] = {
 _PURGE_CHUNK = 5000  # filas por DELETE: no bloquea save_batch mucho tiempo
 
 
+def _vacuum(conn: sqlite3.Connection) -> None:
+    conn.execute("VACUUM")
+
+
 def _minute_key(dt: datetime) -> str:
     """'YYYY-MM-DDTHH:MM': mismo corte que substr(recorded_at, 1, 16) en SQL."""
     return dt.isoformat()[:16]
@@ -67,7 +71,9 @@ class SqliteUsageRepository(UsageRepository):
             self._conn = self._open()
         except sqlite3.DatabaseError as exc:
             code = getattr(exc, "sqlite_errorcode", None)
-            if code not in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+            # sqlite_errorcode es EXTENDIDO (p.ej. 779 = CORRUPT_INDEX): primario = & 0xFF.
+            if code is None or (code & 0xFF) not in (sqlite3.SQLITE_CORRUPT,
+                                                     sqlite3.SQLITE_NOTADB):
                 raise  # p.ej. "database is locked": no es corrupción, no tocar
             self._quarantine(exc)
             self._conn = self._open()
@@ -81,6 +87,7 @@ class SqliteUsageRepository(UsageRepository):
             conn.execute("PRAGMA synchronous = NORMAL")
             conn.execute("PRAGMA busy_timeout = 5000")
             self._migrate(conn)
+            self._ensure_auto_vacuum(conn)
         except BaseException:
             conn.close()  # en Windows no se puede renombrar con la conexión abierta
             raise
@@ -124,8 +131,19 @@ class SqliteUsageRepository(UsageRepository):
                 conn.rollback()
                 raise
             _log.info("usage.db migrada a v%d.", target)
-        # La tabla se recreó: VACUUM devuelve el espacio y activa auto_vacuum.
-        conn.execute("VACUUM")
+
+    @staticmethod
+    def _ensure_auto_vacuum(conn: sqlite3.Connection) -> None:
+        """Si la DB sigue sin auto_vacuum INCREMENTAL (recién migrada o un VACUUM
+        previo falló), lo activa con VACUUM best-effort; se reintenta en cada apertura."""
+        if conn.execute("PRAGMA auto_vacuum").fetchone()[0] == 2:
+            return
+        try:
+            conn.execute("PRAGMA auto_vacuum = INCREMENTAL")
+            _vacuum(conn)
+        except sqlite3.Error:
+            _log.warning("VACUUM post-migración falló; se reintenta en la próxima "
+                         "apertura.", exc_info=True)
 
     def save_batch(self, records: Iterable[UsageRecord]) -> None:
         rows = []

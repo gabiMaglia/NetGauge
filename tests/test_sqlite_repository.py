@@ -265,3 +265,51 @@ def test_save_batch_failure_rolls_back_so_retry_is_exact(repo, tmp_path):
     totals = {r.app_name: r.bytes_sent for r in repo.totals_by_app(
         T0 - timedelta(hours=1), T0 + timedelta(hours=1))}
     assert totals == {"a": 100, "b": 50}
+
+
+# ---- re-auditoría A6/A7 -------------------------------------------------------
+def test_extended_corrupt_errorcode_is_quarantined(tmp_path, monkeypatch):
+    path = tmp_path / "usage.db"
+    path.write_bytes(b"x" * 100)
+    real_open = SqliteUsageRepository._open
+    state = {"n": 0}
+
+    def open_(self):
+        state["n"] += 1
+        if state["n"] == 1:
+            exc = sqlite3.DatabaseError("malformed index")
+            exc.sqlite_errorcode = 779  # SQLITE_CORRUPT_INDEX (extendido de 11)
+            raise exc
+        return real_open(self)
+
+    monkeypatch.setattr(SqliteUsageRepository, "_open", open_)
+    SqliteUsageRepository(path).close()
+    assert list(tmp_path.glob("usage.db.corrupt-*"))
+
+
+def test_failed_vacuum_is_logged_and_does_not_block_open(tmp_path, monkeypatch, caplog):
+    path = tmp_path / "usage.db"
+    _build_v1(path, 1)
+
+    def boom(_conn):
+        raise sqlite3.OperationalError("database or disk is full")
+
+    monkeypatch.setattr(sr, "_vacuum", boom, raising=False)
+    repo = SqliteUsageRepository(path)
+    repo.close()
+    assert _pragma(path, "user_version") == 2
+    assert "VACUUM" in caplog.text
+
+
+def test_vacuum_is_retried_on_next_open_if_auto_vacuum_not_set(tmp_path, monkeypatch):
+    path = tmp_path / "usage.db"
+    _build_v1(path, 1)
+    real = getattr(sr, "_vacuum", None)
+    monkeypatch.setattr(sr, "_vacuum", lambda _c: (_ for _ in ()).throw(
+        sqlite3.OperationalError("full")), raising=False)
+    SqliteUsageRepository(path).close()
+    assert _pragma(path, "auto_vacuum") == 0
+
+    monkeypatch.undo()
+    SqliteUsageRepository(path).close()
+    assert _pragma(path, "auto_vacuum") == 2
