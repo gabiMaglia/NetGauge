@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from collections import deque
 from dataclasses import replace
 from datetime import datetime, timedelta
@@ -41,6 +42,9 @@ log =logging.getLogger(__name__)
 _SPIKE_FLOOR =3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
 _SPIKE_FACTOR = 3.0                # x veces el promedio reciente
 _NEW_APP_BYTES = 5 * 1024 * 1024   # 5 MB enviados para considerar app "nueva en red"
+# Las conexiones sólo se enumeran mientras la UI las pidió en los últimos
+# N segundos (MainWindow sólo las pide con la pestaña visible).
+_CONN_DEMAND_S = 10.0
 
 # T-024: nombres de helpers INTERNOS de la propia app que NO deben aparecer
 # en "Por aplicación" ni contar como una app del usuario (es infraestructura
@@ -135,6 +139,10 @@ class MonitorService:
         self._snap_monthly: QuotaStatus | None = None
         self._snap_periods: dict[str, list[UsageRecord]] = {}
         self._wanted_period: str | None = None
+        self._snap_trust: dict[str, TrustInfo] = {}
+        self._trust_requested: set[str] = set()
+        self._snap_connections: list[Connection] = []
+        self._conn_wanted_at: float | None = None
         self._refresher = SnapshotRefresher(self.refresh_snapshot,
                                             interval=snapshot_interval)
 
@@ -434,7 +442,8 @@ class MonitorService:
         """Un ciclo del worker: hace TODO el IO que antes hacía la UI y lo
         publica. Cada paso es independiente: si uno falla, los demás siguen.
         Público para poder testearlo de forma síncrona."""
-        for step in (self._refresh_quota_snapshot, self._refresh_period_snapshot):
+        for step in (self._refresh_quota_snapshot, self._refresh_period_snapshot,
+                     self._refresh_connections_snapshot, self._refresh_trust_snapshot):
             try:
                 step()
             except Exception:  # noqa: BLE001
@@ -503,15 +512,42 @@ class MonitorService:
             pass
 
     def trust_for(self, app_name: str) -> TrustInfo:
-        """Veredicto de confianza de la app (cacheado por ruta del .exe)."""
+        """Para la UI: veredicto del snapshot (sin IO). Una app nunca vista
+        devuelve UNKNOWN ("evaluando") y queda encolada para el worker."""
         if self._trust is None or not self.settings.trust_check_enabled:
             return TrustInfo(level=TRUST_UNKNOWN)
+        with self._snap_lock:
+            info = self._snap_trust.get(app_name)
+            is_new = app_name not in self._trust_requested
+            self._trust_requested.add(app_name)
+        if is_new:
+            # Una sola vez por app: una app sin ruta ("System", "PID n")
+            # nunca se resuelve y no debe despertar al worker en cada repintado.
+            self._refresher.trigger()
+        return info if info is not None else TrustInfo(level=TRUST_UNKNOWN)
+
+    def _refresh_trust_snapshot(self) -> None:
+        """Worker: evalúa las apps pedidas por la UI. El evaluador cachea por
+        ruta, así que sólo la PRIMERA evaluación de cada .exe es cara; VT se
+        re-aplica cada ciclo porque su lookup es asíncrono (llega después)."""
+        if self._trust is None or not self.settings.trust_check_enabled:
+            return
+        with self._snap_lock:
+            wanted = sorted(self._trust_requested)
+        if not wanted:
+            return
         self._refresh_exe_paths()
-        path = self._exe_paths.get(app_name)
-        if not path:
-            return TrustInfo(level=TRUST_UNKNOWN)
-        info = self._trust.evaluate(path)
-        return self._enrich_with_vt(info, path)
+        for app in wanted:
+            path = self._exe_paths.get(app)
+            if not path:
+                continue   # sin .exe conocido: queda lo último (o UNKNOWN)
+            try:
+                info = self._enrich_with_vt(self._trust.evaluate(path), path)
+            except Exception:  # noqa: BLE001 — una app rota no frena a las demás
+                log.exception("Fallo evaluando confianza de %s", app)
+                continue
+            with self._snap_lock:
+                self._snap_trust[app] = info   # de a una: la UI ve progreso
 
     def _enrich_with_vt(self, info: TrustInfo, path: str) -> TrustInfo:
         if (self._reputation is None or not self.settings.virustotal_enabled
@@ -528,9 +564,30 @@ class MonitorService:
                        level=level, reasons=info.reasons + (reason,))
 
     def connections(self) -> list[Connection]:
+        """Para la UI: conexiones del snapshot (sin psutil en el hilo GUI).
+        Llamarla marca demanda; el worker sólo enumera mientras haya demanda."""
         if self._conn_provider is None:
             return []
-        return self._conn_provider.connections()
+        now = time.monotonic()
+        with self._snap_lock:
+            stale = (self._conn_wanted_at is None
+                     or now - self._conn_wanted_at > _CONN_DEMAND_S)
+            self._conn_wanted_at = now
+            conns = list(self._snap_connections)
+        if stale:
+            self._refresher.trigger()
+        return conns
+
+    def _refresh_connections_snapshot(self) -> None:
+        if self._conn_provider is None:
+            return
+        with self._snap_lock:
+            wanted_at = self._conn_wanted_at
+        if wanted_at is None or time.monotonic() - wanted_at > _CONN_DEMAND_S:
+            return
+        conns = self._conn_provider.connections()
+        with self._snap_lock:
+            self._snap_connections = conns
 
     def geo_for(self, ip: str) -> tuple[str, str] | None:
         """(country_code, org) de una IP remota, o None si no/aún no."""
