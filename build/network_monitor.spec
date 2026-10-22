@@ -21,6 +21,7 @@ hiddenimports = (
     + collect_submodules("reportlab")  # export PDF
     + collect_submodules("openpyxl")   # export Excel (tiene imports dinámicos)
     + ["psutil"]
+    + ["keyring.backends.Windows"]  # API key de VirusTotal en Credential Manager
 )
 
 # reportlab trae fuentes/recursos que hay que bundlear o falla el export PDF.

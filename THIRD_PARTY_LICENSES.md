@@ -10,6 +10,12 @@ build (ver `requirements.txt` y el release correspondiente).
 | PySide6 / Qt for Python (Qt) | Interfaz gráfica | **LGPL v3** (ver abajo) | https://www.qt.io/qt-for-python · https://code.qt.io/cgit/pyside/pyside-setup.git |
 | psutil | Contadores de red, procesos, conexiones | BSD-3-Clause | https://github.com/giampaolo/psutil |
 | pywintrace (módulo `etw`) — solo Windows | Captura ETW por proceso | BSD | https://github.com/fireeye/pywintrace |
+| keyring | API key de VirusTotal en el almacén de credenciales del SO | MIT | https://github.com/jaraco/keyring |
+| jaraco.classes (dep. de keyring) | Utilidades de clases | MIT | https://github.com/jaraco/jaraco.classes |
+| jaraco.functools (dep. de keyring) | Utilidades de funciones | MIT | https://github.com/jaraco/jaraco.functools |
+| jaraco.context (dep. de keyring) | Utilidades de context managers | MIT | https://github.com/jaraco/jaraco.context |
+| more-itertools (dep. de jaraco) | Utilidades de iteración | MIT | https://github.com/more-itertools/more-itertools |
+| pywin32-ctypes (dep. de keyring) — solo Windows | Acceso a Credential Manager sin pywin32 | BSD-3-Clause | https://github.com/enthought/pywin32-ctypes |
 | reportlab | Exportar informes PDF | BSD | https://www.reportlab.com/opensource/ |
 | openpyxl | Exportar informes Excel | MIT | https://foss.heptapod.net/openpyxl/openpyxl |
 | Plus Jakarta Sans (fuentes) | Tipografía de la interfaz | SIL OFL 1.1 | https://github.com/tokotype/PlusJakartaSans |

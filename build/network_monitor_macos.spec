@@ -33,6 +33,7 @@ hiddenimports = (
     + collect_submodules("reportlab")  # export PDF
     + collect_submodules("openpyxl")   # export Excel (tiene imports dinámicos)
     + ["psutil"]
+    + ["keyring.backends.macOS"]  # API key de VirusTotal en el Keychain
     # nettop se invoca como subproceso (src/infrastructure/capture/*nettop*);
     # no es un paquete Python, no requiere hiddenimport. pywintrace/etw son
     # Windows-only: no se listan en hiddenimports para macOS (ETW no importa

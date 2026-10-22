@@ -97,9 +97,13 @@ lo que puede salir por la red:
 
 Notas:
 
-- La **API key de VirusTotal se guarda en texto plano** en `settings.json`
-  (ver rutas abajo). Cualquier proceso o usuario con acceso a tu carpeta de
-  datos puede leerla; usá una key de cuenta gratuita y no la reutilices.
+- La **API key de VirusTotal se guarda en el almacén de credenciales del
+  sistema** (Administrador de credenciales de Windows / Llavero de macOS), no
+  en `settings.json`. Solo si ese almacén no está disponible se guarda en
+  texto plano en `settings.json` (con un aviso en el log); en ese caso
+  cualquier proceso o usuario con acceso a tu carpeta de datos puede leerla.
+  Usá una key de cuenta gratuita y no la reutilices. Si venías de una versión
+  anterior, la key se migra sola al almacén en el primer arranque.
 - Desactivar GeoIP o VirusTotal en Ajustes detiene esas consultas. En GeoIP, las
   IPs que estaban en cola se descartan y, a lo sumo, puede completarse la única
   consulta que ya estaba en vuelo.
@@ -112,8 +116,8 @@ Notas:
 | Windows | `%LOCALAPPDATA%\NetGauge\` |
 | macOS | `~/Library/Application Support/NetGauge/` |
 
-Contiene `usage.db` (historial), `settings.json` (preferencias y, si la
-cargaste, la API key de VirusTotal), el log (`netgauge.log`) y
+Contiene `usage.db` (historial), `settings.json` (preferencias; la API key de
+VirusTotal queda en el almacén de credenciales del SO), el log (`netgauge.log`) y
 `reports\` (informes exportados). Borrar esa carpeta elimina todo lo que
 NetGauge guardó.
 

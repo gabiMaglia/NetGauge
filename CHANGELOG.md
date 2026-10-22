@@ -40,6 +40,10 @@ versionado [SemVer](https://semver.org/lang/es/).
 - GeoIP: apagarlo descarta la cola pendiente (a lo sumo se completa la única consulta ya en vuelo) y se descartan rangos no globales (CGNAT).
 - UI: cambiar de período espera al snapshot en vez de mostrar un frame vacío.
 ### Security
+- La **API key de VirusTotal** ya no se guarda en `settings.json`: se almacena en
+  el almacén de credenciales del SO (Credential Manager / Keychain) vía
+  `keyring`, con migración automática desde texto plano; si el almacén no está
+  disponible se mantiene el texto plano como fallback (con aviso en el log).
 - El tooltip de confianza escapa HTML del firmante/razones.
 - Comparaciones de rutas de confianza con separador (evita falsos positivos
   tipo `C:\Windows` vs `C:\WindowsEvil`).
