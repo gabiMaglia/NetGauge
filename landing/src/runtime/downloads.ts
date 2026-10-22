@@ -14,8 +14,11 @@ function setLabel(root: ParentNode, label: string, sub: string): void {
 export function setupDownloads(root: HTMLElement, platform: Platform, rt: RuntimeStrings): void {
   const primaries = $$<HTMLAnchorElement>(root, '[data-os-primary]');
 
-  if (platform === 'windows') setLabel(root, rt.os.windows.label, rt.os.windows.sub);
-  else if (platform === 'mac') {
+  if (platform === 'windows') {
+    setLabel(root, rt.os.windows.label, rt.os.windows.sub);
+    // El CTA principal ya es Windows: se oculta el botón secundario duplicado.
+    $$(root, '[data-hide-win]').forEach((el) => (el.hidden = true));
+  } else if (platform === 'mac') {
     setLabel(root, rt.os.mac.label, rt.os.mac.sub);
     // No se adivina el chip: el CTA lleva a los botones Intel / Apple Silicon.
     primaries.forEach((a) => {
