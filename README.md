@@ -134,13 +134,15 @@ Notas:
 
 Política de firma de código / Code signing policy.
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/),
-certificate by [SignPath Foundation](https://signpath.org/).
+| Plataforma / Platform | Estado / Status |
+|---|---|
+| macOS (`.dmg`) | Firmado con Apple Developer ID y notarizado por Apple (desde v2.0.3). / Signed with an Apple Developer ID and notarized by Apple (since v2.0.3). |
+| Windows (`.exe`) | **Sin firmar por ahora.** SmartScreen puede mostrar un aviso: *Más información* → *Ejecutar de todas formas*. / **Not signed yet.** SmartScreen may show a warning: *More info* → *Run anyway*. |
 
-**Roles del equipo / Team roles**
-
-- Committers and reviewers: Gabriel Maglia ([@gabiMaglia](https://github.com/gabiMaglia))
-- Approvers: Gabriel Maglia ([@gabiMaglia](https://github.com/gabiMaglia))
+Podés verificar la integridad de cada descarga con `SHA256SUMS.txt`, incluido en
+cada release. El código es abierto y se puede auditar y compilar desde el
+fuente. / You can verify each download with the `SHA256SUMS.txt` published with
+every release. The code is open source and can be audited and built from source.
 
 **Privacy policy / Política de privacidad:** This program will not transfer any
 information to other networked systems unless specifically requested by the user

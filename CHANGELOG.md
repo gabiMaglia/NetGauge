@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+### Fixed
+- Docs: la sección *Code signing policy* del README atribuía la firma a SignPath
+  Foundation, pero nunca se aprobó ni se usó. Ahora refleja el estado real:
+  macOS firmado y notarizado (Apple Developer ID), Windows sin firmar.
 
 ## [2.0.3] - 2026-10-22
 ### Added
@@ -67,7 +71,7 @@ versionado [SemVer](https://semver.org/lang/es/).
 ### Changed
 - Política de privacidad: nuevo `PRIVACY.md` (fuente de verdad) que el instalador
   de Windows muestra durante la instalación y se empaqueta en los bundles; el
-  README suma la sección *Code signing policy* (SignPath Foundation) e
+  README suma la sección *Code signing policy* e
   instrucciones de desinstalación, y la landing enlaza la política.
 - README reescrito (descarga, requisitos, aviso de firma, privacidad y datos
   locales); nuevos `THIRD_PARTY_LICENSES.md` (incluido en el instalador y los
