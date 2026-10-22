@@ -1,6 +1,7 @@
 """Ventana principal NetGauge (frameless, redondeada, con barra de título propia)."""
 from __future__ import annotations
 
+import html
 import ipaddress
 import sys
 
@@ -32,6 +33,20 @@ from .widgets import AppRow, BarsLogo, ConnRow, LiveChart, MetricCard, QuotaBar
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _PERIOD_CODES = ["session", "day", "week", "month"]
+
+
+def trust_tooltip_text(info, translate) -> str:
+    """Tooltip de confianza como rich text: el signer/razones vienen de fuera
+    (cert del ejecutable) y se escapan para que Qt no los interprete como HTML."""
+    lines = [f"{translate('trust.title')}: {translate('trust.level.' + info.level)}"]
+    for r in info.reasons:
+        if r == "trust.signed_by":
+            lines.append("• " + translate(r, signer=info.signer or "?"))
+        elif r in ("trust.vt_clean", "trust.vt_detected"):
+            lines.append("• " + translate(r, m=info.vt_malicious, n=info.vt_total))
+        else:
+            lines.append("• " + translate(r))
+    return "<br>".join(html.escape(line) for line in lines)
 
 
 def _is_loopback(ip: str) -> bool:
@@ -442,15 +457,7 @@ class MainWindow(QWidget):
                              self._vt_badge_tooltip(info))
 
     def _trust_tooltip(self, info) -> str:
-        lines = [f"{t('trust.title')}: {t('trust.level.' + info.level)}"]
-        for r in info.reasons:
-            if r == "trust.signed_by":
-                lines.append("• " + t(r, signer=info.signer or "?"))
-            elif r in ("trust.vt_clean", "trust.vt_detected"):
-                lines.append("• " + t(r, m=info.vt_malicious, n=info.vt_total))
-            else:
-                lines.append("• " + t(r))
-        return "\n".join(lines)
+        return trust_tooltip_text(info, t)
 
     def _vt_badge_tooltip(self, info) -> str:
         if not info.vt_total:

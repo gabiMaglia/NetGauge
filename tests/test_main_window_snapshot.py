@@ -66,6 +66,37 @@ def test_refresh_does_no_io_on_gui_thread(qapp):
         w.deleteLater()
 
 
+def test_period_change_keeps_frame_until_snapshot_arrives(qapp):
+    m = MonitorService(FakeCapture(), FakeRepo(), FakeReporter(),
+                       FakeStore(Settings()), FakeNotifier())
+    m._on_sample(TrafficSample(1, "Chrome", bytes_sent=10, bytes_recv=20))
+    w = MainWindow(m, per_process=True)
+    try:
+        w._set_period("session")
+        assert "Chrome" in w._app_rows
+        w._set_period("week")           # snapshot de 'week' aún no calculado
+        assert "Chrome" in w._app_rows  # no se vacía el frame
+    finally:
+        w._timer.stop()
+        m.set_snapshot_listener(None)
+        w.deleteLater()
+
+
+class _Info:
+    level = "suspicious"
+    signer = "<b>Evil</b> & Co"
+    reasons = ["trust.signed_by"]
+    vt_malicious = None
+    vt_total = None
+
+
+def test_trust_tooltip_escapa_html():
+    from src.presentation.qt.main_window import trust_tooltip_text
+    txt = trust_tooltip_text(_Info(), lambda k, **kw: kw.get("signer", k))
+    assert "<b>" not in txt
+    assert "&lt;b&gt;Evil&lt;/b&gt; &amp; Co" in txt
+
+
 def test_tick_does_not_refresh_data(qapp, monkeypatch):
     m = MonitorService(FakeCapture(), FakeRepo(), FakeReporter(),
                        FakeStore(Settings()), FakeNotifier())
