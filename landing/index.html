@@ -2,43 +2,18 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <title>NetGauge — Monitor de consumo de red por aplicación, gratis y open source</title>
-    <meta
-      name="description"
-      content="Mirá cuánto consume cada app en Windows y Mac, gratis y privado. NetGauge es un monitor de red por aplicación, de código abierto, sin telemetría."
-    />
-
-    <meta property="og:type" content="website" />
-    <meta
-      property="og:title"
-      content="NetGauge — Monitor de consumo de red por aplicación, gratis y open source"
-    />
-    <meta
-      property="og:description"
-      content="Mirá cuánto consume cada app en Windows y Mac, gratis y privado. NetGauge es un monitor de red por aplicación, de código abierto, sin telemetría."
-    />
-    <meta property="og:image" content="/favicon.svg" />
-
-    <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="NetGauge — Monitor de consumo de red por aplicación, gratis y open source"
-    />
-    <meta
-      name="twitter:description"
-      content="Mirá cuánto consume cada app en Windows y Mac, gratis y privado. NetGauge es un monitor de red por aplicación, de código abierto, sin telemetría."
-    />
+    <meta name="theme-color" content="#070b14" />
+    <!--ng:pref-redirect-->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- La fuente del H1 se precarga: es el LCP y no depende de Google Fonts. -->
+    <link rel="preload" href="/fonts/PlusJakartaSans-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
+    <!--ng:head--><!--/ng:head-->
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root"><!--ng:body--><!--/ng:body--></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
