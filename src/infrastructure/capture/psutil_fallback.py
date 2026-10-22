@@ -7,8 +7,8 @@ usuario que el desglose por aplicación requiere el modo ETW.
 """
 from __future__ import annotations
 
+import logging
 import threading
-import time
 from typing import Callable
 
 import psutil
@@ -17,6 +17,8 @@ from ...domain.models import TrafficSample
 from ...domain.ports import CaptureService
 
 _GLOBAL_APP = "Sistema (global)"
+
+log = logging.getLogger(__name__)
 
 
 class PsutilCaptureService(CaptureService):
@@ -33,19 +35,27 @@ class PsutilCaptureService(CaptureService):
         self._thread.start()
 
     def _loop(self, on_sample: Callable[[TrafficSample], None]) -> None:
-        prev = psutil.net_io_counters()
-        while not self._stop_event.is_set():
-            time.sleep(self._interval)
-            cur = psutil.net_io_counters()
-            sent = max(0, cur.bytes_sent - prev.bytes_sent)
-            recv = max(0, cur.bytes_recv - prev.bytes_recv)
-            prev = cur
-            if sent or recv:
-                on_sample(
-                    TrafficSample(
-                        pid=0, app_name=_GLOBAL_APP, bytes_sent=sent, bytes_recv=recv
-                    )
-                )
+        prev = None
+        while True:
+            try:
+                cur = psutil.net_io_counters()
+                # La base avanza ANTES de on_sample: si el callback falla,
+                # el próximo delta no re-cuenta estos bytes.
+                base, prev = prev, cur
+                if base is not None:
+                    sent = max(0, cur.bytes_sent - base.bytes_sent)
+                    recv = max(0, cur.bytes_recv - base.bytes_recv)
+                    if sent or recv:
+                        on_sample(
+                            TrafficSample(
+                                pid=0, app_name=_GLOBAL_APP,
+                                bytes_sent=sent, bytes_recv=recv,
+                            )
+                        )
+            except Exception:  # noqa: BLE001
+                log.exception("psutil: fallo en una iteración de captura; sigo")
+            if self._stop_event.wait(self._interval):
+                return
 
     def stop(self) -> None:
         self._stop_event.set()
