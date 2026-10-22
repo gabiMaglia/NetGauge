@@ -1,7 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec para Network Monitor (Windows x64).
 # Build:  pyinstaller build/network_monitor.spec --noconfirm
+import os
+import sys
+
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+# Version unica: build/gen_version_info.py parsea src/version.py. Se regenera
+# version_info.txt en cada build para que nunca quede desactualizado.
+sys.path.insert(0, SPECPATH)  # noqa: F821  (SPECPATH lo inyecta PyInstaller)
+from gen_version_info import write_version_info  # noqa: E402
+
+write_version_info(os.path.join(SPECPATH, "version_info.txt"))  # noqa: F821
 
 block_cipher = None
 

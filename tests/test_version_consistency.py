@@ -74,3 +74,29 @@ def test_committed_version_info_is_up_to_date():
     assert committed == gvi.render(_app_version()), (
         "build/version_info.txt desactualizado: correr `python build/gen_version_info.py`"
     )
+
+
+# --- specs de PyInstaller ---------------------------------------------------
+
+def _spec(name: str) -> str:
+    return (BUILD / name).read_text(encoding="utf-8")
+
+
+def test_macos_spec_uses_single_source():
+    text = _spec("network_monitor_macos.spec")
+    assert "from gen_version_info import" in text
+    assert '"CFBundleVersion": APP_VERSION' in text
+    assert '"CFBundleShortVersionString": APP_VERSION' in text
+
+
+def test_macos_spec_has_no_hardcoded_version_literal():
+    for line in _spec("network_monitor_macos.spec").splitlines():
+        if "CFBundle" in line and "Version" in line:
+            assert not re.search(r'"\d+\.\d+\.\d+"', line), f"version hardcodeada: {line!r}"
+
+
+def test_windows_spec_regenerates_version_info():
+    text = _spec("network_monitor.spec")
+    assert "from gen_version_info import" in text
+    assert "write_version_info(" in text
+    assert 'version="version_info.txt"' in text

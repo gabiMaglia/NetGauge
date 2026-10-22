@@ -3,7 +3,7 @@
 #
 # Build (en un Mac, arquitectura nativa del runner -- PyInstaller NO
 # cross-compila x86_64<->arm64, cada arch se buildea en su propio runner;
-# eso lo cubre T-004 con macos-13 (Intel) y macos-14 (Apple Silicon)):
+# eso lo cubre T-004 con macos-15-intel (Intel) y macos-14 (Apple Silicon)):
 #   pyinstaller build/network_monitor_macos.spec --noconfirm
 #
 # Para forzar explícitamente la arquitectura del bundle resultante (debe
@@ -16,8 +16,15 @@
 # .app/.dmg resultante están sin firmar; Gatekeeper mostrará advertencia.
 import os
 import platform
+import sys
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+# Version unica: se parsea src/version.py (sin importar el paquete src/Qt).
+sys.path.insert(0, SPECPATH)  # noqa: F821  (SPECPATH lo inyecta PyInstaller)
+from gen_version_info import read_app_version  # noqa: E402
+
+APP_VERSION = read_app_version()
 
 block_cipher = None
 
@@ -91,8 +98,8 @@ app = BUNDLE(
     info_plist={
         "CFBundleName": "NetGauge",
         "CFBundleDisplayName": "NetGauge",
-        "CFBundleShortVersionString": "1.7.1",
-        "CFBundleVersion": "1.7.1",
+        "CFBundleShortVersionString": APP_VERSION,
+        "CFBundleVersion": APP_VERSION,
         "NSHighResolutionCapable": True,
         # App de bandeja: no queremos icono+ventana en el Dock al arrancar
         # (igual criterio que la presentación Windows/T-002, sin forzar
