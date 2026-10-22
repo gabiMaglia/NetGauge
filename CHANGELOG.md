@@ -55,6 +55,10 @@ versionado [SemVer](https://semver.org/lang/es/).
 - Informes: escape de fórmulas (`=`, `+`, `-`, `@`) y nombre de archivo sanitizado (sin path traversal).
 - Nombres de app y datos GeoIP se muestran como texto plano.
 ### Changed
+- Política de privacidad: nuevo `PRIVACY.md` (fuente de verdad) que el instalador
+  de Windows muestra durante la instalación y se empaqueta en los bundles; el
+  README suma la sección *Code signing policy* (SignPath Foundation) e
+  instrucciones de desinstalación, y la landing enlaza la política.
 - README reescrito (descarga, requisitos, aviso de firma, privacidad y datos
   locales); nuevos `THIRD_PARTY_LICENSES.md` (incluido en el instalador y los
   bundles) y `SECURITY.md`; `.gitignore` ignora `.env*`, `*.pfx`, `*.p12`.

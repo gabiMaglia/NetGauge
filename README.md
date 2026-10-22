@@ -28,6 +28,17 @@ Bajá la última versión desde
 | macOS Intel | `NetGauge-<versión>-x86_64.dmg` |
 
 Cada release incluye un archivo `SHA256SUMS.txt` para verificar la descarga.
+Sobre la firma de los binarios, ver la [Code signing policy](#code-signing-policy).
+
+### Desinstalar
+
+- **Windows:** *Configuración → Aplicaciones → NetGauge → Desinstalar*, o el
+  acceso **Desinstalar NetGauge** del menú Inicio (el instalador lo crea y
+  también elimina la tarea de inicio automático). Los datos de usuario
+  (`%LOCALAPPDATA%\NetGauge\`) no se borran; podés eliminarlos a mano.
+- **macOS:** arrastrá `NetGauge.app` a la Papelera. Opcionalmente borrá
+  `~/Library/Application Support/NetGauge` para eliminar el historial y los
+  ajustes.
 
 ### Aviso de firma (importante)
 
@@ -85,6 +96,9 @@ el código fuente: ver [`docs/BUILD.md`](docs/BUILD.md).
 
 ## Privacidad
 
+> La política completa (fuente de verdad) está en [`PRIVACY.md`](PRIVACY.md); el
+> instalador de Windows la muestra durante la instalación. Resumen:
+
 NetGauge **no tiene telemetría ni analítica**, no crea cuentas y no sube tu
 historial de uso. Todo el historial queda en tu equipo. Esto es *exactamente*
 lo que puede salir por la red:
@@ -108,6 +122,37 @@ Notas:
   IPs que estaban en cola se descartan y, a lo sumo, puede completarse la única
   consulta que ya estaba en vuelo.
 - El índice de confianza se calcula **localmente**; no envía nada.
+
+## Code signing policy
+
+Política de firma de código / Code signing policy.
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/),
+certificate by [SignPath Foundation](https://signpath.org/).
+
+**Roles del equipo / Team roles**
+
+- Committers and reviewers: Gabriel Maglia ([@gabiMaglia](https://github.com/gabiMaglia))
+- Approvers: Gabriel Maglia ([@gabiMaglia](https://github.com/gabiMaglia))
+
+**Privacy policy / Política de privacidad:** This program will not transfer any
+information to other networked systems unless specifically requested by the user
+or the person installing or operating it. Concretely, NetGauge only connects to:
+
+- `api.github.com` (HTTPS) — automatic update check at start and every 24 h; sends
+  no usage data. / búsqueda automática de actualizaciones al iniciar y cada 24 h.
+- `ip-api.com` (HTTP) — only if you enable *GeoIP* in Settings (off by default);
+  sends the remote IP. / solo si activás *GeoIP* (apagado por defecto).
+- `www.virustotal.com` (HTTPS) — only if you enable VirusTotal and enter your own
+  API key (off by default); sends the executable's SHA-256 hash. / solo si
+  activás VirusTotal con tu API key (apagado por defecto).
+
+Details: [`PRIVACY.md`](PRIVACY.md).
+
+> Los binarios publicados en una release pueden estar firmados o no, según la
+> versión; los de releases anteriores a la adopción de esta política no lo están
+> (ver *Aviso de firma* arriba). / Binaries of releases published before this
+> policy was adopted are unsigned (see the signing notice above).
 
 ## Datos locales
 
