@@ -34,8 +34,9 @@ from ..domain.ports import (
     TrustEvaluator,
     UsageRepository,
 )
+from .snapshot_refresher import SnapshotRefresher
 
-log = logging.getLogger(__name__)
+log =logging.getLogger(__name__)
 
 _SPIKE_FLOOR =3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
 _SPIKE_FACTOR = 3.0                # x veces el promedio reciente
@@ -67,6 +68,7 @@ class MonitorService:
         connection_provider: ConnectionProvider | None = None,
         reputation: ReputationService | None = None,
         geoip: GeoIpService | None = None,
+        snapshot_interval: float = 2.0,
     ) -> None:
         self._capture = capture
         self._repo = repository
@@ -123,6 +125,19 @@ class MonitorService:
         self._daily_alerts_fired: set[int] = set()
         self._alert_day: datetime | None = None
 
+        # ---- snapshot para la UI (plan 04) ------------------------------
+        # La UI SÓLO lee estos campos (getters baratos, sin IO). Los llena el
+        # worker de fondo vía refresh_snapshot(). Lock propio: _lock es el del
+        # camino caliente de captura y no queremos contención con la UI.
+        # Regla: nunca hacer IO con _snap_lock tomado.
+        self._snap_lock = threading.Lock()
+        self._snap_daily: QuotaStatus | None = None
+        self._snap_monthly: QuotaStatus | None = None
+        self._snap_periods: dict[str, list[UsageRecord]] = {}
+        self._wanted_period: str | None = None
+        self._refresher = SnapshotRefresher(self.refresh_snapshot,
+                                            interval=snapshot_interval)
+
     @property
     def reputation_service(self) -> ReputationService | None:
         """Acceso de solo lectura para la capa de presentación (ej. probar
@@ -136,6 +151,7 @@ class MonitorService:
         self._capture.start(self._on_sample)
         self._schedule_flush()
         self._schedule_rate()
+        self._refresher.start()
 
     def stop(self) -> None:
         with self._sched_lock:
@@ -148,6 +164,12 @@ class MonitorService:
         for t in timers:
             if t is not None:
                 t.cancel()
+        # Fuera de _sched_lock (el join puede tardar hasta su timeout) y antes
+        # del flush final: el worker lee del repo y no debe correr después.
+        try:
+            self._refresher.stop()
+        except Exception:  # noqa: BLE001
+            log.exception("Fallo deteniendo el worker del snapshot")
         try:
             self._capture.stop()
         except Exception:  # noqa: BLE001
@@ -326,24 +348,54 @@ class MonitorService:
         records = self._repo.totals_by_app(start, now + timedelta(seconds=1))
         return sum(r.bytes_sent + r.bytes_recv for r in records)
 
-    def quota_status(self) -> QuotaStatus:
+    @staticmethod
+    def _day_start() -> datetime:
+        return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def _monthly_limit(self) -> int:
+        return int(self.settings.monthly_quota_gb * (1024**3))
+
+    def _daily_limit(self) -> int:
+        return int(self.settings.daily_quota_gb * (1024**3))
+
+    def _compute_quota_status(self) -> QuotaStatus:
+        """Consulta SQLite: SÓLO desde hilos de fondo (worker / timer de flush)."""
         start = self._cycle_start()
-        limit = int(self.settings.monthly_quota_gb * (1024**3))
-        return QuotaStatus(
-            used_bytes=self._usage_since(start), limit_bytes=limit, cycle_start=start
-        )
+        return QuotaStatus(used_bytes=self._usage_since(start),
+                           limit_bytes=self._monthly_limit(), cycle_start=start)
+
+    def _compute_daily_status(self) -> QuotaStatus:
+        """Consulta SQLite: SÓLO desde hilos de fondo (worker / timer de flush)."""
+        start = self._day_start()
+        return QuotaStatus(used_bytes=self._usage_since(start),
+                           limit_bytes=self._daily_limit(), cycle_start=start)
+
+    @staticmethod
+    def _from_snapshot(snap: QuotaStatus | None, start: datetime,
+                       limit: int) -> QuotaStatus:
+        # Si el snapshot es de otro ciclo/día (recién cambió), 0 hasta el
+        # próximo refresco antes que mostrar el consumo del período anterior.
+        used = snap.used_bytes if snap is not None and snap.cycle_start == start else 0
+        return QuotaStatus(used_bytes=used, limit_bytes=limit, cycle_start=start)
+
+    def quota_status(self) -> QuotaStatus:
+        """Para la UI: lee el snapshot (sin IO). El límite sale de los settings
+        actuales para reflejar un cambio de cuota sin esperar al worker."""
+        with self._snap_lock:
+            snap = self._snap_monthly
+        return self._from_snapshot(snap, self._cycle_start(), self._monthly_limit())
 
     def daily_status(self) -> QuotaStatus:
-        start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        limit = int(self.settings.daily_quota_gb * (1024**3))
-        return QuotaStatus(
-            used_bytes=self._usage_since(start), limit_bytes=limit, cycle_start=start
-        )
+        """Para la UI: lee el snapshot (sin IO)."""
+        with self._snap_lock:
+            snap = self._snap_daily
+        return self._from_snapshot(snap, self._day_start(), self._daily_limit())
 
     def _check_quota_alerts(self) -> None:
-        self._check_alerts(self.quota_status(), "monthly",
+        # Corre en el timer de flush (fuera del hilo GUI): consulta directo.
+        self._check_alerts(self._compute_quota_status(), "monthly",
                            self._alerts_fired, "_alert_cycle")
-        self._check_alerts(self.daily_status(), "daily",
+        self._check_alerts(self._compute_daily_status(), "daily",
                            self._daily_alerts_fired, "_alert_day")
 
     def _check_alerts(self, status: QuotaStatus, scope: str,
@@ -370,22 +422,72 @@ class MonitorService:
         self._settings_store.save(settings)
         self._alerts_fired.clear()  # re-evaluar con la nueva cuota
         self._daily_alerts_fired.clear()
+        self._refresher.trigger()  # límites/flags nuevos: refrescar ya
+
+    # ---- snapshot para la UI (worker de fondo, plan 04) ----------------
+    def set_snapshot_listener(self, callback: Callable[[], None] | None) -> None:
+        """Avisa tras cada refresco. Corre en el hilo del worker: la UI debe
+        saltar a su hilo (señal Qt encolada)."""
+        self._refresher.set_listener(callback)
+
+    def refresh_snapshot(self) -> None:
+        """Un ciclo del worker: hace TODO el IO que antes hacía la UI y lo
+        publica. Cada paso es independiente: si uno falla, los demás siguen.
+        Público para poder testearlo de forma síncrona."""
+        for step in (self._refresh_quota_snapshot, self._refresh_period_snapshot):
+            try:
+                step()
+            except Exception:  # noqa: BLE001
+                log.exception("Fallo refrescando %s", step.__name__)
+
+    def _refresh_quota_snapshot(self) -> None:
+        daily = self._compute_daily_status()
+        monthly = self._compute_quota_status()
+        with self._snap_lock:
+            self._snap_daily = daily
+            self._snap_monthly = monthly
+
+    def _refresh_period_snapshot(self) -> None:
+        with self._snap_lock:
+            period = self._wanted_period
+        if period is None:
+            return
+        rows = self._compute_usage_for_period(period)
+        with self._snap_lock:
+            self._snap_periods[period] = rows
 
     # ---- consultas para la UI -----------------------------------------
     def session_usage(self) -> list[AppUsage]:
         with self._lock:
             return sorted(self._session.values(), key=lambda u: -u.total)
 
-    def usage_for_period(self, period: str) -> list[UsageRecord]:
-        """period in {'day', 'week', 'month'}."""
+    @staticmethod
+    def _period_start(period: str) -> datetime:
         now = datetime.now()
-        start = {
+        return {
             "day": now.replace(hour=0, minute=0, second=0, microsecond=0),
             "week": (now - timedelta(days=now.weekday())).replace(
                 hour=0, minute=0, second=0, microsecond=0),
             "month": now.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
         }.get(period, now - timedelta(days=1))
-        return self._repo.totals_by_app(start, now + timedelta(seconds=1))
+
+    def _compute_usage_for_period(self, period: str) -> list[UsageRecord]:
+        """Consulta SQLite: SÓLO desde el worker."""
+        now = datetime.now()
+        return self._repo.totals_by_app(self._period_start(period),
+                                        now + timedelta(seconds=1))
+
+    def usage_for_period(self, period: str) -> list[UsageRecord]:
+        """Para la UI. period in {'day', 'week', 'month'}. Lee el snapshot (sin
+        IO); si es un período nuevo despierta al worker UNA vez y devuelve lo
+        último conocido (o vacío) hasta que llegue el dato."""
+        with self._snap_lock:
+            rows = self._snap_periods.get(period)
+            changed = period != self._wanted_period
+            self._wanted_period = period
+        if changed:
+            self._refresher.trigger()
+        return list(rows) if rows is not None else []
 
     # ---- índice de confianza / conexiones -----------------------------
     def _refresh_exe_paths(self) -> None:

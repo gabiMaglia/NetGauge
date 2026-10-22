@@ -27,6 +27,7 @@ def test_quota_status_sums_repo_usage(settings, notifier):
     repo = FakeRepo([UsageRecord("A", 100, 200, datetime.now()),
                      UsageRecord("B", 300, 400, datetime.now())])
     m = make_monitor(settings, notifier, repo)
+    m.refresh_snapshot()   # plan 04: quota_status() lee el snapshot
     st = m.quota_status()
     assert st.used_bytes == 1000
     assert st.has_limit is True
@@ -279,6 +280,7 @@ def test_week_period_starts_exactly_at_monday_midnight(settings, notifier):
     m = make_monitor(settings, notifier, repo)
 
     m.usage_for_period("week")
+    m.refresh_snapshot()   # plan 04: la consulta ocurre en el worker
 
     start = repo.starts[-1]
     assert start.weekday() == 0
