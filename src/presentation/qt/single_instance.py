@@ -54,18 +54,20 @@ class SingleInstance:
     def listen(self, on_show: Callable[[], None]) -> bool:
         """Arranca el servidor de esta instancia (la primera).
 
-        Devuelve True si quedó escuchando. Si `listen` falla (pipe huérfano),
-        limpia con removeServer y reintenta UNA vez; si vuelve a fallar, False.
+        Devuelve True si quedó escuchando. Si `listen` falla, primero verifica que
+        no haya otra instancia viva (removeServer borraría su socket en macOS); si
+        nadie responde, limpia el pipe huérfano con removeServer y reintenta UNA vez.
         """
         for _attempt in range(2):
             server = self._server_factory()
-            server.removeServer(self._key)  # limpia un pipe huérfano si quedó
             if server.listen(self._key):
                 self._server = server
                 server.newConnection.connect(
                     lambda: self._on_connection(on_show))
                 return True
-            server.removeServer(self._key)
+            if self.already_running():
+                return False  # hay dueño vivo: no tocar su socket
+            server.removeServer(self._key)  # pipe huérfano
         return False
 
     def _on_connection(self, on_show: Callable[[], None]) -> None:

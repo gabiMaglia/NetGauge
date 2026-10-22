@@ -89,9 +89,42 @@ def test_listen_reintenta_una_vez_tras_removeServer():
     g = SingleInstance(key="k", server_factory=factory)
     assert g.listen(lambda: None) is True
     assert len(servers) == 2                       # server nuevo en el reintento
-    assert _FakeServer.removed.count("k") >= 2     # limpieza previa + tras el fallo
+    assert _FakeServer.removed.count("k") >= 1     # limpieza del pipe huérfano tras el fallo
 
 
 def test_listen_falla_dos_veces_devuelve_false():
     g, _ = _guard(5)
     assert g.listen(lambda: None) is False
+
+
+def test_listen_no_borra_el_socket_si_hay_instancia_viva(monkeypatch):
+    g, servers = _guard(5)
+    monkeypatch.setattr(g, "already_running", lambda: True)
+    assert g.listen(lambda: None) is False
+    assert _FakeServer.removed == []               # borraría el socket vivo (macOS)
+    assert len(servers) == 1
+
+
+def test_listen_limpia_huerfano_si_nadie_responde(monkeypatch):
+    g, servers = _guard(5)
+    monkeypatch.setattr(g, "already_running", lambda: False)
+    assert g.listen(lambda: None) is False
+    assert _FakeServer.removed.count("k") >= 1
+
+
+class _FakeGuard:
+    def __init__(self, running): self._running = running
+    def already_running(self): return self._running
+
+
+def test_listen_fallido_con_otra_instancia_sale_con_0():
+    from src.presentation.qt.app import should_exit_after_listen_failure
+    assert should_exit_after_listen_failure(_FakeGuard(True)) is True
+
+
+def test_listen_fallido_sin_otra_instancia_continua_con_warning(caplog):
+    import logging
+    from src.presentation.qt.app import should_exit_after_listen_failure
+    with caplog.at_level(logging.WARNING):
+        assert should_exit_after_listen_failure(_FakeGuard(False)) is False
+    assert any("instancia única" in r.getMessage() for r in caplog.records)

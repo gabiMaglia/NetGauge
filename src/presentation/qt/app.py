@@ -108,6 +108,16 @@ def create_app() -> QApplication:
     return QApplication(sys.argv)
 
 
+def should_exit_after_listen_failure(guard) -> bool:
+    """Tras un listen() fallido: True si otra instancia responde (salir con 0);
+    si nadie responde, loguea y sigue sin instancia única (mejor abrir que no abrir)."""
+    if guard.already_running():
+        return True
+    logging.getLogger(__name__).warning(
+        'No se pudo abrir el servidor de instancia única; se continúa sin él')
+    return False
+
+
 def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
         per_process: bool, notifier: QtNotifier) -> int:
     load_app_fonts()  # registrar Plus Jakarta Sans bundleada (no depende del SO)
@@ -181,9 +191,8 @@ def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
     # Cuando una 2ª instancia toca el pipe, traemos esta ventana al frente.
     # Si no pudimos escuchar (ni tras reintentar), seguimos SIN instancia única:
     # mejor abrir que no abrir; solo se pierde el 'traer al frente' de la 2ª.
-    if not guard.listen(show_window):
-        logging.getLogger(__name__).warning(
-            'No se pudo abrir el servidor de instancia única; se continúa sin él')
+    if not guard.listen(show_window) and should_exit_after_listen_failure(guard):
+        return 0
 
     # Mini-gráfico en el tray + tooltip con velocidad y app top (cada 2s).
     spark: deque[float] = deque([0.0] * 24, maxlen=24)
