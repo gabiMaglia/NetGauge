@@ -36,8 +36,7 @@ build/make_dmg.sh x86_64
 PyInstaller no cross-compila: un Mac Intel solo puede generar el `.app`
 x86_64; un Mac Apple Silicon solo arm64 (salvo Python universal2, no usado
 aquí). Los dos builds separados se resuelven con dos runners en CI
-(`macos-13` x86_64 y `macos-14` arm64) — eso es alcance de **T-004**, no de
-este ticket.
+(`macos-15-intel` x86_64 y `macos-14` arm64, ver `.github/workflows/release.yml`).
 
 ## Firma y notarización (opcional)
 
