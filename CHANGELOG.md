@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+
+## [2.0.4] - 2026-10-22
 ### Fixed
 - **macOS:** `nettop` consumía ~100-120 % de CPU permanente mientras NetGauge
   estaba abierta. Causa: el modo streaming (`-L 0`) mantiene una suscripción
