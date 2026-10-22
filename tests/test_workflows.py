@@ -91,3 +91,60 @@ def test_release_windows_generates_version_info_before_pyinstaller():
     gen = next(i for i, c in enumerate(cmds) if "gen_version_info.py" in c)
     pyi = next(i for i, c in enumerate(cmds) if "pyinstaller" in c)
     assert gen < pyi
+
+
+def _release_macos_steps() -> list[dict]:
+    return _load("release.yml")["jobs"]["macos"]["steps"]
+
+
+# --- release.yml (job macos) ---------------------------------------------
+
+def test_release_macos_maps_signing_secrets_to_env():
+    wf = _load("release.yml")
+    env = wf["jobs"]["macos"]["env"]
+    for name in (
+        "APPLE_CERTIFICATE_P12_BASE64",
+        "APPLE_CERTIFICATE_PASSWORD",
+        "APPLE_CODESIGN_IDENTITY",
+        "APPLE_ID",
+        "APPLE_TEAM_ID",
+        "APPLE_APP_PASSWORD",
+    ):
+        assert env[name] == "${{ secrets." + name + " }}"
+
+
+def test_release_macos_imports_certificate_only_when_present():
+    steps = _release_macos_steps()
+    imp = next(s for s in steps if "security import" in s.get("run", ""))
+    assert "env.APPLE_CERTIFICATE_P12_BASE64 != ''" in imp["if"]
+    run = imp["run"]
+    for cmd in (
+        "security create-keychain",
+        "set-keychain-settings -lut 21600",
+        "unlock-keychain",
+        "-T /usr/bin/codesign",
+        "set-key-partition-list -S apple-tool:,apple:,codesign:",
+        "list-keychains",
+        "NETGAUGE_CODESIGN_IDENTITY",
+        "GITHUB_ENV",
+    ):
+        assert cmd in run, cmd
+
+
+def test_release_macos_import_happens_before_dmg():
+    steps = _release_macos_steps()
+    runs = [s.get("run", "") for s in steps]
+    imp = next(i for i, r in enumerate(runs) if "security import" in r)
+    dmg = next(i for i, r in enumerate(runs) if "make_dmg.sh" in r)
+    assert imp < dmg
+
+
+def test_release_macos_deletes_keychain_always():
+    steps = _release_macos_steps()
+    cleanup = next(s for s in steps if "delete-keychain" in s.get("run", ""))
+    assert "always()" in cleanup["if"]
+
+
+def test_release_macos_never_inlines_secrets_in_run():
+    for step in _release_macos_steps():
+        assert "${{ secrets." not in step.get("run", "")
