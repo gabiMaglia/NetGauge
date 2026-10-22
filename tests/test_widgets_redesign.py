@@ -307,3 +307,41 @@ def test_apps_connections_count_text(qapp):
     assert w._app_rows["Slack"]._conns.text() == "1 conexión"
     assert w._app_rows["Dropbox"]._conns.text() == ""
     w.close()
+
+
+def test_search_and_sort_do_not_advance_sparklines(qapp):
+    w = _apps_window()
+    n = len(w._spark_total)
+    for text in ("c", "ch", "chr", ""):
+        w._apps_search.setText(text)
+    for code in ("up", "down", "now", "total"):
+        w._sort_chips[code].click()
+    assert len(w._spark_total) == len(w._spark_down) == len(w._spark_up) == n
+    w._refresh()
+    assert len(w._spark_total) == n + 1
+    w.close()
+
+
+def test_trust_for_called_for_every_visible_row(qapp):
+    w = _apps_window()
+    seen = []
+    real = w._monitor.trust_for
+    w._monitor.trust_for = lambda app: (seen.append(app), real(app))[1]  # type: ignore[method-assign]
+    w._refresh()
+    assert set(seen) == {"Google Chrome", "Dropbox", "Slack"}
+    seen.clear()
+    w._apps_search.setText("slack")
+    assert set(seen) == {"Slack"}
+    w.close()
+
+
+def test_switching_to_apps_tab_shows_connection_counts_at_once(qapp):
+    from src.domain.models import Connection
+    w = _apps_window()
+    w._tabs.setCurrentIndex(0)
+    w._monitor.connections = lambda: [Connection("Slack", 3, "1.1.1.1", 443, "E")]  # type: ignore[method-assign]
+    w._refresh()
+    assert w._app_rows["Slack"]._conns.text() == ""
+    w._tabs.setCurrentIndex(1)
+    assert w._app_rows["Slack"]._conns.text() == "1 conexión"
+    w.close()

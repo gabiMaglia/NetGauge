@@ -46,6 +46,20 @@ def main(out: Path) -> None:
         w._refresh()
         app.processEvents()
         w.grab().save(str(out / f"ui_{name}.png"))
+    # Fila con badge de confianza (Chrome) y fila con VirusTotal (Dropbox): comprueba que no
+    # desalinean las columnas derechas.
+    from src.domain.models import TRUST_CAUTION, TRUST_TRUSTED, TrustInfo
+    real_trust = m.trust_for
+    m.trust_for = lambda a: (  # type: ignore[method-assign]
+        TrustInfo(level=TRUST_TRUSTED, signed=True, signer="Google LLC") if a == "Google Chrome"
+        else TrustInfo(level=TRUST_CAUTION, vt_total=70, vt_malicious=0) if a == "Dropbox"
+        else real_trust(a))
+    w._tabs.setCurrentIndex(1)
+    w._refresh()
+    app.processEvents()
+    w.grab().save(str(out / "ui_apps_badges.png"))
+    m.trust_for = real_trust  # type: ignore[method-assign]
+    w._refresh()
     # Vista "Día" con tendencias: el FakeRepo no tiene período previo, se simula aquí.
     mb = 1024 * 1024
     m.previous_period_breakdown = lambda period: (400 * mb, 700 * mb)  # type: ignore[method-assign]

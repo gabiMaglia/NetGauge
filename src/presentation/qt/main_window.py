@@ -127,6 +127,7 @@ class MainWindow(QWidget):
         self._app_rows: dict[str, AppRow] = {}   # filas reutilizadas por nombre
         self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
         self._apps_sort = "total"
+        self._last_rows: tuple | None = None  # (rows, total) del último _refresh
         # Dos trackers (bajada/subida) sobre los acumulados de la sesión; se
         # alimentan sólo desde _tick (1 Hz) para que dt no dependa de cuántos
         # _refresh haya (búsqueda, orden, snapshots).
@@ -358,6 +359,7 @@ class MainWindow(QWidget):
         self._tabs.addTab(self._build_global_tab(), t("tab.global"))
         self._tabs.addTab(self._build_apps_tab(), t("tab.apps"))
         self._tabs.addTab(self._build_connections_tab(), t("tab.connections"))
+        self._tabs.bar.currentChanged.connect(lambda _i: self._redraw_apps())
         return self._tabs
 
     def _build_global_tab(self) -> QWidget:
@@ -453,7 +455,7 @@ class MainWindow(QWidget):
         self._search_action = self._apps_search.addAction(
             svg_icon("search", self._theme["text_muted"], 16),
             QLineEdit.ActionPosition.LeadingPosition)
-        self._apps_search.textChanged.connect(lambda _t: self._refresh())
+        self._apps_search.textChanged.connect(lambda _t: self._redraw_apps())
         tools.addWidget(self._apps_search, 1)
         tools.addSpacing(6)
         self._sort_caption = QLabel(t("apps.sort"))
@@ -527,7 +529,13 @@ class MainWindow(QWidget):
 
     def _set_apps_sort(self, code: str) -> None:
         self._apps_sort = code
-        self._refresh()
+        self._redraw_apps()
+
+    def _redraw_apps(self) -> None:
+        """Búsqueda/orden/cambio de pestaña: sólo re-concilia las filas con los
+        últimos datos; _refresh (y sus puntos de sparkline) corre a ~1 Hz."""
+        if self._last_rows is not None:
+            self._rebuild_apps(*self._last_rows)
 
     def _build_connections_tab(self) -> QWidget:
         page = QWidget()
@@ -607,6 +615,7 @@ class MainWindow(QWidget):
         self._set_limit(self._month_card, self._monitor.quota_status(),
                         "quota.monthly", "limit.monthly")
 
+        self._last_rows = (rows, total)
         self._rebuild_apps(rows, total)
         self._refresh_connections()
 
@@ -758,6 +767,8 @@ class MainWindow(QWidget):
 
     def _update_app_rates(self) -> None:
         """Velocidad por app: delta de los acumulados de sesión entre ticks (1 Hz)."""
+        # "Ahora" es la tasa en vivo de la SESIÓN aun en Día/Semana/Mes: las apps
+        # que no están en la sesión muestran 0 y quedan últimas al ordenar por Ahora.
         usage = self._monitor.session_usage()
         now = self._clock()
         self._rates_down = self._recv_tracker.update({u.app_name: u.bytes_recv for u in usage}, now)
