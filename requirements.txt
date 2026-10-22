@@ -1,7 +1,7 @@
 psutil>=5.9,<8
 # PySide6 (LGPL): apta para distribución gratuita y comercial/closed-source.
 # (Se migró desde PyQt6, que es GPL/comercial y no servía para vender.)
-PySide6>=6.6,<7
+PySide6>=6.12.0,<7
 # Export de informes (Excel / PDF). Ambas son BSD/MIT (aptas comercialmente).
 openpyxl>=3.1,<4
 reportlab>=4.0,<5
