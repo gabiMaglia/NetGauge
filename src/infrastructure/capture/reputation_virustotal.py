@@ -19,9 +19,12 @@ from ...domain.ports import ReputationService
 log = logging.getLogger(__name__)
 
 _API = "https://www.virustotal.com/api/v3/files/"
-_API_USERS = "https://www.virustotal.com/api/v3/users/"
 _MIN_INTERVAL = 16.0   # seg entre consultas (≈4/min, dentro del free tier)
 _UNKNOWN = "unknown"   # VT no conoce el archivo
+# Hash público y conocido (archivo de prueba EICAR) para validar la key sin
+# poner la credencial en la URL: 200/404 = key aceptada, 401/403 = rechazada.
+_EICAR_SHA256 = "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f"
+
 _ERROR = "error"       # irrecuperable (p.ej. archivo ilegible); set_api_key lo limpia
 _IDLE_TIMEOUT = 60.0   # seg sin trabajo antes de que el worker termine
 _BACKOFF_BASE = 300.0  # reintento tras error transitorio: 5 min, x2 por fallo
@@ -51,25 +54,26 @@ class VirusTotalReputation(ReputationService):
             self._fails.clear()
 
     def test_api_key(self, key: str) -> bool:
-        """Valida una key contra VT sin gastar cuota de análisis.
+        """Valida una key contra VT. La key va SOLO en el header x-apikey.
 
-        Usa GET /api/v3/users/{apikey}: VT devuelve los datos de la propia
-        cuenta asociada a esa key. Es liviano (no consulta archivos) y es el
-        mecanismo que VT documenta para "quién soy"/validación de credenciales.
+        Consulta un hash público conocido (EICAR): con key válida VT responde
+        200 (o 404); con key inválida, 401/403. Cuesta 1 request de la cuota.
+        Cualquier otro resultado o excepción -> False (no se puede confirmar).
         Llamar siempre desde un hilo de fondo: hace I/O de red bloqueante.
         """
         key = (key or "").strip()
         if not key:
             return False
         req = urllib.request.Request(
-            _API_USERS + key,
+            _API + _EICAR_SHA256,
             headers={"x-apikey": key, "Accept": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 return resp.status == 200
-        except urllib.error.HTTPError:
-            return False
-        except urllib.error.URLError:
+        except urllib.error.HTTPError as e:
+            return e.code == 404
+        except Exception as exc:  # noqa: BLE001 — el hilo llamador debe retornar siempre
+            log.debug("test_api_key falló: %s", exc)
             return False
 
     def lookup(self, exe_path: str) -> tuple[int, int] | None:

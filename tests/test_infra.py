@@ -43,9 +43,9 @@ def test_test_api_key_valid_returns_true():
     mock_resp.__enter__.return_value = mock_resp
     with patch("urllib.request.urlopen", return_value=mock_resp) as mocked:
         assert vt.test_api_key("a-valid-key") is True
-        # Debe pegarle al endpoint de usuarios, no al de archivos.
+        # La key va solo en el header, nunca en la URL.
         req = mocked.call_args[0][0]
-        assert "/users/a-valid-key" in req.full_url
+        assert "a-valid-key" not in req.full_url
         assert req.headers.get("X-apikey") == "a-valid-key"
 
 

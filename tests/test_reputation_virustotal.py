@@ -146,3 +146,57 @@ def test_set_api_key_limpia_errores_y_backoffs_pero_no_resultados():
     assert vt._cache["y"] == (1, 2) and vt._cache["z"] == vtmod._UNKNOWN
     assert vt._retry_at == {} and vt._fails == {}
     assert vt._api_key == "new"
+
+
+# --- test_api_key -------------------------------------------------------
+_EICAR = "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f"
+
+
+def test_api_key_200_es_valida():
+    vt = VirusTotalReputation()
+    with patch("urllib.request.urlopen", return_value=_resp(b"{}")):
+        assert vt.test_api_key("k") is True
+
+
+def test_api_key_404_es_valida():
+    vt = VirusTotalReputation()
+    with patch("urllib.request.urlopen", side_effect=_http_error(404)):
+        assert vt.test_api_key("k") is True
+
+
+@pytest.mark.parametrize("code", [401, 403, 429, 500])
+def test_api_key_otros_http_es_invalida(code):
+    vt = VirusTotalReputation()
+    with patch("urllib.request.urlopen", side_effect=_http_error(code)):
+        assert vt.test_api_key("k") is False
+
+
+@pytest.mark.parametrize("exc", [
+    TimeoutError("t"), ConnectionResetError("r"), ValueError("v"),
+    OSError("o"), RuntimeError("cualquier cosa")])
+def test_api_key_cualquier_excepcion_devuelve_false(exc):
+    vt = VirusTotalReputation()
+    with patch("urllib.request.urlopen", side_effect=exc):
+        assert vt.test_api_key("k") is False
+
+
+def test_api_key_no_va_en_la_url_sino_en_el_header():
+    vt = VirusTotalReputation()
+    seen = {}
+
+    def fake_urlopen(req, timeout=None):
+        seen["url"] = req.full_url
+        seen["key"] = req.get_header("X-apikey")
+        return _resp(b"{}")
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        assert vt.test_api_key("SECRETA") is True
+    assert "SECRETA" not in seen["url"]
+    assert seen["url"].endswith(_EICAR)
+    assert seen["key"] == "SECRETA"
+
+
+def test_api_key_vacia_no_toca_la_red():
+    vt = VirusTotalReputation()
+    with patch("urllib.request.urlopen") as m:
+        assert vt.test_api_key("   ") is False
+    m.assert_not_called()
