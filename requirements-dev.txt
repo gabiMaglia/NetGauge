@@ -1,7 +1,11 @@
-# Dependencias solo de desarrollo (no van al binario).
+# Dependencias solo de desarrollo/build (no van al binario).
 -r requirements.txt
-pytest>=8.0
+pytest>=8.0,<10
+# PyYAML: tests/test_workflows.py parsea los workflows de GitHub Actions.
+PyYAML>=6.0,<7
+# Empaquetado (solo en build, no en runtime):
+pyinstaller>=6.0,<7
 # Pillow: solo para build/make_icon.py (generación de assets/icon.ico/.icns
 # en build-time). No se usa en runtime (la UI/tray son Qt) ni se empaqueta
 # en el binario final.
-Pillow>=10.0
+Pillow>=10.0,<13
