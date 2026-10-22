@@ -463,3 +463,19 @@ def test_failed_purge_is_logged_and_not_marked_done(settings, notifier, caplog):
         m._purge_if_due()
     assert "locked" in caplog.text
     assert m._last_purge is None   # reintenta en el próximo tick
+
+
+# ---- listener del snapshot se desengancha (re-auditoría A11) ----------------
+def test_snapshot_listener_none_stops_notifying(settings, notifier):
+    import threading
+    m = make_monitor(settings, notifier)
+    called = threading.Event()
+    m.set_snapshot_listener(called.set)
+    m.set_snapshot_listener(None)
+    m._refresher.start()
+    try:
+        m.refresh_snapshot()
+        m._refresher.trigger()
+        assert not called.wait(0.3)
+    finally:
+        m._refresher.stop()

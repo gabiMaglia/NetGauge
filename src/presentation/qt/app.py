@@ -163,6 +163,7 @@ def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
 
     def quit_app() -> None:
         # El informe lo genera el atexit de main.py (una sola vez).
+        monitor.set_snapshot_listener(None)  # la ventana se destruye: no emitir más
         monitor.stop()
         guard.close()
         tray.hide()
@@ -233,5 +234,6 @@ def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
     monitor.start()
     window.show()  # arranca ENTERA y visible
     rc = app.exec()
+    monitor.set_snapshot_listener(None)
     guard.close()
     return rc
