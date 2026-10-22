@@ -1,0 +1,70 @@
+"""Ícono de cada app: el real del SO si hay ruta, o un chip de color estable con la inicial."""
+from __future__ import annotations
+
+import zlib
+
+from PySide6.QtCore import QFileInfo, QRectF, Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
+from PySide6.QtWidgets import QFileIconProvider
+
+# 8 tonos fijos del diseño; el tema no los cambia (son identidad de la app, no UI).
+PALETTE = ("#458bf8", "#34d5a3", "#f5b942", "#f0716b",
+           "#a78bfa", "#f27ab8", "#2cc4d8", "#f59a4a")
+_CHIP_INK = "#0b0f17"
+_DPR = 2  # nitidez en pantallas HiDPI
+_cache: dict[tuple[str, str | None, int], QPixmap] = {}
+_provider: QFileIconProvider | None = None
+
+
+def chip_color(app_name: str) -> str:
+    # crc32 y no hash(): hash() de str varía entre ejecuciones y el color debe ser estable.
+    return PALETTE[zlib.crc32(app_name.encode("utf-8")) % len(PALETTE)]
+
+
+def _chip(app_name: str, size: int) -> QPixmap:
+    pm = QPixmap(size * _DPR, size * _DPR)
+    pm.setDevicePixelRatio(_DPR)
+    pm.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    path = QPainterPath()
+    radius = size / 4  # 11 px para 44
+    path.addRoundedRect(QRectF(0, 0, size, size), radius, radius)
+    p.fillPath(path, QColor(chip_color(app_name)))
+    font = QFont()
+    font.setPixelSize(round(size * 0.42))
+    font.setBold(True)
+    p.setFont(font)
+    p.setPen(QColor(_CHIP_INK))
+    letter = (app_name.strip()[:1] or "?").upper()
+    p.drawText(QRectF(0, 0, size, size), Qt.AlignmentFlag.AlignCenter, letter)
+    p.end()
+    return pm
+
+
+def _system_icon(exe_path: str, size: int) -> QPixmap | None:
+    global _provider
+    info = QFileInfo(exe_path)
+    if not info.exists():
+        return None
+    if _provider is None:
+        _provider = QFileIconProvider()
+    icon = _provider.icon(info)
+    if icon.isNull():
+        return None
+    pm = icon.pixmap(size * _DPR, size * _DPR)
+    if pm.isNull():
+        return None
+    pm.setDevicePixelRatio(_DPR)
+    return pm
+
+
+def icon_for(app_name: str, exe_path: str | None, size: int = 44) -> QPixmap:
+    """Pixmap no nulo para la app; cacheado por (nombre, ruta, tamaño)."""
+    key = (app_name, exe_path, size)
+    pm = _cache.get(key)
+    if pm is None:
+        real = _system_icon(exe_path, size) if exe_path else None
+        pm = real if real is not None else _chip(app_name, size)
+        _cache[key] = pm
+    return pm
