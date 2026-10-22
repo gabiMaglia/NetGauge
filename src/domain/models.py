@@ -1,6 +1,7 @@
 """Entidades del dominio. Puro Python, sin dependencias de infraestructura."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -126,6 +127,15 @@ TRUST_UNKNOWN = "unknown"      # sin datos suficientes / no evaluado
 TRUST_CAUTION = "caution"      # alguna señal floja (sin firma, ruta atípica)
 TRUST_SUSPICIOUS = "suspicious"  # varias señales de riesgo
 
+# Severidad para combinar veredictos (mayor = peor). UNKNOWN va por encima de
+# TRUSTED: "no sé" nunca debe tapar un problema ni pasar por bueno.
+_TRUST_SEVERITY = {
+    TRUST_TRUSTED: 0,
+    TRUST_UNKNOWN: 1,
+    TRUST_CAUTION: 2,
+    TRUST_SUSPICIOUS: 3,
+}
+
 
 @dataclass
 class TrustInfo:
@@ -145,6 +155,19 @@ class TrustInfo:
     reasons: tuple[str, ...] = ()
     vt_malicious: int | None = None   # motores de VirusTotal que lo marcan
     vt_total: int | None = None       # total de motores que analizaron
+
+
+def worst_trust(infos: Iterable[TrustInfo]) -> TrustInfo:
+    """El veredicto MÁS severo de varios ejecutables que se muestran con el
+    mismo nombre. El FileDescription es spoofeable: un 'Google Chrome' falso
+    en AppData debe volver sospechosa la fila, no heredar la confianza del
+    Chrome real. Ante empate gana el primero (el caller ordena las rutas)."""
+    worst: TrustInfo | None = None
+    for info in infos:
+        if worst is None or (_TRUST_SEVERITY.get(info.level, 1)
+                             > _TRUST_SEVERITY.get(worst.level, 1)):
+            worst = info
+    return worst if worst is not None else TrustInfo(level=TRUST_UNKNOWN)
 
 
 @dataclass

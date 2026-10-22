@@ -50,3 +50,40 @@ def test_settings_from_dict_uses_defaults_for_missing_keys():
     assert s.virustotal_enabled is False
     assert s.geoip_enabled is False
     assert s.anomaly_alerts_enabled is True
+
+
+# ---- combinación de veredictos de confianza (plan 04) ----------------------
+from src.domain.models import (  # noqa: E402
+    TRUST_CAUTION, TRUST_SUSPICIOUS, TRUST_TRUSTED, TRUST_UNKNOWN, TrustInfo,
+    worst_trust,
+)
+
+
+def test_worst_trust_picks_most_severe():
+    real = TrustInfo(level=TRUST_TRUSTED,
+                     exe_path="C:/Program Files/Google/Chrome/chrome.exe")
+    fake = TrustInfo(level=TRUST_CAUTION, exe_path="C:/Users/x/AppData/chrome.exe")
+    assert worst_trust([real, fake]) is fake
+    assert worst_trust([fake, real]) is fake
+
+
+def test_worst_trust_suspicious_beats_everything():
+    infos = [TrustInfo(level=TRUST_TRUSTED), TrustInfo(level=TRUST_SUSPICIOUS),
+             TrustInfo(level=TRUST_CAUTION), TrustInfo(level=TRUST_UNKNOWN)]
+    assert worst_trust(infos).level == TRUST_SUSPICIOUS
+
+
+def test_worst_trust_unknown_is_worse_than_trusted():
+    # "no sé" nunca debe pasar por bueno
+    infos = [TrustInfo(level=TRUST_TRUSTED), TrustInfo(level=TRUST_UNKNOWN)]
+    assert worst_trust(infos).level == TRUST_UNKNOWN
+
+
+def test_worst_trust_empty_is_unknown():
+    assert worst_trust([]).level == TRUST_UNKNOWN
+
+
+def test_worst_trust_tie_keeps_first():
+    a = TrustInfo(level=TRUST_CAUTION, exe_path="a")
+    b = TrustInfo(level=TRUST_CAUTION, exe_path="b")
+    assert worst_trust([a, b]) is a
