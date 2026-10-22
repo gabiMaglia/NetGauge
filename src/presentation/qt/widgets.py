@@ -1,10 +1,11 @@
 """Widgets custom dibujados con QPainter para fidelidad pixel-perfect."""
 from __future__ import annotations
 
+import html
 import math
 from collections import deque
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -14,6 +15,7 @@ from PySide6.QtGui import (
     QLinearGradient,
     QPainter,
     QPainterPath,
+    QPalette,
     QPen,
     QPixmap,
 )
@@ -33,6 +35,7 @@ from ...domain.models import (
     TRUST_TRUSTED,
     human_bytes,
 )
+from .app_icons import icon_for
 from .i18n import fmt_number, loc_bytes, t
 from .theme import MONO_FAMILY
 
@@ -268,10 +271,12 @@ class LiveChart(QWidget):
 class QuotaBar(QWidget):
     """Track + chunk con gradiente (azul o ámbar/rojo según %)."""
 
-    def __init__(self, theme: dict, warn: bool = False) -> None:
+    def __init__(self, theme: dict, warn: bool = False, plain: bool = False) -> None:
         super().__init__()
         self._t = theme
         self._warn = warn
+        self._plain = plain  # barra de reparto: siempre acento, sin ámbar/rojo
+        self._track_key = "track"
         self._pct = 0.0
         self.setFixedHeight(9)
 
@@ -283,6 +288,11 @@ class QuotaBar(QWidget):
         self._pct = max(0.0, pct)
         self.update()
 
+    def set_track_key(self, key: str) -> None:
+        if key != self._track_key:
+            self._track_key = key
+            self.update()
+
     def paintEvent(self, _event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -291,7 +301,7 @@ class QuotaBar(QWidget):
 
         track = QPainterPath()
         track.addRoundedRect(QRectF(0, 0, w, h), r, r)
-        p.fillPath(track, QColor(self._t["track"]))
+        p.fillPath(track, QColor(self._t[self._track_key]))
 
         if self._pct <= 0:
             p.end()
@@ -300,7 +310,10 @@ class QuotaBar(QWidget):
         chunk = QPainterPath()
         chunk.addRoundedRect(QRectF(0, 0, max(fw, h), h), r, r)
         grad = QLinearGradient(0, 0, fw, 0)
-        if self._pct >= 100:
+        if self._plain:
+            grad.setColorAt(0, QColor(self._t["accent"]))
+            grad.setColorAt(1, QColor(self._t["accent"]))
+        elif self._pct >= 100:
             grad.setColorAt(0, QColor(self._t["danger"]))
             grad.setColorAt(1, QColor("#f87171"))
         elif self._warn or self._pct >= 80:
@@ -550,8 +563,32 @@ class LimitCard(QFrame):
                 w.style().polish(w)
 
 
+# Columnas de la fila Por aplicación; la cabecera de main_window usa las mismas.
+APP_ICON_PX = 44
+APP_COL_RATE = 130
+APP_COL_TOTAL = 96
+APP_COL_GAP = 14
+APP_ROW_PAD_X = 10
+APP_ROW_BORDER = 1
+
+
+class _ElidedLabel(QLabel):
+    """QLabel de una línea que recorta con "…" en vez de forzar el ancho de la fila."""
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(1, super().minimumSizeHint().height())
+
+    def paintEvent(self, _event) -> None:
+        p = QPainter(self)
+        text = self.fontMetrics().elidedText(
+            self.text(), Qt.TextElideMode.ElideRight, self.width())
+        self.style().drawItemText(p, self.rect(), int(self.alignment()), self.palette(),
+                                  self.isEnabled(), text, QPalette.ColorRole.WindowText)
+        p.end()
+
+
 class AppRow(QFrame):
-    """Fila de la vista Por aplicación: ícono + nombre + barra + totales.
+    """Fila de la vista Por aplicación: ícono · nombre+barra · velocidad · total.
 
     Se REUTILIZA: en vez de recrear la fila en cada refresco, se actualiza
     in-place con update_data(). Esto evita churn de widgets/memoria por segundo.
@@ -561,34 +598,39 @@ class AppRow(QFrame):
         super().__init__()
         self._t = theme
         self._name = name
+        self._rate_plain = ""
+        self._icon_path: str | None = None
+        self._active = False
         self.setObjectName("AppRow")
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(12, 9, 14, 9)
-        lay.setSpacing(13)
+        lay.setContentsMargins(APP_ROW_PAD_X, 8, APP_ROW_PAD_X, 8)
+        lay.setSpacing(APP_COL_GAP)
 
         self._badge = QLabel()
-        self._badge.setFixedSize(36, 36)
-        self._badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._style_badge()
+        self._badge.setFixedSize(APP_ICON_PX, APP_ICON_PX)
+        self._badge.setPixmap(icon_for(name, None, APP_ICON_PX))
         lay.addWidget(self._badge)
 
         center = QVBoxLayout()
         center.setSpacing(6)
-        self._nm = QLabel(name)
+        top = QHBoxLayout()
+        top.setSpacing(8)
+        self._nm = _ElidedLabel(name)
         self._nm.setTextFormat(Qt.TextFormat.PlainText)  # el nombre viene del SO
-        self._nm.setObjectName("AppName")
-        center.addWidget(self._nm)
-        self._bar = QuotaBar(theme)
-        self._bar.setFixedHeight(6)
-        center.addWidget(self._bar)
-        lay.addLayout(center, 1)
+        self._nm.setObjectName("AppRowName")
+        self._nm.setToolTip(name)
+        top.addWidget(self._nm)
+        self._conns = QLabel("")
+        self._conns.setObjectName("AppConns")
+        top.addWidget(self._conns)
+        top.addStretch(1)
 
         # Slot de confianza: SIEMPRE reserva 22px (aunque no haya badge) para
         # que la columna quede alineada entre filas.
         self._trust = QLabel()
         self._trust.setFixedSize(22, 22)
         self._trust.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self._trust)
+        top.addWidget(self._trust)
 
         # Badge ADICIONAL específico de VirusTotal: independiente del de
         # confianza local. Solo se pinta cuando VT efectivamente analizó la
@@ -596,35 +638,76 @@ class AppRow(QFrame):
         self._vt_badge = QLabel()
         self._vt_badge.setFixedSize(16, 16)
         self._vt_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self._vt_badge)
+        top.addWidget(self._vt_badge)
+        center.addLayout(top)
 
-        # Columna de totales de ancho FIJO: así la barra mide igual en todas las
-        # filas (no depende del largo del número) y todo queda en escuadra.
+        self._bar = QuotaBar(theme, plain=True)
+        self._bar.setFixedHeight(6)
+        self._bar.set_track_key("segment_bg")
+        center.addWidget(self._bar)
+        lay.addLayout(center, 1)
+
+        # Columnas derechas de ancho FIJO: la barra mide igual en todas las filas
+        # y la cabecera puede alinearse con ellas.
+        self._rate = QLabel("")
+        self._rate.setObjectName("AppRate")
+        self._rate.setTextFormat(Qt.TextFormat.RichText)  # solo spans propios; texto escapado
+        self._rate.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self._rate.setFixedWidth(APP_COL_RATE)
+        lay.addWidget(self._rate)
+
         right_w = QWidget()
-        right_w.setFixedWidth(128)
+        right_w.setFixedWidth(APP_COL_TOTAL)
         right = QVBoxLayout(right_w)
         right.setContentsMargins(0, 0, 0, 0)
-        right.setSpacing(3)
+        right.setSpacing(2)
         self._tot = QLabel("")
-        self._tot.setObjectName("AppTotal")
+        self._tot.setObjectName("AppRowTotal")
         self._tot.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self._sp = QLabel("")
-        self._sp.setObjectName("AppSplit")
-        self._sp.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self._share = QLabel("")
+        self._share.setObjectName("AppRowShare")
+        self._share.setAlignment(Qt.AlignmentFlag.AlignRight)
         right.addWidget(self._tot)
-        right.addWidget(self._sp)
+        right.addWidget(self._share)
         lay.addWidget(right_w)
 
-    def update_data(self, total: str, split: str, pct: float,
-                    active: bool = False) -> None:
-        self._tot.setText(total)
-        self._sp.setText(split)
-        self._bar.set_percent(pct)
+    def update_data(self, total_text: str, rate_text: str, share_text: str,
+                    pct_of_top: float, conns_text: str, active: bool = False) -> None:
+        self._tot.setText(total_text)
+        self._share.setText(share_text)
+        self._conns.setText(conns_text)
+        self._set_rate(rate_text)
+        self._bar.set_percent(pct_of_top)
+        self._active = active
+        self._bar.set_track_key("track" if active else "segment_bg")
         name = "AppRowActive" if active else "AppRow"
         if self.objectName() != name:
             self.setObjectName(name)
             self.style().unpolish(self)
             self.style().polish(self)
+
+    def rate_text(self) -> str:
+        return self._rate_plain
+
+    def _set_rate(self, rate_text: str) -> None:
+        """rate_text: 'Flecha valor' por línea; las flechas llevan el color de su dirección."""
+        self._rate_plain = rate_text
+        colors = {"↓": self._t["down"], "↑": self._t["upload"]}
+        lines = []
+        for line in rate_text.split("\n"):
+            head, rest = line[:1], line[1:]
+            color = colors.get(head)
+            esc = html.escape(rest)
+            lines.append(f'<span style="color:{color}">{head}</span>{esc}' if color
+                         else html.escape(line))
+        self._rate.setText("<br>".join(lines))
+
+    def set_icon(self, exe_path: str | None) -> None:
+        """La ruta del exe aparece tarde (la resuelve el worker): sólo se repinta si cambió."""
+        if exe_path == self._icon_path:
+            return
+        self._icon_path = exe_path
+        self._badge.setPixmap(icon_for(self._name, exe_path, APP_ICON_PX))
 
     _TRUST_STYLE = {
         TRUST_TRUSTED: ("#10b981", "✓"),
@@ -663,17 +746,10 @@ class AppRow(QFrame):
             f"color:white; background:{color}; border-radius:8px;"
             f"font-size:8px; font-weight:800;")
 
-    def _style_badge(self) -> None:
-        icon = _app_icon(self._name, self._t)
-        self._badge.setText(icon["letter"])
-        self._badge.setStyleSheet(
-            f"background:{icon['bg']}; color:{icon['fg']}; border-radius:11px;"
-            f"font-size:16px; font-weight:800;")
-
     def set_theme(self, theme: dict) -> None:
         self._t = theme
         self._bar.set_theme(theme)
-        self._style_badge()
+        self._set_rate(self._rate_plain)
 
 
 class ConnRow(QFrame):
@@ -785,17 +861,3 @@ def make_sparkline_icon(values: list[float], accent: str = "#3b82f6") -> QIcon:
     p.drawPath(line)
     p.end()
     return QIcon(pix)
-
-
-def _app_icon(name: str, theme: dict | None = None) -> dict:
-    """Estilo del badge por app. En tema oscuro usa un chip oscuro con la
-    letra de color (los pasteles claros quedaban como manchones)."""
-    from .theme import APP_ICONS
-    base = APP_ICONS.get(name)
-    if base is None:
-        letter = (name.strip()[:1] or "?").upper()
-        base = {"bg": "#e7f0ff", "fg": "#2563eb", "letter": letter}
-    if theme is not None and theme.get("is_dark"):
-        return {"bg": theme["segment_bg"], "fg": base["fg"],
-                "letter": base["letter"]}
-    return base

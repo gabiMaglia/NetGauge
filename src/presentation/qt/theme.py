@@ -43,14 +43,6 @@ DARK = {
     "total_fg": "#9cc4ff", "total_fg2": "#c7dcff",
 }
 
-APP_ICONS = {
-    "Google Chrome": {"bg": "#fef0e6", "fg": "#ea7c3c", "letter": "C"},
-    "Steam": {"bg": "#e7f0ff", "fg": "#2563eb", "letter": "S"},
-    "Spotify": {"bg": "#e6f7ee", "fg": "#10b981", "letter": "♪"},
-    "Windows Update": {"bg": "#eef1f5", "fg": "#64748b", "letter": "⊞"},
-    "Discord": {"bg": "#ecebfe", "fg": "#6366f1", "letter": "D"},
-}
-
 # Sin "Segoe UI": en macOS Qt avisa del alias; en Windows sans-serif lo resuelve.
 FONT_FAMILY = '"Plus Jakarta Sans", "Helvetica Neue", sans-serif'
 MONO_FAMILY = '"JetBrains Mono", "Menlo", "Consolas", monospace'
@@ -216,13 +208,41 @@ def app_qss(t: dict) -> str:
     #AppRow {{ background: transparent; border: 1px solid transparent;
                border-radius: 12px; }}
     #AppRow:hover {{ background: {t['card_bg']}; border: 1px solid {t['hairline']}; }}
-    #AppRowActive {{ border-radius: 12px;
-        border: 1px solid {t['accent_soft_bd']};
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 {t['accent_soft_bg']}, stop:1 {t['card_bg']}); }}
+    #AppRowActive {{ border-radius: 12px; border: 1px solid {t['selected_bd']};
+                     background: {t['selected_bg']}; }}
     #AppName {{ font-size: 13.5px; font-weight: 700; color: {t['text_strong']}; }}
-    #AppTotal {{ font-size: 14px; font-weight: 800; color: {t['text']}; }}
     #AppSplit {{ font-size: 11px; font-weight: 600; color: {t['text_muted']}; }}
+    #AppRowName {{ font-size: 15px; font-weight: 700; color: {t['text_strong']};
+                   background: transparent; }}
+    #AppConns {{ font-size: 12px; color: {t['text_muted']}; background: transparent; }}
+    #AppRate {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_secondary']};
+                background: transparent; }}
+    #AppRowTotal {{ font-family: {MONO_FAMILY}; font-size: 15px; font-weight: 700;
+                 color: {t['text']}; background: transparent; }}
+    #AppRowShare {{ font-size: 12px; font-weight: 600; color: {t['text_muted']};
+                    background: transparent; }}
+
+    /* Barra de herramientas de Por aplicación */
+    QLineEdit#AppsSearch {{
+        background: {t['input_bg']}; border: 1px solid {t['input_border']};
+        border-radius: {RADIUS['input']}px; padding: 0 12px 0 4px;
+        font-size: 13px; font-weight: 500; color: {t['text']};
+        placeholder-text-color: {t['text_muted']};
+    }}
+    QLineEdit#AppsSearch:focus {{ border: 1px solid {t['accent']}; }}
+    #SortCaption {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
+    QPushButton#SortChip {{
+        background: transparent; border: 1px solid {t['border']}; border-radius: 16px;
+        color: {t['text_muted']}; font-size: 12px; font-weight: 600; padding: 0 12px;
+    }}
+    QPushButton#SortChip:hover {{ border: 1px solid {t['accent_soft_bd']}; }}
+    QPushButton#SortChip:focus {{ border: 1px solid {t['accent']}; }}
+    QPushButton#SortChip:checked {{
+        background: {t['selected_bg']}; border: 1px solid {t['accent']};
+        color: {t['accent_text']}; font-weight: 700;
+    }}
+    #AppsHeader QLabel {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
+    #AppsEmpty {{ font-size: 13px; color: {t['text_muted']}; }}
 
     /* Diálogo */
     QDialog {{ background: {t['window_bg']}; }}

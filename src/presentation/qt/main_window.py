@@ -4,6 +4,7 @@ from __future__ import annotations
 import html
 import ipaddress
 import sys
+import time
 from collections import deque
 
 from PySide6.QtCore import QPoint, QSize, Qt, QTimer, Signal
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -33,13 +35,17 @@ from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
 from .settings_dialog import SettingsDialog
 from .theme import DARK, LIGHT, app_qss
-from .viewmodel import share_pct, trend_label, trend_pct
-from .widgets import AppRow, BarsLogo, ConnRow, LimitCard, LiveChart, MetricCard
+from .viewmodel import (
+    AppRateTracker, AppRowData, filter_sort_apps, share_pct, trend_label, trend_pct)
+from .widgets import (
+    APP_COL_GAP, APP_COL_RATE, APP_COL_TOTAL, APP_ICON_PX, APP_ROW_BORDER, APP_ROW_PAD_X,
+    AppRow, BarsLogo, ConnRow, LimitCard, LiveChart, MetricCard)
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
+_SORT_CODES = ["total", "down", "up", "now"]
 
 
 def trust_tooltip_text(info, translate) -> str:
@@ -120,6 +126,15 @@ class MainWindow(QWidget):
         self._drag_pos: QPoint | None = None
         self._app_rows: dict[str, AppRow] = {}   # filas reutilizadas por nombre
         self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
+        self._apps_sort = "total"
+        # Dos trackers (bajada/subida) sobre los acumulados de la sesión; se
+        # alimentan sólo desde _tick (1 Hz) para que dt no dependa de cuántos
+        # _refresh haya (búsqueda, orden, snapshots).
+        self._recv_tracker = AppRateTracker()
+        self._sent_tracker = AppRateTracker()
+        self._rates_down: dict[str, float] = {}
+        self._rates_up: dict[str, float] = {}
+        self._clock = time.monotonic
         self._period_chips: list[tuple[QPushButton, str]] = []
         self._legends: list[tuple[QLabel, str]] = []
         self._legend_dashes: list[QLabel] = []
@@ -271,6 +286,8 @@ class MainWindow(QWidget):
         for b in (self._about_btn, self._settings_btn, self._theme_btn,
                   self._min_btn, self._max_btn, self._close_btn):
             b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
+        if hasattr(self, "_search_action"):
+            self._search_action.setIcon(svg_icon("search", color, 16))
         if hasattr(self, "_unit_chevron"):
             self._unit_chevron.setPixmap(
                 svg_icon("chevron-down", color, 16).pixmap(16, 16))
@@ -421,19 +438,96 @@ class MainWindow(QWidget):
         return w
 
     def _build_apps_tab(self) -> QWidget:
+        page = QWidget()
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        tools = QHBoxLayout()
+        tools.setContentsMargins(0, 14, 0, 8)
+        tools.setSpacing(8)
+        self._apps_search = QLineEdit()
+        self._apps_search.setObjectName("AppsSearch")
+        self._apps_search.setPlaceholderText(t("apps.search"))
+        self._apps_search.setFixedHeight(38)
+        self._search_action = self._apps_search.addAction(
+            svg_icon("search", self._theme["text_muted"], 16),
+            QLineEdit.ActionPosition.LeadingPosition)
+        self._apps_search.textChanged.connect(lambda _t: self._refresh())
+        tools.addWidget(self._apps_search, 1)
+        tools.addSpacing(6)
+        self._sort_caption = QLabel(t("apps.sort"))
+        self._sort_caption.setObjectName("SortCaption")
+        tools.addWidget(self._sort_caption)
+        self._sort_group = QButtonGroup(self)
+        self._sort_group.setExclusive(True)
+        self._sort_chips: dict[str, QPushButton] = {}
+        for code in _SORT_CODES:
+            chip = QPushButton(t("apps.sort." + code))
+            chip.setObjectName("SortChip")
+            chip.setCheckable(True)
+            chip.setFixedHeight(32)
+            chip.setCursor(Qt.CursorShape.PointingHandCursor)
+            chip.setChecked(code == self._apps_sort)
+            chip.clicked.connect(lambda _c, c=code: self._set_apps_sort(c))
+            self._sort_group.addButton(chip)
+            self._sort_chips[code] = chip
+            tools.addWidget(chip)
+        outer.addLayout(tools)
+
+        # Cabecera alineada con las columnas de AppRow (mismos anchos y márgenes).
+        self._apps_header = QWidget()
+        self._apps_header.setObjectName("AppsHeader")
+        self._header_lay = QHBoxLayout(self._apps_header)
+        self._header_pad = APP_ROW_BORDER + APP_ROW_PAD_X
+        self._header_lay.setContentsMargins(self._header_pad, 0, self._header_pad, 4)
+        self._header_lay.setSpacing(APP_COL_GAP)
+        self._col_app = QLabel(t("apps.col.app"))
+        self._col_now = QLabel(t("apps.col.now"))
+        self._col_total = QLabel(t("apps.col.total"))
+        spacer = QWidget()
+        spacer.setFixedWidth(APP_ICON_PX)
+        self._header_lay.addWidget(spacer)
+        self._header_lay.addWidget(self._col_app, 1)
+        for lbl, width in ((self._col_now, APP_COL_RATE), (self._col_total, APP_COL_TOTAL)):
+            lbl.setFixedWidth(width)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+            self._header_lay.addWidget(lbl)
+        outer.addWidget(self._apps_header)
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._apps_scroll = scroll
         self._apps_container = QWidget()
         self._apps_container.setObjectName("AppsContainer")
         self._apps_lay = QVBoxLayout(self._apps_container)
-        self._apps_lay.setContentsMargins(0, 12, 0, 0)
-        self._apps_lay.setSpacing(6)
+        self._apps_lay.setContentsMargins(0, 0, 0, 0)
+        self._apps_lay.setSpacing(4)
+        self._apps_empty = QLabel("")
+        self._apps_empty.setObjectName("AppsEmpty")
+        self._apps_empty.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self._apps_empty.setTextFormat(Qt.TextFormat.PlainText)  # contiene lo que tipeó el usuario
+        self._apps_empty.setContentsMargins(0, 40, 0, 0)
+        self._apps_empty.hide()
+        self._apps_lay.addWidget(self._apps_empty)
         self._apps_lay.addStretch()
         scroll.setWidget(self._apps_container)
-        return scroll
+        # La barra de scroll come ancho sólo de las filas: la cabecera lo compensa.
+        scroll.verticalScrollBar().rangeChanged.connect(lambda *_: self._sync_header_pad())
+        outer.addWidget(scroll, 1)
+        return page
+
+    def _sync_header_pad(self) -> None:
+        sb = self._apps_scroll.verticalScrollBar()
+        extra = sb.sizeHint().width() if sb.maximum() > 0 else 0
+        self._header_lay.setContentsMargins(self._header_pad, 0, self._header_pad + extra, 4)
+
+    def _set_apps_sort(self, code: str) -> None:
+        self._apps_sort = code
+        self._refresh()
 
     def _build_connections_tab(self) -> QWidget:
         page = QWidget()
@@ -543,34 +637,71 @@ class MainWindow(QWidget):
         else:
             card.set_state(t(empty_key), "", 0, False, t("limit.none"))
 
+    def _connection_counts(self) -> dict[str, int]:
+        """Conexiones por app desde el snapshot (sin I/O); sólo con la pestaña visible,
+        porque connections() marca demanda y despierta la enumeración del worker."""
+        if self._tabs.currentIndex() != 1:
+            return {}
+        counts: dict[str, int] = {}
+        for c in self._monitor.connections():
+            counts[c.app_name] = counts.get(c.app_name, 0) + 1
+        return counts
+
+    def _conns_text(self, n: int) -> str:
+        if n <= 0:
+            return ""
+        return t("apps.conn_one") if n == 1 else t("apps.conns", n=n)
+
     def _rebuild_apps(self, rows, total) -> None:
-        """Reconciliación in-place: reutiliza filas, no las recrea cada segundo."""
-        wanted = [r[0] for r in rows]
+        """Reconciliación in-place: reutiliza filas, no las recrea cada segundo.
+
+        Las apps que ya no existen se destruyen; las que sólo no pasan el filtro
+        de búsqueda se OCULTAN (siguen en _app_rows) y quedan tras las visibles.
+        """
+        data = [AppRowData(name, sent, recv,
+                           self._rates_down.get(name, 0.0) + self._rates_up.get(name, 0.0))
+                for name, sent, recv in rows]
+        shown = filter_sort_apps(data, self._apps_search.text(), self._apps_sort)
+        existing = {r.name for r in data}
 
         for name in list(self._app_rows):
-            if name not in wanted:
+            if name not in existing:
                 row = self._app_rows.pop(name)
                 self._apps_lay.removeWidget(row)
                 row.deleteLater()
 
-        for i, (app, sent, recv) in enumerate(rows):
-            tt = sent + recv
-            pct = (tt / total * 100) if total else 0
-            vt, ut = _fmt(tt, self._unit)
-            vd, _ = _fmt(recv, self._unit)
-            vu, _ = _fmt(sent, self._unit)
-            row = self._app_rows.get(app)
+        query = self._apps_search.text().strip()
+        self._apps_empty.setText(t("apps.no_results", q=query) if query else "")
+        self._apps_empty.setVisible(bool(query) and not shown and bool(data))
+
+        counts = self._connection_counts()
+        top_total = max((r.total for r in shown), default=0)
+        for i, r in enumerate(shown):
+            row = self._app_rows.get(r.name)
             if row is None:
-                row = AppRow(self._theme, app)
-                self._app_rows[app] = row
+                row = AppRow(self._theme, r.name)
+                self._app_rows[r.name] = row
             if self._apps_lay.indexOf(row) != i:
                 self._apps_lay.removeWidget(row)
                 self._apps_lay.insertWidget(i, row)
-            row.update_data(f"{vt} {ut}", f"↓{vd} ↑{vu}", pct, active=(i == 0))
-            info = self._monitor.trust_for(app)
+            if row.isHidden():
+                row.show()
+            vt, ut = _fmt(r.total, self._unit)
+            rate_text = (f"↓ {loc_bytes(self._rates_down.get(r.name, 0.0))}/s\n"
+                         f"↑ {loc_bytes(self._rates_up.get(r.name, 0.0))}/s")
+            row.update_data(
+                f"{vt} {ut}", rate_text, f"{share_pct(r.total, total):.0f} %",
+                (r.total / top_total * 100) if top_total else 0,
+                self._conns_text(counts.get(r.name, 0)), active=(i == 0))
+            row.set_icon(self._monitor.exe_path_for(r.name))
+            info = self._monitor.trust_for(r.name)
             row.set_trust(info.level, self._trust_tooltip(info))
             row.set_vt_badge(info.vt_malicious, info.vt_total,
                              self._vt_badge_tooltip(info))
+        shown_names = {r.name for r in shown}
+        for name, row in self._app_rows.items():
+            if name not in shown_names and not row.isHidden():
+                row.hide()
 
     def _trust_tooltip(self, info) -> str:
         return trust_tooltip_text(info, t)
@@ -623,6 +754,14 @@ class MainWindow(QWidget):
             val.setText(num)
             unit.setText(f"{u or 'B'}/s")
         self._peak_chip.setText(t("chart.peak", v=loc_bytes(self._chart.peak())))
+        self._update_app_rates()
+
+    def _update_app_rates(self) -> None:
+        """Velocidad por app: delta de los acumulados de sesión entre ticks (1 Hz)."""
+        usage = self._monitor.session_usage()
+        now = self._clock()
+        self._rates_down = self._recv_tracker.update({u.app_name: u.bytes_recv for u in usage}, now)
+        self._rates_up = self._sent_tracker.update({u.app_name: u.bytes_sent for u in usage}, now)
 
     # ---- acciones ------------------------------------------------------
     def _set_period(self, value: str) -> None:
@@ -689,6 +828,13 @@ class MainWindow(QWidget):
             card.retranslate()
         for lbl, key in self._legends:
             lbl.setText(t(key))
+        self._apps_search.setPlaceholderText(t("apps.search"))
+        self._sort_caption.setText(t("apps.sort"))
+        for code, chip in self._sort_chips.items():
+            chip.setText(t("apps.sort." + code))
+        self._col_app.setText(t("apps.col.app"))
+        self._col_now.setText(t("apps.col.now"))
+        self._col_total.setText(t("apps.col.total"))
         self._conn_subtitle.setText(t("conn.subtitle"))
         self._hide_local_cb.setText(t("conn.hide_localhost"))
 
