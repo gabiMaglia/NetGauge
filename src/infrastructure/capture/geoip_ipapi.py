@@ -20,6 +20,7 @@ log = logging.getLogger(__name__)
 # HTTP (el endpoint HTTPS de ip-api es de pago); fields: status,countryCode,isp,org,as
 _URL = "http://ip-api.com/json/{ip}?fields=status,countryCode,isp,org,as"
 _MIN_INTERVAL = 1.5   # seg entre consultas (free tier: 45/min)
+_IDLE_TIMEOUT = 60.0  # seg sin trabajo antes de que el worker termine
 
 
 def _is_public(ip: str) -> bool:
@@ -51,12 +52,15 @@ class IpApiGeoIp(GeoIpService):
             if ip in self._queued:
                 return None
             self._queued.add(ip)
-        self._ensure_worker()
-        self._q.put(ip)
+            # put + asegurar worker bajo el mismo lock con el que el worker decide
+            # salir por idle: nunca queda un item en la cola sin worker vivo.
+            self._q.put(ip)
+            self._ensure_worker_locked()
         return None
 
-    def _ensure_worker(self) -> None:
-        if self._worker and self._worker.is_alive():
+    def _ensure_worker_locked(self) -> None:
+        """Arranca el worker si no hay uno vivo. Llamar con self._lock tomado."""
+        if self._worker is not None and self._worker.is_alive():
             return
         self._worker = threading.Thread(target=self._run, daemon=True)
         self._worker.start()
@@ -64,9 +68,13 @@ class IpApiGeoIp(GeoIpService):
     def _run(self) -> None:
         while True:
             try:
-                ip = self._q.get(timeout=60)
+                ip = self._q.get(timeout=_IDLE_TIMEOUT)
             except queue.Empty:
-                return
+                with self._lock:
+                    if self._q.empty():   # nadie encoló mientras decidíamos salir
+                        self._worker = None
+                        return
+                continue
             try:
                 result = self._query(ip)
             except Exception as exc:  # noqa: BLE001
