@@ -96,3 +96,54 @@ def test_stop_joins_and_is_idempotent():
     r.stop()
     assert not r.running
     r.stop()                 # dos veces: no-op
+
+
+def test_start_after_stop_with_stuck_worker_does_not_spawn_second_worker():
+    gate = threading.Event()
+    entered = threading.Event()
+    active = []
+    peak = [0]
+    lock = threading.Lock()
+
+    def refresh():
+        with lock:
+            active.append(1)
+            peak[0] = max(peak[0], len(active))
+        entered.set()
+        gate.wait(2)
+        with lock:
+            active.pop()
+
+    r = SnapshotRefresher(refresh, interval=0.01)
+    r.start()
+    assert entered.wait(1)
+    r.stop(timeout=0.05)         # el worker sigue trabado en refresh()
+    r.start()                    # no debe crear un 2º worker concurrente
+    gate.set()
+    r.stop(timeout=1)
+    assert peak[0] == 1
+
+
+def test_trigger_during_refresh_is_not_lost():
+    in_refresh = threading.Event()
+    release = threading.Event()
+    calls = []
+    second = threading.Event()
+
+    def refresh():
+        calls.append(1)
+        if len(calls) == 1:
+            in_refresh.set()
+            release.wait(1)
+        else:
+            second.set()
+
+    r = SnapshotRefresher(refresh, interval=60)
+    r.start()
+    try:
+        assert in_refresh.wait(1)
+        r.trigger()
+        release.set()
+        assert second.wait(1)
+    finally:
+        r.stop()

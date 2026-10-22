@@ -53,10 +53,15 @@ class SnapshotRefresher:
             # Si un refresco está trabado (ej. WinVerifyTrust lento) no
             # bloqueamos el cierre más de `timeout`: el hilo es daemon.
             thread.join(timeout)
-        self._thread = None
+        if thread is None or not thread.is_alive():
+            self._thread = None
+        # Si sigue vivo lo conservamos: start() es no-op y no hay 2º worker.
 
     def _loop(self) -> None:
         while not self._stop.is_set():
+            # clear ANTES de refrescar: un trigger() que llegue durante el refresco
+            # o el callback queda puesto y la espera siguiente vuelve enseguida.
+            self._wake.clear()
             try:
                 self._refresh()
             except Exception:  # noqa: BLE001 — el worker nunca muere en silencio
@@ -72,4 +77,3 @@ class SnapshotRefresher:
             # Un trigger() que llegó DURANTE el refresco deja el evento puesto:
             # wait() vuelve enseguida y se refresca de nuevo (no se pierde).
             self._wake.wait(self._interval)
-            self._wake.clear()
