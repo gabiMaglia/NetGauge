@@ -16,7 +16,8 @@ def trend_label(pct: float | None) -> tuple[str, str]:
     if abs(pct) < 0.5:
         return "= 0 %", "flat"
     arrow, level = ("▲", "up") if pct > 0 else ("▼", "down")
-    return f"{arrow} {abs(pct):.0f} %", level
+    # half-up (no el redondeo bancario de format): 12,5 % -> 13 %
+    return f"{arrow} {int(abs(pct) + 0.5)} %", level
 
 
 def share_pct(part: float, total: float) -> float:

@@ -18,6 +18,13 @@ def test_trend_label():
     assert trend_label(None) == ("", "none")
 
 
+def test_trend_label_rounds_half_up():
+    assert trend_label(0.5) == ("▲ 1 %", "up")
+    assert trend_label(12.5) == ("▲ 13 %", "up")
+    assert trend_label(-12.5) == ("▼ 13 %", "down")
+    assert trend_label(0.0) == ("= 0 %", "flat")
+
+
 def test_rate_tracker_computes_bytes_per_second():
     t = AppRateTracker()
     assert t.update({"a": 1000}, now=10.0) == {"a": 0.0}   # primera lectura
