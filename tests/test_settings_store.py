@@ -115,3 +115,121 @@ def test_transient_read_error_is_retried(tmp_path, monkeypatch):
 
     monkeypatch.setattr(type(path), "read_text", flaky)
     assert store.load().monthly_quota_gb == 7.0
+
+
+# ---- API key de VirusTotal en el almacén de secretos ----
+import logging  # noqa: E402
+
+from src.domain.ports import SecretStore  # noqa: E402
+
+
+class FakeSecrets(SecretStore):
+    def __init__(self, available: bool = True) -> None:
+        self.data: dict[str, str] = {}
+        self._available = available
+
+    @property
+    def available(self) -> bool:
+        return self._available
+
+    def get(self, name):
+        return self.data.get(name) if self._available else None
+
+    def set(self, name, value):
+        if not self._available:
+            return
+        if value:
+            self.data[name] = value
+        else:
+            self.data.pop(name, None)
+
+
+def test_save_puts_key_in_secret_store_and_blanks_json(tmp_path):
+    path = tmp_path / "settings.json"
+    secrets = FakeSecrets()
+    JsonSettingsStore(path, secrets=secrets).save(Settings(virustotal_api_key="secreto"))
+
+    assert secrets.data == {"virustotal_api_key": "secreto"}
+    assert json.loads(path.read_text("utf-8"))["virustotal_api_key"] == ""
+    assert "secreto" not in path.read_text("utf-8")
+
+
+def test_load_returns_key_from_secret_store(tmp_path):
+    path = tmp_path / "settings.json"
+    secrets = FakeSecrets()
+    store = JsonSettingsStore(path, secrets=secrets)
+    store.save(Settings(virustotal_api_key="secreto"))
+
+    assert JsonSettingsStore(path, secrets=secrets).load().virustotal_api_key == "secreto"
+
+
+def test_load_migrates_plaintext_key_and_rewrites_json(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"monthly_quota_gb": 10, "virustotal_api_key": "viejo"}),
+                    encoding="utf-8")
+    secrets = FakeSecrets()
+
+    loaded = JsonSettingsStore(path, secrets=secrets).load()
+
+    assert loaded.virustotal_api_key == "viejo"
+    assert loaded.monthly_quota_gb == 10.0
+    assert secrets.data == {"virustotal_api_key": "viejo"}
+    on_disk = json.loads(path.read_text("utf-8"))
+    assert on_disk["virustotal_api_key"] == ""
+    assert on_disk["monthly_quota_gb"] == 10.0
+
+
+def test_unavailable_secret_store_falls_back_to_plaintext_with_warning(tmp_path, caplog):
+    path = tmp_path / "settings.json"
+    store = JsonSettingsStore(path, secrets=FakeSecrets(available=False))
+    with caplog.at_level(logging.WARNING):
+        store.save(Settings(virustotal_api_key="k"))
+
+    assert json.loads(path.read_text("utf-8"))["virustotal_api_key"] == "k"
+    assert "texto plano" in caplog.text
+    assert store.load().virustotal_api_key == "k"
+
+
+def test_store_that_becomes_unavailable_on_set_falls_back_to_plaintext(tmp_path):
+    class Flaky(FakeSecrets):
+        def set(self, name, value):
+            self._available = False
+
+    path = tmp_path / "settings.json"
+    JsonSettingsStore(path, secrets=Flaky()).save(Settings(virustotal_api_key="k"))
+    assert json.loads(path.read_text("utf-8"))["virustotal_api_key"] == "k"
+
+
+def test_unavailable_store_does_not_migrate(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"virustotal_api_key": "viejo"}), encoding="utf-8")
+    loaded = JsonSettingsStore(path, secrets=FakeSecrets(available=False)).load()
+    assert loaded.virustotal_api_key == "viejo"
+    assert json.loads(path.read_text("utf-8"))["virustotal_api_key"] == "viejo"
+
+
+def test_corrupt_json_with_secrets_still_returns_defaults_and_backup(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text('{"monthly_quota_gb": 50', encoding="utf-8")
+    secrets = FakeSecrets()
+    secrets.data["virustotal_api_key"] = "guardada"
+
+    loaded = JsonSettingsStore(path, secrets=secrets).load()
+
+    assert loaded.monthly_quota_gb == Settings().monthly_quota_gb
+    assert (tmp_path / "settings.json.bak").exists()
+
+
+def test_read_failed_does_not_touch_secret_store(tmp_path, monkeypatch):
+    path = tmp_path / "settings.json"
+    path.write_text("{}", encoding="utf-8")
+    secrets = FakeSecrets()
+    secrets.data["virustotal_api_key"] = "guardada"
+    store = JsonSettingsStore(path, secrets=secrets)
+    monkeypatch.setattr(ss.time, "sleep", lambda _s: None, raising=False)
+    monkeypatch.setattr(type(path), "read_text",
+                        lambda self, *a, **k: (_ for _ in ()).throw(PermissionError("av")))
+    store.load()
+    store.save(Settings(virustotal_api_key=""))
+
+    assert secrets.data == {"virustotal_api_key": "guardada"}

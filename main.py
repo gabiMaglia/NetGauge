@@ -24,6 +24,7 @@ from src.infrastructure.capture.factory import create_capture_service
 from src.infrastructure.capture.geoip_ipapi import IpApiGeoIp
 from src.infrastructure.capture.reputation_virustotal import VirusTotalReputation
 from src.infrastructure.capture.trust import WindowsTrustEvaluator
+from src.infrastructure.persistence.keyring_secret_store import KeyringSecretStore
 from src.infrastructure.persistence.settings_store import JsonSettingsStore
 from src.infrastructure.persistence.sqlite_repository import SqliteUsageRepository
 from src.infrastructure.reporting.report_generator import CsvReportGenerator
@@ -200,7 +201,8 @@ def _start() -> int:
         rotate_reports(_data_dir() / "reports", keep=20)
     except Exception:  # noqa: BLE001 — la limpieza nunca debe impedir el arranque
         logging.exception("Fallo rotando informes viejos")
-    settings_store = JsonSettingsStore(_data_dir() / "settings.json")
+    settings_store = JsonSettingsStore(_data_dir() / "settings.json",
+                                      secrets=KeyringSecretStore())
 
     # Notifier Qt: thread-safe vía señal; se enlaza al tray dentro de run().
     notifier = QtNotifier()
