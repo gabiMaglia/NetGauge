@@ -493,3 +493,59 @@ def test_resolve_name_cae_al_fallback_sin_cachear(monkeypatch):
     svc = NettopCaptureService()
     assert svc._resolve_name(999, "truncad") == "truncad"
     assert 999 not in svc._name_cache
+
+
+# --- plan 03: resiliencia del loop (errores por bloque + relanzamiento) ---
+
+_HDR = ",bytes_in,bytes_out,"
+
+
+def _no_resolve(svc, monkeypatch):
+    monkeypatch.setattr(svc, "_resolve_name", lambda pid, fallback: fallback)
+
+
+def test_loop_survives_on_sample_error_without_double_counting(monkeypatch):
+    import src.infrastructure.capture.nettop_capture as mod
+
+    stream = [_HDR, "A.1,100,100,", _HDR, "A.1,200,200,", _HDR, "A.1,300,300,"]
+    monkeypatch.setattr(mod, "iter_lines_from_fd", lambda fd, ev: iter(stream))
+    svc = NettopCaptureService()
+    svc._master_fd = -1
+    svc._MAX_RESTARTS = 0          # sin relanzar: al cortarse el stream se rinde
+    _no_resolve(svc, monkeypatch)
+    calls = []
+
+    def on_sample(sample):
+        calls.append(sample)
+        if len(calls) == 1:
+            raise RuntimeError("UI caída")
+
+    svc._loop(on_sample)
+    assert [c.bytes_recv for c in calls] == [100, 100]
+
+
+def test_loop_restarts_nettop_with_backoff_and_gives_up(monkeypatch):
+    import src.infrastructure.capture.nettop_capture as mod
+
+    feeds = iter([[_HDR, "A.1,100,100,"], [_HDR, "A.1,150,150,"]])
+    monkeypatch.setattr(
+        mod, "iter_lines_from_fd", lambda fd, ev: iter(next(feeds, []))
+    )
+    svc = NettopCaptureService()
+    svc._master_fd = -1
+    svc._RESTART_BASE_DELAY = 0.0
+    _no_resolve(svc, monkeypatch)
+    respawns = []
+    monkeypatch.setattr(svc, "_respawn", lambda: respawns.append(1))
+    failed = []
+    svc.on_failure = lambda: failed.append(True)
+    samples = []
+
+    svc._loop(samples.append)
+
+    # El 2º nettop retoma con la base previa: delta 50, sin perder ni duplicar.
+    assert [(s.bytes_recv, s.bytes_sent) for s in samples] == [(50, 50)]
+    # 2 corridas con datos (cada una resetea el contador) + _MAX_RESTARTS
+    # relanzamientos seguidos sin datos -> se rinde y avisa.
+    assert len(respawns) == svc._MAX_RESTARTS + 1
+    assert svc.failed is True and failed == [True]
