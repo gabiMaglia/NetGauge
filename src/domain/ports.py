@@ -108,6 +108,22 @@ class GeoIpService(ABC):
         """Descarta las consultas encoladas (el usuario apagó GeoIP)."""
 
 
+class SecretStore(ABC):
+    """Guarda secretos (API keys) fuera de los archivos de configuración."""
+
+    @property
+    @abstractmethod
+    def available(self) -> bool:
+        """False si el backend no está disponible (se degrada a texto plano)."""
+
+    @abstractmethod
+    def get(self, name: str) -> str | None: ...
+
+    @abstractmethod
+    def set(self, name: str, value: str) -> None:
+        """Guarda el secreto; un string vacío lo elimina."""
+
+
 class SettingsStore(ABC):
     """Lee/escribe la configuración persistente del usuario."""
 
