@@ -55,6 +55,13 @@ que el sistema muestre una advertencia la primera vez:
   xattr -dr com.apple.quarantine /Applications/NetGauge.app
   ```
 
+  El pipeline de build ya soporta firma *Developer ID* + notarización de Apple
+  (opcional, ver [`build/README_macos.md`](build/README_macos.md)). Un `.dmg`
+  **firmado y notarizado** abre sin advertencia y **no** necesita el paso de
+  `xattr`; los pasos de arriba aplican solo a builds sin firmar. Podés
+  comprobarlo con `spctl -a -t open --context context:primary-signature -v NetGauge-*.dmg`
+  (debe decir `accepted` y `source=Notarized Developer ID`).
+
 Si preferís no confiar en un binario sin firma, podés compilarlo vos mismo desde
 el código fuente: ver [`docs/BUILD.md`](docs/BUILD.md).
 

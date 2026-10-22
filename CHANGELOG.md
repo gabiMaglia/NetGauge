@@ -4,6 +4,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+### Added
+- **macOS:** firma *Developer ID* (hardened runtime + `build/entitlements.plist`)
+  y notarización de Apple **opcionales** en el build: `build/make_dmg.sh` firma
+  el `.app` inside-out, firma, notariza y engrapa el `.dmg` cuando hay
+  credenciales (`NETGAUGE_CODESIGN_IDENTITY`, `NETGAUGE_NOTARY_PROFILE` o
+  `APPLE_ID`/`APPLE_TEAM_ID`/`APPLE_APP_PASSWORD`), y el workflow de release lo
+  hace si existen los secrets de Apple. Sin credenciales el `.dmg` sale sin
+  firmar, igual que antes. Pasos en `build/README_macos.md`.
 ### Fixed
 - **Windows:** crash potencial en la verificación de firma (llamadas `ctypes`
   sin tipos de retorno/argumentos y fuga de contexto de certificado) y la
