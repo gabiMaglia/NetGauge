@@ -20,7 +20,9 @@ ni filtrar a un solo PID (medido). Un snapshot one-shot cuesta ~0.08 s de CPU
 Limitación conocida del polling: un flow que nace y muere ENTRE dos snapshots
 no se ve (conexiones sub-intervalo), y los últimos bytes de un flow que cierra
 justo antes del siguiente snapshot se pierden (el contador del proceso baja y
-ese tramo se descarta). Es aceptable para tráfico sostenido.
+ese tramo se descarta). Un PID que aparece por primera vez DESPUÉS del snapshot
+de base cuenta su contador completo (solo refleja flows vivos). Es aceptable
+para tráfico sostenido.
 
 Historia que sigue vigente:
 - T-010: `nettop` puede omitir transitoriamente a un PID de un snapshot. `_prev`
@@ -145,6 +147,8 @@ class NettopCaptureService(CaptureService):
         self._stop_event = threading.Event()
         # pid -> (bytes_in, bytes_out, ticks_ausente_consecutivos)
         self._prev: dict[int, tuple[int, int, int]] = {}
+        # False hasta procesar el primer snapshot (solo fija bases, no cuenta).
+        self._has_baseline = False
         # pid -> nombre real resuelto (T-025), cacheado por PID.
         self._name_cache: dict[int, str] = {}
         self._proc_lock = threading.Lock()
@@ -229,6 +233,7 @@ class NettopCaptureService(CaptureService):
         self._build_command()  # falla rápido (CaptureUnavailable) si no hay nettop
         self._stop_event.clear()
         self._prev = {}
+        self._has_baseline = False
         self._name_cache = {}
         self.failed = False
         self._thread = threading.Thread(
@@ -319,7 +324,13 @@ class NettopCaptureService(CaptureService):
             new_prev[pid] = (bytes_in, bytes_out, 0)
             prev = self._prev.get(pid)
             if prev is None:
-                continue  # primer sample del proceso: sin base para delta
+                if self._has_baseline and (bytes_in or bytes_out):
+                    # PID nuevo (o reaparecido) tras el snapshot de base: en
+                    # one-shot su contador solo refleja flows vivos, o sea bytes
+                    # nuevos; sin esto se perdería su primera ventana.
+                    samples.append(TrafficSample(
+                        pid=pid, app_name=name, bytes_sent=bytes_out, bytes_recv=bytes_in))
+                continue
             prev_in, prev_out, _missing = prev
             delta_in = bytes_in - prev_in
             delta_out = bytes_out - prev_out
@@ -356,6 +367,7 @@ class NettopCaptureService(CaptureService):
         # La base se actualiza ANTES de emitir: si un on_sample falla, el
         # próximo snapshot no re-cuenta lo ya emitido.
         self._prev = new_prev
+        self._has_baseline = True
         for sample in samples:
             try:
                 on_sample(sample)

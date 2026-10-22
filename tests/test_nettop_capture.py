@@ -83,8 +83,23 @@ def test_emit_deltas_skips_first_sample_then_emits_delta():
     assert sample.bytes_sent == 30
 
 
+def test_new_pid_after_baseline_counts_full_counter_but_baseline_pids_do_not():
+    svc = NettopCaptureService()
+    samples = []
+    # Snapshot de base: solo fija bases, nada se cuenta.
+    svc._emit_deltas({1: ("Old", 9000, 9000)}, samples.append)
+    assert samples == []
+    # PID 2 aparece después de la base: su contador completo es tráfico nuevo.
+    svc._emit_deltas({1: ("Old", 9000, 9000), 2: ("New", 700, 30)}, samples.append)
+    assert [(s.pid, s.bytes_recv, s.bytes_sent) for s in samples] == [(2, 700, 30)]
+    # Y luego sigue con deltas normales (sin recontar).
+    svc._emit_deltas({1: ("Old", 9000, 9000), 2: ("New", 900, 30)}, samples.append)
+    assert [(s.pid, s.bytes_recv) for s in samples] == [(2, 700), (2, 200)]
+
+
 def test_emit_deltas_ignores_counter_reset_without_negative_bytes():
     svc = NettopCaptureService()
+    svc._has_baseline = True
     svc._prev = {1: (1000, 1000, 0)}
     samples = []
     # El proceso se reinició: el contador bajó. No debe reportar bytes negativos
@@ -100,6 +115,7 @@ def test_emit_deltas_ignores_counter_reset_without_negative_bytes():
 
 def test_emit_deltas_skips_pids_with_no_traffic_change():
     svc = NettopCaptureService()
+    svc._has_baseline = True
     svc._prev = {1: (100, 100, 0)}
     samples = []
     svc._emit_deltas({1: ("App", 100, 100)}, samples.append)
@@ -149,10 +165,10 @@ def test_emit_deltas_purges_pid_after_too_many_missing_ticks():
         svc._emit_deltas({}, samples.append)
     assert 1 not in svc._prev  # purgado tras exceder el límite de ausencias
 
-    # Reaparece (probablemente otro proceso reciclando el PID): se trata
-    # como primer sample, sin emitir un delta gigante espurio.
+    # Reaparece (otro proceso reciclando el PID): en one-shot su contador solo
+    # refleja flows vivos, así que cuenta completo como un PID nuevo.
     svc._emit_deltas({1: ("OtroProceso", 5000, 5000)}, samples.append)
-    assert len(samples) == 1  # no se agregó un nuevo evento por el "reset"
+    assert len(samples) == 2 and samples[1].bytes_recv == 5000
 
 
 def test_is_available_reflects_shutil_which(monkeypatch):
