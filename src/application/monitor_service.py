@@ -436,6 +436,8 @@ class MonitorService:
     def update_settings(self, settings: Settings) -> None:
         self.settings = settings
         self._settings_store.save(settings)
+        if not settings.geoip_enabled and self._geoip is not None:
+            self._geoip.cancel_pending()   # apagar GeoIP corta la cola ya
         # Rearmar avisos sólo si cambió algo que los afecta: guardar la geometría
         # al ocultar la ventana no debe repetir los toasts 80/100 %. Se compara
         # contra una copia (los llamadores mutan el mismo objeto Settings).

@@ -479,3 +479,21 @@ def test_snapshot_listener_none_stops_notifying(settings, notifier):
         assert not called.wait(0.3)
     finally:
         m._refresher.stop()
+
+
+def test_update_settings_geoip_off_cancels_pending(settings, notifier):
+    class _Geo:
+        cancelled = 0
+
+        def lookup(self, ip): return None
+        def cancel_pending(self): self.cancelled += 1
+
+    m = make_monitor(settings, notifier)
+    geo = _Geo()
+    m._geoip = geo
+    settings.geoip_enabled = True
+    m.update_settings(settings)
+    assert geo.cancelled == 0
+    settings.geoip_enabled = False
+    m.update_settings(settings)
+    assert geo.cancelled == 1

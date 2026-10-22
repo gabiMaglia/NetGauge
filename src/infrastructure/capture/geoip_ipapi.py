@@ -26,8 +26,7 @@ _IDLE_TIMEOUT = 60.0  # seg sin trabajo antes de que el worker termine
 def _is_public(ip: str) -> bool:
     try:
         addr = ipaddress.ip_address(ip)
-        return not (addr.is_private or addr.is_loopback or addr.is_link_local
-                    or addr.is_multicast or addr.is_reserved)
+        return addr.is_global and not addr.is_multicast
     except ValueError:
         return False
 
@@ -58,6 +57,17 @@ class IpApiGeoIp(GeoIpService):
             self._ensure_worker_locked()
         return None
 
+    def cancel_pending(self) -> None:
+        """Descarta lo encolado (el usuario apagó GeoIP): no sale ni una request
+        más salvo la que ya esté en vuelo."""
+        with self._lock:
+            self._queued.clear()
+            while True:
+                try:
+                    self._q.get_nowait()
+                except queue.Empty:
+                    break
+
     def _ensure_worker_locked(self) -> None:
         """Arranca el worker si no hay uno vivo. Llamar con self._lock tomado."""
         if self._worker is not None and self._worker.is_alive():
@@ -74,6 +84,10 @@ class IpApiGeoIp(GeoIpService):
                     if self._q.empty():   # nadie encoló mientras decidíamos salir
                         self._worker = None
                         return
+                continue
+            with self._lock:
+                cancelled = ip not in self._queued   # cancel_pending() lo vació
+            if cancelled:
                 continue
             try:
                 result = self._query(ip)
@@ -98,5 +112,8 @@ class IpApiGeoIp(GeoIpService):
 
 
 class NullGeoIp(GeoIpService):
+    def cancel_pending(self) -> None:
+        return None
+
     def lookup(self, ip: str) -> tuple[str, str] | None:
         return None

@@ -103,6 +103,10 @@ class GeoIpService(ABC):
     def lookup(self, ip: str) -> tuple[str, str] | None:
         """(country_code, org) si hay dato; None si no/aún no/IP privada."""
 
+    @abstractmethod
+    def cancel_pending(self) -> None:
+        """Descarta las consultas encoladas (el usuario apagó GeoIP)."""
+
 
 class SettingsStore(ABC):
     """Lee/escribe la configuración persistente del usuario."""

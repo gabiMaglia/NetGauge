@@ -63,3 +63,53 @@ def test_lookup_ip_privada_no_encola():
     g = IpApiGeoIp()
     assert g.lookup("192.168.0.5") is None
     assert g._q.qsize() == 0 and g._worker is None
+
+
+def test_cancel_pending_corta_la_cola(monkeypatch):
+    import threading
+
+    g = IpApiGeoIp()
+    started, release = threading.Event(), threading.Event()
+    calls: list[str] = []
+
+    def fake_query(ip):
+        calls.append(ip)
+        started.set()
+        release.wait(3)
+        return ("AR", "Telecom")
+
+    monkeypatch.setattr(g, "_query", fake_query)
+    for i in range(1, 6):
+        g.lookup(f"8.8.8.{i}")
+    assert started.wait(2)          # el worker ya tiene la 1ª en vuelo
+    g.cancel_pending()
+    assert g._queued == set() and g._q.empty()
+    release.set()
+    time.sleep(0.2)
+    assert len(calls) == 1          # sólo la que ya estaba en vuelo
+
+
+def test_cancel_pending_descarta_item_ya_sacado_de_la_cola(monkeypatch):
+    g = IpApiGeoIp()
+    calls: list[str] = []
+    monkeypatch.setattr(g, "_query", lambda ip: calls.append(ip))
+    g._q.put("8.8.8.8")             # en cola pero cancelado: no está en _queued
+    g._q.put("__stop__")
+    real_get = g._q.get
+
+    def get(block=True, timeout=None):
+        v = real_get(block, timeout)
+        if v == "__stop__":
+            raise queue.Empty
+        return v
+
+    g._q.get = get
+    monkeypatch.setattr(gmod, "_IDLE_TIMEOUT", 0.01)
+    g._run()
+    assert calls == []
+
+
+def test_is_public_rechaza_cgnat_y_rangos_especiales():
+    assert not gmod._is_public("100.64.0.1")      # CGNAT
+    assert not gmod._is_public("192.0.2.1")       # TEST-NET
+    assert gmod._is_public("8.8.8.8")
