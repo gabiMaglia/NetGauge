@@ -100,3 +100,23 @@ def test_windows_spec_regenerates_version_info():
     assert "from gen_version_info import" in text
     assert "write_version_info(" in text
     assert 'version="version_info.txt"' in text
+
+
+# --- instalador Inno Setup y dmg --------------------------------------------
+
+def test_iss_default_version_matches():
+    text = (BUILD / "installer.iss").read_text(encoding="utf-8")
+    m = re.search(r'#ifndef AppVersion\s*\r?\n#define AppVersion "([^"]+)"', text)
+    assert m, "no se encontro el default de AppVersion en installer.iss"
+    assert m.group(1) == _app_version()
+
+
+def test_iss_has_no_legacy_runonce_id():
+    assert "DelTraficMeTask" not in (BUILD / "installer.iss").read_text(encoding="utf-8")
+
+
+def test_dmg_default_reads_version_py():
+    text = (BUILD / "make_dmg.sh").read_text(encoding="utf-8")
+    assert "gen_version_info.py --print-version" in text
+    # ningun default numerico hardcodeado en ${DMG_VERSION:-...}
+    assert not re.search(r"DMG_VERSION:-\d", text)

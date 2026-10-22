@@ -6,8 +6,9 @@
 ; Permite inyectar la versión desde CI sin tocar este archivo:
 ;   ISCC.exe build\installer.iss /DAppVersion=1.9.0
 ; Sin ese define (build local), se usa el default de abajo.
+; Default = src/version.py APP_VERSION (verificado por tests/test_version_consistency.py).
 #ifndef AppVersion
-#define AppVersion "1.8.1"
+#define AppVersion "2.0.1"
 #endif
 #define AppExe "NetGauge.exe"
 
@@ -56,4 +57,4 @@ Filename: "{app}\{#AppExe}"; Description: "Ejecutar ahora"; \
 [UninstallRun]
 ; Borra la tarea al desinstalar (si no existe, schtasks devuelve error inocuo).
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /F /TN ""{#AppName}"""; \
-    Flags: runhidden; RunOnceId: "DelTraficMeTask"
+    Flags: runhidden; RunOnceId: "DelNetGaugeTask"

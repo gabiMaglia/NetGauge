@@ -12,8 +12,8 @@
 #   build/make_dmg.sh x86_64
 #
 # La versión del nombre del .dmg sale de DMG_VERSION si está definida (CI la
-# inyecta con la versión del git tag); sin esa env var (build local) se usa
-# el default hardcodeado de abajo.
+# inyecta con la versión del git tag); sin esa env var (build local) se lee
+# de src/version.py (fuente única) vía build/gen_version_info.py.
 #
 # Requiere macOS (usa hdiutil, no portable a Linux/Windows).
 set -euo pipefail
@@ -25,7 +25,11 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="NetGauge"
-VERSION="${DMG_VERSION:-1.8.1}"
+VERSION="${DMG_VERSION:-$(cd "$ROOT_DIR" && python3 build/gen_version_info.py --print-version)}"
+if [[ -z "$VERSION" ]]; then
+    echo "[make_dmg] No se pudo determinar la versión (src/version.py)." >&2
+    exit 1
+fi
 ARCH="${1:-$(uname -m)}"
 
 if [[ "$ARCH" != "x86_64" && "$ARCH" != "arm64" ]]; then
