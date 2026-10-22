@@ -34,6 +34,7 @@ LicenseFile=..\LICENSE
 [Files]
 ; Salida one-file de PyInstaller (dist\NetGauge.exe):
 Source: "..\dist\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
