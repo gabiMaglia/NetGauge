@@ -101,7 +101,7 @@ def try_session(seconds: int = 15) -> None:
 
 def main() -> None:
     print("=" * 60)
-    print("DIAGNÓSTICO ETW - Network Monitor")
+    print("DIAGNÓSTICO ETW - NetGauge")
     print("=" * 60)
     print(f"Python: {sys.version}")
     print("\n[1] Privilegios:")

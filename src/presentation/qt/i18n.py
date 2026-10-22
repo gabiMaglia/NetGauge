@@ -29,7 +29,7 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.quota.cycle_day": "Día de corte del ciclo (1–28)",
         "btn.cancel": "Cancelar", "btn.save": "Guardar", "btn.close": "Cerrar",
         "about.version": "versión {v}",
-        "dlg.about.desc": "Monitor de consumo de red por aplicación para Windows. "
+        "dlg.about.desc": "Monitor de consumo de red por aplicación para Windows y macOS. "
                           "Mide subida y bajada en tiempo real, lleva analíticas "
                           "históricas y te avisa al superar tus cuotas.",
         "dlg.about.made_by": "Hecho por {author} · Licencia MIT (software libre)",
@@ -110,7 +110,7 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.quota.cycle_day": "Billing cycle start day (1–28)",
         "btn.cancel": "Cancel", "btn.save": "Save", "btn.close": "Close",
         "about.version": "version {v}",
-        "dlg.about.desc": "Per-application network usage monitor for Windows. "
+        "dlg.about.desc": "Per-application network usage monitor for Windows and macOS. "
                           "Measures upload and download in real time, keeps "
                           "historical analytics and alerts you when you exceed quotas.",
         "dlg.about.made_by": "Made by {author} · MIT License (free software)",
@@ -191,7 +191,7 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.quota.cycle_day": "Dia de início do ciclo (1–28)",
         "btn.cancel": "Cancelar", "btn.save": "Salvar", "btn.close": "Fechar",
         "about.version": "versão {v}",
-        "dlg.about.desc": "Monitor de consumo de rede por aplicativo para Windows. "
+        "dlg.about.desc": "Monitor de consumo de rede por aplicativo para Windows e macOS. "
                           "Mede upload e download em tempo real, mantém análises "
                           "históricas e avisa quando você ultrapassa as cotas.",
         "dlg.about.made_by": "Feito por {author} · Licença MIT (software livre)",
