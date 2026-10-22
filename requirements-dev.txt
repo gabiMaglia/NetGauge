@@ -1,6 +1,6 @@
 # Dependencias solo de desarrollo/build (no van al binario).
 -r requirements.txt
-pytest>=8.0,<10
+pytest>=9.1.1,<10
 # PyYAML: tests/test_workflows.py parsea los workflows de GitHub Actions.
 PyYAML>=6.0,<7
 # Empaquetado (solo en build, no en runtime):
