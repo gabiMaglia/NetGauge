@@ -70,8 +70,10 @@ class ConnectionProvider(ABC):
     def connections(self) -> list[Connection]: ...
 
     @abstractmethod
-    def exe_paths(self) -> dict[str, str]:
-        """Mapa app_name -> ruta del ejecutable (para el índice de confianza)."""
+    def exe_paths(self) -> dict[str, frozenset[str]]:
+        """Mapa app_name -> rutas de TODOS los ejecutables que se muestran con
+        ese nombre. El nombre (FileDescription) es spoofeable: dos .exe
+        distintos pueden compartirlo, así que la confianza se evalúa por ruta."""
 
 
 class ReputationService(ABC):

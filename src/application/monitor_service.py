@@ -23,6 +23,7 @@ from ..domain.models import (
     TrustInfo,
     UsageRecord,
     human_bytes,
+    worst_trust,
 )
 from ..domain.ports import (
     CaptureService,
@@ -85,7 +86,7 @@ class MonitorService:
         self._conn_provider = connection_provider
         self._reputation = reputation
         self._geoip = geoip
-        self._exe_paths: dict[str, str] = {}
+        self._exe_paths: dict[str, frozenset[str]] = {}
         self._exe_paths_at: datetime | None = None
         self._last_purge: datetime | None = None
         self._translator: Callable[[str], str] | None = None
@@ -538,11 +539,15 @@ class MonitorService:
             return
         self._refresh_exe_paths()
         for app in wanted:
-            path = self._exe_paths.get(app)
-            if not path:
+            paths = self._exe_paths.get(app)
+            if not paths:
                 continue   # sin .exe conocido: queda lo último (o UNKNOWN)
             try:
-                info = self._enrich_with_vt(self._trust.evaluate(path), path)
+                # VT por ruta ANTES de combinar: una detección en cualquiera
+                # de los homónimos vuelve sospechosa la fila.
+                info = worst_trust(
+                    self._enrich_with_vt(self._trust.evaluate(p), p)
+                    for p in sorted(paths))
             except Exception:  # noqa: BLE001 — una app rota no frena a las demás
                 log.exception("Fallo evaluando confianza de %s", app)
                 continue

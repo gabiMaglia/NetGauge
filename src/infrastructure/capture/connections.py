@@ -33,15 +33,17 @@ class PsutilConnectionProvider(ConnectionProvider):
                 raddr=raddr.ip, rport=raddr.port, status=c.status))
         return out
 
-    def exe_paths(self) -> dict[str, str]:
-        paths: dict[str, str] = {}
+    def exe_paths(self) -> dict[str, frozenset[str]]:
+        paths: dict[str, set[str]] = {}
         for proc in psutil.process_iter(["pid", "exe"]):
             try:
                 exe = proc.info.get("exe")
                 if not exe:
                     continue
                 name = friendly_name(proc.info["pid"])
-                paths.setdefault(name, exe)
+                # NO setdefault(name, exe): un "Google Chrome" falso no debe
+                # esconderse detrás de la ruta del real (ni viceversa).
+                paths.setdefault(name, set()).add(exe)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-        return paths
+        return {name: frozenset(p) for name, p in paths.items()}

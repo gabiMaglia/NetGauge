@@ -12,7 +12,8 @@ from conftest import (
 )
 from src.application.monitor_service import MonitorService
 from src.domain.models import (
-    TRUST_TRUSTED, TRUST_UNKNOWN, Connection, TrustInfo, UsageRecord,
+    TRUST_CAUTION, TRUST_SUSPICIOUS, TRUST_TRUSTED, TRUST_UNKNOWN, Connection,
+    TrustInfo, UsageRecord,
 )
 
 
@@ -120,8 +121,8 @@ def test_start_runs_worker_and_notifies(settings, notifier):
 
 
 # ---- confianza / conexiones -------------------------------------------------
-# Mapa que devuelve el ConnectionProvider fake. Task 6 lo pasa a frozenset.
-CHROME_PATHS = {"Chrome": "C:/chrome.exe"}
+# Mapa que devuelve el ConnectionProvider fake: nombre -> rutas (plan 04, Task 6).
+CHROME_PATHS = {"Chrome": frozenset({"C:/chrome.exe"})}
 
 
 class BlockingEvaluator:
@@ -270,3 +271,40 @@ def test_connections_demand_wakes_worker_only_when_stale(settings, notifier):
     m._conn_wanted_at = time.monotonic() - 60   # demanda vencida
     m.connections()
     assert len(calls) == 2
+
+
+# ---- ejecutables homónimos: gana el PEOR veredicto --------------------------
+REAL = "C:/Program Files/Google/Chrome/chrome.exe"
+FAKE = "C:/Users/x/AppData/Local/Temp/chrome.exe"
+SPOOFED = {"Google Chrome": frozenset({REAL, FAKE})}
+
+
+def test_trust_reports_worst_across_same_named_exes(settings, notifier):
+    ev = DictEvaluator({REAL: TRUST_TRUSTED, FAKE: TRUST_CAUTION})
+    m = _monitor(settings, notifier, trust_evaluator=ev,
+                 connection_provider=FakeConnProvider(SPOOFED))
+    m.trust_for("Google Chrome")
+    m.refresh_snapshot()
+    info = m.trust_for("Google Chrome")
+    assert info.level == TRUST_CAUTION
+    assert info.exe_path == FAKE
+
+
+class _PathReputation:
+    def __init__(self, by_path): self._by_path = by_path
+    def set_api_key(self, key): pass
+    def lookup(self, path): return self._by_path.get(path)
+
+
+def test_vt_detection_on_any_same_named_exe_marks_row_suspicious(settings, notifier):
+    settings.virustotal_enabled = True
+    settings.virustotal_api_key = "k"
+    ev = DictEvaluator({REAL: TRUST_TRUSTED, FAKE: TRUST_TRUSTED})
+    m = _monitor(settings, notifier, trust_evaluator=ev,
+                 connection_provider=FakeConnProvider(SPOOFED),
+                 reputation=_PathReputation({REAL: (0, 70), FAKE: (5, 70)}))
+    m.trust_for("Google Chrome")
+    m.refresh_snapshot()
+    info = m.trust_for("Google Chrome")
+    assert info.level == TRUST_SUSPICIOUS
+    assert info.vt_malicious == 5
