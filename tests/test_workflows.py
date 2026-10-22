@@ -43,7 +43,7 @@ def test_ci_has_linux_and_audit_jobs():
 
 
 def test_third_party_actions_pinned_by_sha():
-    for name in ("ci.yml",):  # Task 6 suma release.yml
+    for name in ("ci.yml", "release.yml"):
         for ref in _uses(_load(name)):
             if ref.startswith(FIRST_PARTY):
                 continue
@@ -52,9 +52,42 @@ def test_third_party_actions_pinned_by_sha():
 
 def test_python_version_consistent_across_workflows():
     versions = set()
-    for name in ("ci.yml",):  # Task 6 suma release.yml
+    for name in ("ci.yml", "release.yml"):
         for job in _load(name)["jobs"].values():
             for step in job.get("steps", []):
                 if str(step.get("uses", "")).startswith("actions/setup-python"):
                     versions.add(step["with"]["python-version"])
     assert versions == {"3.12"}
+
+
+def test_release_default_permissions_read_only_and_publish_writes():
+    wf = _load("release.yml")
+    assert wf["permissions"] == {"contents": "read"}
+    assert wf["jobs"]["publish"]["permissions"] == {"contents": "write"}
+    for job in ("test", "windows", "macos"):
+        assert "permissions" not in wf["jobs"][job]
+
+
+def test_release_builds_are_gated_by_tests():
+    jobs = _load("release.yml")["jobs"]
+    assert "test" in jobs
+    for job in ("windows", "macos"):
+        assert "test" in jobs[job]["needs"]
+    assert set(jobs["publish"]["needs"]) == {"windows", "macos"}
+
+
+def test_release_generates_checksums_and_attaches_them():
+    text = (WF / "release.yml").read_text(encoding="utf-8")
+    assert "sha256sum" in text and "SHA256SUMS.txt" in text
+
+
+def test_release_no_longer_rewrites_version_py():
+    assert "sed -i" not in (WF / "release.yml").read_text(encoding="utf-8")
+
+
+def test_release_windows_generates_version_info_before_pyinstaller():
+    steps = _load("release.yml")["jobs"]["windows"]["steps"]
+    cmds = [s.get("run", "") for s in steps]
+    gen = next(i for i, c in enumerate(cmds) if "gen_version_info.py" in c)
+    pyi = next(i for i, c in enumerate(cmds) if "pyinstaller" in c)
+    assert gen < pyi
