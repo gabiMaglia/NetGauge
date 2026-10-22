@@ -47,6 +47,8 @@ class VirusTotalReputation(ReputationService):
         """Cambia la key. Los errores (cacheados o en backoff) se descartan: con
         otra key pueden andar. Los resultados válidos se conservan."""
         with self._lock:
+            if key == self._api_key:
+                return  # el monitor lo llama cada ciclo: no anular el backoff
             self._api_key = key
             for p in [p for p, v in self._cache.items() if v == _ERROR]:
                 del self._cache[p]

@@ -200,3 +200,23 @@ def test_api_key_vacia_no_toca_la_red():
     with patch("urllib.request.urlopen") as m:
         assert vt.test_api_key("   ") is False
     m.assert_not_called()
+
+
+def test_set_api_key_same_key_keeps_backoff():
+    vt = VirusTotalReputation(api_key="K")
+    vt._retry_at["x.exe"] = 999.0
+    vt._fails["x.exe"] = 2
+    vt._cache["e.exe"] = vtmod._ERROR
+    vt.set_api_key("K")
+    assert vt._retry_at == {"x.exe": 999.0}
+    assert vt._fails == {"x.exe": 2}
+    assert vt._cache["e.exe"] == vtmod._ERROR
+
+
+def test_set_api_key_different_key_clears_backoff():
+    vt = VirusTotalReputation(api_key="K")
+    vt._retry_at["x.exe"] = 999.0
+    vt._fails["x.exe"] = 2
+    vt._cache["e.exe"] = vtmod._ERROR
+    vt.set_api_key("OTHER")
+    assert vt._retry_at == {} and vt._fails == {} and "e.exe" not in vt._cache
