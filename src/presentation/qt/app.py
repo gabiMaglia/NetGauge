@@ -1,6 +1,7 @@
 """Arranque de la app PySide6: ventana + tray + notifier, todo cableado."""
 from __future__ import annotations
 
+import logging
 import sys
 
 # Windows agrupa la app en la barra de tareas por este ID; sin él, usa el ícono
@@ -163,7 +164,11 @@ def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int
     tray.activated.connect(on_activate)
 
     # Cuando una 2ª instancia toca el pipe, traemos esta ventana al frente.
-    guard.listen(show_window)
+    # Si no pudimos escuchar (ni tras reintentar), seguimos SIN instancia única:
+    # mejor abrir que no abrir; solo se pierde el 'traer al frente' de la 2ª.
+    if not guard.listen(show_window):
+        logging.getLogger(__name__).warning(
+            'No se pudo abrir el servidor de instancia única; se continúa sin él')
 
     # Mini-gráfico en el tray + tooltip con velocidad y app top (cada 2s).
     spark: deque[float] = deque([0.0] * 24, maxlen=24)
