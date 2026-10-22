@@ -5,7 +5,7 @@ import html
 import ipaddress
 import sys
 
-from PySide6.QtCore import QPoint, Qt, QTimer, Signal
+from PySide6.QtCore import QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from ...application.monitor_service import MonitorService
 from .about_dialog import AboutDialog
 from .geometry import available_screen_rects, clamp_to_screens
+from .icons import svg_icon
 from .i18n import fmt_number, loc_bytes, set_language, t
 from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
@@ -32,6 +33,7 @@ from .theme import DARK, LIGHT, app_qss
 from .widgets import AppRow, BarsLogo, ConnRow, LiveChart, MetricCard, QuotaBar
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
+_TITLEBAR_H = 56
 _PERIOD_CODES = ["session", "day", "week", "month"]
 
 
@@ -103,7 +105,7 @@ class MainWindow(QWidget):
 
         self._build_ui()
         self._apply_theme()
-        self._native = apply_native_chrome(self, caption_height=52)
+        self._native = apply_native_chrome(self, caption_height=_TITLEBAR_H)
 
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
@@ -141,62 +143,85 @@ class MainWindow(QWidget):
     def _build_titlebar(self) -> QWidget:
         bar = QFrame()
         bar.setObjectName("TitleBar")
-        bar.setFixedHeight(52)
+        bar.setFixedHeight(_TITLEBAR_H)
         lay = QHBoxLayout(bar)
-        lay.setContentsMargins(18, 0, 14, 0)
+        lay.setContentsMargins(20, 0, 14, 0)
         lay.setSpacing(10)
 
-        lay.addWidget(BarsLogo(26, 8))
-
+        self._logo = BarsLogo(26, 8)
+        lay.addWidget(self._logo)
         brand = QLabel('Net<span style="color:#3b82f6;">Gauge</span>')
         brand.setObjectName("BrandName")
         lay.addWidget(brand)
-        self._sub = QLabel(t("brand.sub"))
-        self._sub.setObjectName("BrandSub")
-        lay.addWidget(self._sub)
-
-        self._mode_badge = QLabel()
-        lay.addWidget(self._mode_badge)
         self._style_mode_badge()
         lay.addStretch()
 
-        self._speed_down = QLabel("↓ 0 B/s")
-        self._speed_down.setObjectName("SpeedDown")
-        self._speed_up = QLabel("↑ 0 B/s")
-        self._speed_up.setObjectName("SpeedUp")
-        lay.addWidget(self._speed_down)
-        lay.addWidget(self._speed_up)
+        self._speed_down, self._unit_down = self._speed_group(lay, "SpeedDown", "↓")
+        lay.addSpacing(10)
+        self._speed_up, self._unit_up = self._speed_group(lay, "SpeedUp", "↑")
+        lay.addSpacing(8)
+        sep = QFrame()
+        sep.setObjectName("TitleSep")
+        sep.setFixedSize(1, 24)
+        lay.addWidget(sep)
         lay.addSpacing(8)
 
-        self._about_btn = QPushButton("ⓘ")
-        self._about_btn.setObjectName("WinBtn")
-        self._about_btn.setToolTip(t("btn.about"))
-        self._about_btn.clicked.connect(self._open_about)
-        lay.addWidget(self._about_btn)
+        self._about_btn = self._icon_btn("info", "btn.about", self._open_about)
+        self._settings_btn = self._icon_btn("settings", "btn.settings", self._open_settings)
+        self._theme_btn = self._icon_btn("moon", "btn.theme", self._toggle_theme)
+        for b in (self._about_btn, self._settings_btn, self._theme_btn):
+            lay.addWidget(b)
+        lay.addSpacing(6)
 
-        self._settings_btn = QPushButton("⚙︎")  # engranaje monocromo
-        self._settings_btn.setObjectName("WinBtn")
-        self._settings_btn.setToolTip(t("btn.settings"))
-        self._settings_btn.clicked.connect(self._open_settings)
-        lay.addWidget(self._settings_btn)
-
-        theme_btn = QPushButton("◐")
-        theme_btn.setObjectName("WinBtn")
-        theme_btn.clicked.connect(self._toggle_theme)
-        mini = QPushButton("—")
-        mini.setObjectName("WinBtn")
-        mini.clicked.connect(self.showMinimized)
-        self._max_btn = QPushButton("□")
-        self._max_btn.setObjectName("WinBtn")
-        self._max_btn.clicked.connect(self._toggle_maximize)
-        close = QPushButton("✕")
-        close.setObjectName("WinBtn")
-        close.setProperty("class", "CloseBtn")
-        close.clicked.connect(self.hide)  # cerrar -> al tray
-        for b in (theme_btn, mini, self._max_btn, close):
+        self._min_btn = self._win_btn("minimize", self.showMinimized)
+        self._max_btn = self._win_btn("maximize", self._toggle_maximize)
+        self._close_btn = self._win_btn("close", self.hide)  # cerrar -> al tray
+        self._close_btn.setProperty("class", "CloseBtn")
+        for b in (self._min_btn, self._max_btn, self._close_btn):
             lay.addWidget(b)
         self._titlebar = bar
         return bar
+
+    def _speed_group(self, lay: QHBoxLayout, name: str, arrow: str) -> tuple[QLabel, QLabel]:
+        """Flecha + valor grande mono + unidad chica; devuelve (valor, unidad)."""
+        arrow_lbl = QLabel(arrow)
+        arrow_lbl.setObjectName(name)
+        value = QLabel("0")
+        value.setObjectName(name)
+        unit = QLabel("B/s")
+        unit.setObjectName("SpeedUnit")
+        lay.addWidget(arrow_lbl)
+        lay.addSpacing(-4)
+        lay.addWidget(value)
+        lay.addSpacing(-4)
+        lay.addWidget(unit)
+        return value, unit
+
+    def _icon_btn(self, icon: str, tip_key: str, slot) -> QPushButton:
+        b = QPushButton()
+        b.setObjectName("IconBtn")
+        b.setFixedSize(36, 36)
+        b.setIconSize(QSize(18, 18))
+        b.setProperty("icon_name", icon)
+        b.setToolTip(t(tip_key))
+        b.clicked.connect(slot)
+        return b
+
+    def _win_btn(self, icon: str, slot) -> QPushButton:
+        b = QPushButton()
+        b.setObjectName("WinBtn")
+        b.setFixedSize(32, 32)
+        b.setIconSize(QSize(16, 16))
+        b.setProperty("icon_name", icon)
+        b.clicked.connect(slot)
+        return b
+
+    def _recolor_icons(self) -> None:
+        """Re-pinta los íconos de la barra con el color muted del tema activo."""
+        color = self._theme["text_muted"]
+        for b in (self._about_btn, self._settings_btn, self._theme_btn,
+                  self._min_btn, self._max_btn, self._close_btn):
+            b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
 
     def _build_toolbar(self) -> QHBoxLayout:
         lay = QHBoxLayout()
@@ -504,8 +529,11 @@ class MainWindow(QWidget):
     def _tick(self) -> None:
         up, down = self._monitor.live_rate()
         self._chart.push(up, down)
-        self._speed_down.setText(f"↓ {loc_bytes(down)}/s")
-        self._speed_up.setText(f"↑ {loc_bytes(up)}/s")
+        for val, unit, rate in ((self._speed_down, self._unit_down, down),
+                                (self._speed_up, self._unit_up, up)):
+            num, _, u = loc_bytes(rate).partition(" ")
+            val.setText(num)
+            unit.setText(f"{u or 'B'}/s")
         self._peak_chip.setText(t("chart.peak", v=loc_bytes(self._chart.peak())))
 
     # ---- acciones ------------------------------------------------------
@@ -553,10 +581,10 @@ class MainWindow(QWidget):
 
     def _retranslate(self) -> None:
         """Re-aplica todos los textos tras un cambio de idioma."""
-        self._sub.setText(t("brand.sub"))
         self._style_mode_badge()
         self._about_btn.setToolTip(t("btn.about"))
         self._settings_btn.setToolTip(t("btn.settings"))
+        self._theme_btn.setToolTip(t("btn.theme"))
         self._quota_btn.setText(t("btn.quota"))
         for chip, value in self._period_chips:
             chip.setText(t("period." + value))
@@ -584,22 +612,26 @@ class MainWindow(QWidget):
 
     def _apply_theme(self) -> None:
         self.setStyleSheet(app_qss(self._theme))
+        self._recolor_icons()
+        self._sync_max_icon()
 
     # ---- gestión de ventana (maximizar / persistir geometría) ---------
     def _style_mode_badge(self) -> None:
+        # El modo de captura vive por ahora en el tooltip del logo (Task 8: barra de estado).
         per_app = self._per_process
         if per_app and sys.platform == "darwin":
-            label_key, tip_key = "mode.nettop", "mode.nettop_tip"
+            tip_key = "mode.nettop_tip"
         elif per_app:
-            label_key, tip_key = "mode.etw", "mode.etw_tip"
+            tip_key = "mode.etw_tip"
         else:
-            label_key, tip_key = "mode.global", "mode.global_tip"
-        self._mode_badge.setText(t(label_key))
-        self._mode_badge.setToolTip(t(tip_key))
-        color = "#10b981" if per_app else "#f59e0b"
-        self._mode_badge.setStyleSheet(
-            f"color:{color}; border:1px solid {color}; border-radius:7px;"
-            f"padding:1px 7px; font-size:11px; font-weight:700;")
+            tip_key = "mode.global_tip"
+        self._logo.setToolTip(t(tip_key))
+
+    def _sync_max_icon(self) -> None:
+        maximized = self.isMaximized() if self._native else self._maximized
+        self._max_btn.setProperty("icon_name", "restore" if maximized else "maximize")
+        self._max_btn.setIcon(svg_icon("restore" if maximized else "maximize",
+                                       self._theme["text_muted"], 16))
 
     def _toggle_maximize(self) -> None:
         if self._native:  # el SO maneja maximizar/restaurar (con animación y snap)
@@ -609,12 +641,12 @@ class MainWindow(QWidget):
             if self._restore_geom is not None:
                 self.setGeometry(self._restore_geom)
             self._maximized = False
-            self._max_btn.setText("□")
+            self._sync_max_icon()
         else:
             self._restore_geom = self.geometry()
             self.setGeometry(self.screen().availableGeometry())  # respeta taskbar
             self._maximized = True
-            self._max_btn.setText("❐")
+            self._sync_max_icon()
 
     def _restore_geometry(self) -> None:
         raw = self._monitor.settings.window_geometry
@@ -648,7 +680,7 @@ class MainWindow(QWidget):
         # Reaplica el chrome nativo en el primer show (Qt finaliza estilos al mostrar).
         if self._native and not self._native_applied:
             self._native_applied = True
-            apply_native_chrome(self, caption_height=52)
+            apply_native_chrome(self, caption_height=_TITLEBAR_H)
         super().showEvent(event)
 
     def resizeEvent(self, event) -> None:
@@ -662,7 +694,7 @@ class MainWindow(QWidget):
         # Mantiene el glifo del botón en sync cuando el SO maximiza/restaura.
         from PySide6.QtCore import QEvent
         if self._native and event.type() == QEvent.Type.WindowStateChange:
-            self._max_btn.setText("❐" if self.isMaximized() else "□")
+            self._sync_max_icon()
         super().changeEvent(event)
 
     def nativeEvent(self, event_type, message):
@@ -674,7 +706,7 @@ class MainWindow(QWidget):
 
     # ---- arrastre manual (solo si NO hay chrome nativo) ---------------
     def mouseDoubleClickEvent(self, event) -> None:
-        if not self._native and event.position().y() <= 52:
+        if not self._native and event.position().y() <= _TITLEBAR_H:
             self._toggle_maximize()
             event.accept()
 

@@ -80,16 +80,16 @@ def app_qss(t: dict) -> str:
              border-bottom-right-radius: {RADIUS['window']}px; }}
     #Logo {{ border-radius: 8px; }}
     #BrandName {{ font-size: 14px; font-weight: 700; color: {t['text_strong']}; }}
-    #BrandSub  {{ font-size: 12px; color: {t['text_faint']}; }}
-    #SpeedDown {{ font-size: 12px; font-weight: 700; color: {t['accent']}; }}
-    #SpeedUp   {{ font-size: 12px; font-weight: 700; color: {t['upload']}; }}
+    #SpeedDown {{ font-family: {MONO_FAMILY}; font-size: 20px; font-weight: 700; color: {t['down']}; }}
+    #SpeedUp   {{ font-family: {MONO_FAMILY}; font-size: 20px; font-weight: 700; color: {t['upload']}; }}
+    #SpeedUnit {{ font-size: 12px; color: {t['text_muted']}; }}
+    #TitleSep  {{ background: {t['border']}; }}
 
-    QPushButton#WinBtn {{
-        background: transparent; border: none; color: {t['text_faint']};
-        font-size: 14px; padding: 2px 8px; border-radius: 6px;
+    QPushButton#IconBtn, QPushButton#WinBtn {{
+        background: transparent; border: none; border-radius: 8px; padding: 0;
     }}
-    QPushButton#WinBtn:hover {{ background: {t['segment_bg']}; color: {t['text']}; }}
-    QPushButton#CloseBtn:hover {{ background: {t['danger']}; color: #fff; }}
+    QPushButton#IconBtn:hover, QPushButton#WinBtn:hover {{ background: {t['segment_bg']}; }}
+    QPushButton#WinBtn[class="CloseBtn"]:hover {{ background: {t['danger']}; }}
 
     /* Segmented (período) */
     #Segment {{ background: {t['segment_bg']}; border-radius: {RADIUS['segment']}px; }}

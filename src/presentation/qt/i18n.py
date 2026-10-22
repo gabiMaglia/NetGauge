@@ -11,7 +11,7 @@ _lang = "es"
 
 _STR: dict[str, dict[str, str]] = {
     "es": {
-        "brand.sub": "· Mes actual",
+        "brand.sub": "· Mes actual", "btn.theme": "Cambiar tema",
         "btn.about": "Acerca de", "btn.quota": "Cuota", "btn.settings": "Ajustes",
         "period.session": "Sesión", "period.day": "Día",
         "period.week": "Semana", "period.month": "Mes",
@@ -96,7 +96,7 @@ _STR: dict[str, dict[str, str]] = {
         "trust.vt_detected": "VirusTotal: {m}/{n} motores lo marcan",
     },
     "en": {
-        "brand.sub": "· Current month",
+        "brand.sub": "· Current month", "btn.theme": "Toggle theme",
         "btn.about": "About", "btn.quota": "Quota", "btn.settings": "Settings",
         "period.session": "Session", "period.day": "Day",
         "period.week": "Week", "period.month": "Month",
@@ -181,7 +181,7 @@ _STR: dict[str, dict[str, str]] = {
         "trust.vt_detected": "VirusTotal: {m}/{n} engines flag it",
     },
     "pt": {
-        "brand.sub": "· Mês atual",
+        "brand.sub": "· Mês atual", "btn.theme": "Alternar tema",
         "btn.about": "Sobre", "btn.quota": "Cota", "btn.settings": "Ajustes",
         "period.session": "Sessão", "period.day": "Dia",
         "period.week": "Semana", "period.month": "Mês",
