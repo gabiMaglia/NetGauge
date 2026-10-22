@@ -7,11 +7,12 @@ from typing import Iterable
 
 from ...domain.models import UsageRecord, human_bytes
 from ...domain.ports import ReportGenerator
+from .safe_output import escape_formula, safe_filename
 
 
 class PdfReportGenerator(ReportGenerator):
-    def __init__(self, output_dir: str | Path | None = None) -> None:
-        self._dir = Path(output_dir or (Path.home() / "Desktop"))
+    def __init__(self, output_dir: str | Path) -> None:
+        self._dir = Path(output_dir)
         self._dir.mkdir(parents=True, exist_ok=True)
 
     def generate(
@@ -26,7 +27,8 @@ class PdfReportGenerator(ReportGenerator):
         )
 
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = self._dir / (destination_hint or f"NetGauge_report_{stamp}.pdf")
+        path = self._dir / safe_filename(
+            destination_hint, f"NetGauge_report_{stamp}.pdf")
 
         styles = getSampleStyleSheet()
         doc = SimpleDocTemplate(str(path), pagesize=A4,

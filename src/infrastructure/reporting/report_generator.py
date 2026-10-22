@@ -8,12 +8,11 @@ from typing import Iterable
 
 from ...domain.models import UsageRecord, human_bytes
 from ...domain.ports import ReportGenerator
+from .safe_output import escape_formula, safe_filename
 
 
 class CsvReportGenerator(ReportGenerator):
-    def __init__(self, output_dir: str | Path | None = None) -> None:
-        if output_dir is None:
-            output_dir = Path.home() / "Desktop"
+    def __init__(self, output_dir: str | Path) -> None:
         self._dir = Path(output_dir)
         self._dir.mkdir(parents=True, exist_ok=True)
 
@@ -21,11 +20,11 @@ class CsvReportGenerator(ReportGenerator):
         self, records: Iterable[UsageRecord], destination_hint: str | None = None
     ) -> str:
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        name = destination_hint or f"network_report_{stamp}.csv"
+        name = safe_filename(destination_hint, f"network_report_{stamp}.csv")
         path = self._dir / name
 
         records = list(records)
-        with path.open("w", newline="", encoding="utf-8") as fh:
+        with path.open("w", newline="", encoding="utf-8-sig") as fh:  # BOM: Excel abre bien los acentos
             writer = csv.writer(fh)
             writer.writerow(
                 ["Aplicación", "Subida", "Bajada", "Total", "Subida (B)", "Bajada (B)"]
@@ -34,7 +33,7 @@ class CsvReportGenerator(ReportGenerator):
                 total = r.bytes_sent + r.bytes_recv
                 writer.writerow(
                     [
-                        r.app_name,
+                        escape_formula(r.app_name),
                         human_bytes(r.bytes_sent),
                         human_bytes(r.bytes_recv),
                         human_bytes(total),
