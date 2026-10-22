@@ -1,73 +1,55 @@
 """Captura por proceso en macOS usando el comando `nettop` (best-effort).
 
-`nettop -P -x -L 0 -J bytes_in,bytes_out` imprime, cada `-s` segundos, un bloque
-CSV con una fila de encabezado (",bytes_in,bytes_out,") seguida de una fila por
-proceso con el formato "<nombre>.<pid>,<bytes_in>,<bytes_out>,". Los contadores
-son ACUMULATIVOS desde que el proceso abrió sus sockets (igual que
-psutil.net_io_counters()), por lo que esta clase calcula deltas entre samples
-consecutivos por PID, descartando el primer sample (no hay base de referencia).
+Estrategia actual (fix/nettop-cpu): POLLING de snapshots one-shot.
+Cada `interval` segundos (2 s por defecto) se ejecuta
+`nettop -P -x -L 1 -J bytes_in,bytes_out`, que imprime UN bloque CSV (encabezado
+",bytes_in,bytes_out," + una fila "<nombre>.<pid>,<bytes_in>,<bytes_out>," por
+proceso) y termina. Los contadores son ACUMULATIVOS por proceso (igual que
+psutil.net_io_counters()), así que se calculan deltas entre snapshots
+consecutivos por PID, descartando el primero (no hay base de referencia).
 
-Verificado empíricamente en este Mac (T-010) con `nettop -P -x -L 0 -s 1 -J
-bytes_in,bytes_out` mientras corría una descarga sostenida: para un mismo PID
-los valores de `bytes_in` crecen monótonamente entre bloques consecutivos
-(ej. 42000 -> 226800 -> 453600 -> 694400 -> 963200), confirmando que SON
-acumulativos. El parseo y el delta simple (current - prev) son correctos.
+Qué se descartó y por qué: el modo streaming `nettop -L 0 -s N` (un proceso
+persistente que imprime un bloque cada N s). Ese modo mantiene una suscripción
+PERSISTENTE a NetworkStatistics: el proceso recibe y procesa cada evento de
+cada flow del kernel (el filtrado -P/-p/-t es del lado cliente) y consume
+~100-120 % de CPU constante en un i7 Intel / macOS 14, sin importar -s, -m, -t
+ni filtrar a un solo PID (medido). Un snapshot one-shot cuesta ~0.08 s de CPU
+(~4-5 % de un core a 1 snapshot/2 s) y la exactitud es la misma (descarga de
+10 MB: streaming 10.02 MB, polling 1 s y 2 s: 10.02 MB).
 
-El bug real de T-010 (picos seguidos de 0 con tráfico sostenido) NO era un
-"doble delta": era que `nettop` puede omitir transitoriamente a un PID de un
-bloque puntual (timing del pipe, proceso sin syscalls de red ese tick, bloque
-truncado, etc.) aunque el proceso siga generando tráfico. La implementación
-anterior reconstruía `_prev` solo con los PIDs presentes en el bloque actual,
-así que un PID ausente en un solo bloque perdía su base de referencia; al
-reaparecer se trataba como "primer sample" y el delta acumulado real (todo lo
-transferido durante la ausencia) se descartaba en silencio -> aparecía como 0
-en vez de como el consumo continuo real. Ahora `_prev` conserva la última
-lectura conocida de cada PID entre bloques (no se borra por ausencia
-puntual), y solo se purga tras `_MAX_MISSING_TICKS` bloques consecutivos sin
-aparecer (proceso terminado de verdad), evitando además que un PID que vuelve
-a aparecer DESPUÉS de purgado se confunda con un reset de contador.
+Limitación conocida del polling: un flow que nace y muere ENTRE dos snapshots
+no se ve (conexiones sub-intervalo), y los últimos bytes de un flow que cierra
+justo antes del siguiente snapshot se pierden (el contador del proceso baja y
+ese tramo se descarta). Es aceptable para tráfico sostenido.
 
-No requiere privilegios de Administrador ni entitlements especiales; es
-best-effort (puede no ver todo el tráfico, p.ej. de la propia VPN/proxy).
-Si el binario no existe o el proceso falla, lanza CaptureUnavailable y la
-fábrica cae a PsutilCaptureService, igual que hace Windows con ETW.
+Historia que sigue vigente:
+- T-010: `nettop` puede omitir transitoriamente a un PID de un snapshot. `_prev`
+  conserva la última lectura de cada PID y solo se purga tras
+  `_MAX_MISSING_TICKS` snapshots consecutivos sin aparecer, así el delta al
+  reaparecer incluye lo transferido durante la ausencia (sin duplicar ni perder).
+  Si un contador baja (flows cerrados / PID reciclado) no se emite delta negativo.
+- T-011 (PTY) YA NO APLICA: el PTY existía para evitar el buffering completo de
+  libc del stream persistente por pipe. Con `-L 1` el proceso termina y
+  flushea al salir, así que alcanza un pipe común.
+- T-023: con el streaming, un cierre no-limpio dejaba un `nettop -L 0` huérfano
+  (ppid=1) para siempre. Ya no se mantiene un hijo vivo (cada snapshot dura
+  ~0.1 s y tiene timeout), pero `reap_orphans()` y el handler de señales de
+  `main.py` se conservan como red de seguridad contra huérfanos de versiones
+  previas que sigan corriendo; solo matchean la firma vieja `-L 0`.
+- T-025: `nettop` trunca el nombre; se resuelve el real por PID con psutil.
 
-T-011 (bug raíz de los picos→0): `nettop` detecta que su stdout no es un
-TTY cuando se lo lanza con `stdout=PIPE` (caso de `subprocess.Popen` común)
-y pasa a usar buffering completo de libc, acumulando varios bloques antes
-de volcarlos de una sola vez al pipe. Verificado empíricamente en este Mac:
-con pipe simple, 8 bloques esperados en ~8s (a 1/s) llegaron TODOS juntos
-en una sola ráfaga a t+12.02s. Lanzando `nettop` bajo un pseudo-terminal
-(PTY, vía `os.openpty`) en vez de un pipe, `nettop` ve un TTY en su stdout y
-usa line-buffering: los mismos 8 bloques llegaron a t=[0.05, 1.05, 2.03,
-3.03, 4.03, 5.03, 6.03, 7.02]s, es decir ~1 bloque/seg, cadencia pareja.
-Esto elimina el aliasing con el `_rate_tick` de 1s que causaba el patrón
-pico-luego-0. Bajo PTY, las líneas llegan terminadas en "\r\n" (traducción
-de terminal); el parseo ya tolera esto porque tanto `parse_nettop_block`
-como `split_into_blocks` hacen `.strip()` antes de evaluar cada línea.
-
-T-023 (leak de huérfanos): con cierre NO-limpio del proceso padre (force-quit,
-crash, `kill -9`, logout), `stop()`/`atexit` no llegan a ejecutarse y el
-`nettop` hijo queda reparentado a launchd (ppid=1), vivo indefinidamente.
-Cada arranque nuevo lanza otro más -> se acumulan (confirmado empíricamente:
-tras `kill -9` al padre, el `nettop` siguió corriendo con ppid=1). Mitigación
-de dos capas: (1) al arrancar, `_reap_orphans()` mata cualquier `nettop`
-previo del usuario actual cuya línea de comando matchee EXACTAMENTE la
-firma propia (ver `_OWN_SIGNATURE_ARGS`), por las dudas que haya quedado
-alguno de una sesión anterior; (2) manejo de SIGTERM/SIGINT (instalado desde
-`main.py`, solo en macOS) para correr el mismo cleanup que `atexit` ante un
-cierre "casi limpio" (ej. `kill` sin -9, logout ordenado). `SIGKILL` no es
-atrapable por ningún proceso, así que (1) sigue siendo la red de seguridad
-final para los casos que ningún handler puede cubrir.
+No requiere privilegios de Administrador. Si el binario no existe lanza
+CaptureUnavailable; si los snapshots fallan N veces seguidas se marca
+`failed` y se avisa a `on_failure` (FallbackCaptureService degrada a psutil).
 """
 from __future__ import annotations
 
 import logging
 import os
-import select
 import shutil
 import subprocess
 import threading
+import time
 from typing import Callable, Iterable
 
 from ...domain.models import TrafficSample
@@ -110,52 +92,6 @@ def parse_nettop_block(lines: Iterable[str]) -> dict[int, tuple[str, int, int]]:
     return result
 
 
-def split_into_blocks(stream_lines: Iterable[str]) -> Iterable[list[str]]:
-    """Agrupa líneas de salida continua de `nettop -L 0` en bloques por sample.
-
-    Cada bloque nuevo arranca con la fila de encabezado (",bytes_in,bytes_out,").
-    """
-    block: list[str] = []
-    for line in stream_lines:
-        if line.strip().startswith(",") and block:
-            yield block
-            block = []
-        block.append(line)
-    if block:
-        yield block
-
-
-def iter_lines_from_fd(
-    fd: int, stop_event: threading.Event, chunk_size: int = 65536
-) -> Iterable[str]:
-    """Lee de un file descriptor (master de un PTY) y yieldea líneas de texto.
-
-    Usa `select` con timeout corto para poder revisar `stop_event`
-    periódicamente y no bloquear `stop()` indefinidamente. Decodea con
-    `errors="replace"` (best-effort, igual que `text=True` en Popen).
-    """
-    buf = b""
-    while not stop_event.is_set():
-        try:
-            ready, _, _ = select.select([fd], [], [], 0.5)
-        except (OSError, ValueError):
-            break
-        if fd not in ready:
-            continue
-        try:
-            chunk = os.read(fd, chunk_size)
-        except OSError:
-            break  # PTY cerrado del otro lado (proceso terminó)
-        if not chunk:
-            break
-        buf += chunk
-        while b"\n" in buf:
-            line, buf = buf.split(b"\n", 1)
-            yield line.decode(errors="replace")
-    if buf:
-        yield buf.decode(errors="replace")
-
-
 def _is_own_nettop_cmdline(cmdline: list[str]) -> bool:
     """True si `cmdline` (de `psutil.Process.cmdline()`) matchea EXACTAMENTE
     la firma de argumentos que usa esta clase (sin contar el intervalo `-s`,
@@ -181,29 +117,35 @@ def _is_own_nettop_cmdline(cmdline: list[str]) -> bool:
 
 
 class NettopCaptureService(CaptureService):
-    """Captura por proceso en macOS vía `nettop`. Best-effort, no privilegiada."""
+    """Captura por proceso en macOS vía snapshots `nettop -L 1`. Best-effort."""
 
-    # Cantidad de bloques consecutivos sin aparecer tras los cuales se purga
-    # la base de un PID (se asume proceso terminado, no ausencia transitoria).
+    # Snapshots consecutivos sin ausencia de un PID tras los cuales se purga
+    # su base (se asume proceso terminado, no ausencia transitoria).
     _MAX_MISSING_TICKS = 3
 
-    # Relanzamiento si `nettop` muere solo: backoff 1, 2, 4, 8, 16 s (tope 30)
-    # y se rinde tras _MAX_RESTARTS corridas seguidas sin datos.
-    _MAX_RESTARTS = 5
-    _RESTART_BASE_DELAY = 1.0
-    _RESTART_MAX_DELAY = 30.0
+    # Fallos SEGUIDOS de snapshot (error, timeout o salida vacía) tras los
+    # cuales se abandona nettop. Backoff entre fallos: 1, 2, 4, 8 s (tope 30).
+    _MAX_FAILURES = 5
+    _FAILURE_BASE_DELAY = 1.0
+    _FAILURE_MAX_DELAY = 30.0
 
-    def __init__(self, interval: float = 1.0) -> None:
-        self._interval = interval
+    # Un snapshot dura ~0.1 s; si tarda más de esto algo anda mal.
+    _SNAPSHOT_TIMEOUT = 5.0
+
+    def __init__(
+        self,
+        interval: float = 2.0,
+        runner: Callable[[list[str], float], str] | None = None,
+    ) -> None:
+        self.interval = interval
+        # Inyectable para tests: (cmd, timeout) -> stdout del snapshot.
+        self._runner = runner or self._run_nettop
         self._proc: subprocess.Popen | None = None
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._master_fd: int | None = None
         # pid -> (bytes_in, bytes_out, ticks_ausente_consecutivos)
         self._prev: dict[int, tuple[int, int, int]] = {}
-        # pid -> nombre real resuelto (T-025): nettop trunca el nombre a un
-        # ancho fijo; cacheamos el nombre completo por PID para no resolver
-        # en cada bloque.
+        # pid -> nombre real resuelto (T-025), cacheado por PID.
         self._name_cache: dict[int, str] = {}
         self._proc_lock = threading.Lock()
         # Salud: si nettop no se puede sostener, failed=True y se avisa a
@@ -280,87 +222,41 @@ class NettopCaptureService(CaptureService):
         nettop_path = shutil.which("nettop")
         if not nettop_path:
             raise CaptureUnavailable("`nettop` no está disponible en este sistema.")
-        return [
-            nettop_path, "-P", "-x", "-L", "0", "-s", str(int(self._interval)),
-            "-J", "bytes_in,bytes_out",
-        ]
+        return [nettop_path, "-P", "-x", "-L", "1", "-J", "bytes_in,bytes_out"]
 
     def start(self, on_sample: Callable[[TrafficSample], None]) -> None:
         self.reap_orphans()
-        cmd = self._build_command()
+        self._build_command()  # falla rápido (CaptureUnavailable) si no hay nettop
         self._stop_event.clear()
         self._prev = {}
         self._name_cache = {}
         self.failed = False
-        self._spawn(cmd)
         self._thread = threading.Thread(
             target=self._loop, args=(on_sample,), daemon=True
         )
         self._thread.start()
 
-    def _spawn(self, cmd: list[str] | None = None) -> None:
-        """Lanza `nettop` y deja listos `_proc`/`_master_fd`.
-
-        Bajo un PTY (en vez de un pipe simple) para que vea su stdout como un
-        TTY y use line-buffering: así entrega cada bloque ~1/s en vez de
-        bufferear varios y volcarlos en ráfaga (causa raíz de T-011).
-        """
-        # `pty` (termios) no existe en Windows: import perezoso, solo macOS lo usa.
-        import pty
-
-        cmd = cmd or self._build_command()
-        try:
-            master_fd, slave_fd = pty.openpty()
-        except OSError as exc:
-            raise CaptureUnavailable(f"No se pudo abrir un PTY: {exc}") from exc
-        try:
-            proc = subprocess.Popen(
-                cmd, stdout=slave_fd, stderr=subprocess.DEVNULL, close_fds=True,
-            )
-        except OSError as exc:
-            # slave_fd lo cierra el `finally` (corre siempre); acá solo el master
-            # para no fugarlo. Cerrar slave en ambos lados sería un doble-close.
-            os.close(master_fd)
-            raise CaptureUnavailable(f"No se pudo iniciar nettop: {exc}") from exc
-        finally:
-            os.close(slave_fd)  # el hijo ya tiene su propio fd duplicado
+    def _run_nettop(self, cmd: list[str], timeout: float) -> str:
+        """Ejecuta un snapshot y devuelve su stdout. Sin PTY: con `-L 1` el
+        proceso termina y flushea. Guarda el Popen para que stop() lo corte."""
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, close_fds=True,
+        )
         with self._proc_lock:
-            if not self._stop_event.is_set():
-                self._proc, self._master_fd = proc, master_fd
-                return
-        # stop() llegó mientras relanzábamos: no dejar un nettop huérfano.
-        self._terminate(proc)
-        self._close_fd(master_fd)
-
-    def _respawn(self) -> None:
-        """Descarta el nettop muerto y lanza otro (corre en el hilo del loop)."""
-        with self._proc_lock:
-            proc, self._proc = self._proc, None
-            fd, self._master_fd = self._master_fd, None
-        self._terminate(proc)
-        self._close_fd(fd)
-        self._spawn()
-
-    def _terminate(self, proc: subprocess.Popen | None) -> None:
-        if proc is None:
-            return
-        try:
-            proc.terminate()
-            proc.wait(timeout=self._interval + 2)
-        except Exception:  # noqa: BLE001
-            try:
+            if self._stop_event.is_set():
                 proc.kill()
-            except Exception:  # noqa: BLE001
-                pass
-
-    @staticmethod
-    def _close_fd(fd: int | None) -> None:
-        if fd is None:
-            return
+            self._proc = proc
         try:
-            os.close(fd)
-        except OSError:
-            pass
+            out, _ = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.communicate()
+            raise
+        finally:
+            with self._proc_lock:
+                if self._proc is proc:
+                    self._proc = None
+        return out.decode(errors="replace")
 
     def _give_up(self) -> None:
         self.failed = True
@@ -372,57 +268,44 @@ class NettopCaptureService(CaptureService):
                 log.exception("nettop: fallo activando el fallback")
 
     def _loop(self, on_sample: Callable[[TrafficSample], None]) -> None:
-        failures = 0  # corridas SEGUIDAS sin datos
-        while True:
-            if self._pump(on_sample):
-                failures = 0
-            if self._stop_event.is_set():
-                return
-            # nettop terminó sin que nadie llamara a stop(): relanzar.
-            while True:
-                if failures >= self._MAX_RESTARTS:
-                    log.error("nettop: %d relanzamientos seguidos sin datos; "
-                              "abandono la captura nativa.", failures)
-                    self._give_up()
+        failures = 0  # snapshots fallidos SEGUIDOS
+        cmd = self._build_command()
+        while not self._stop_event.is_set():
+            started = time.monotonic()
+            try:
+                output = self._runner(cmd, self._SNAPSHOT_TIMEOUT)
+                parsed = parse_nettop_block(output.splitlines())
+                if not parsed:
+                    raise ValueError("snapshot de nettop sin filas")
+            except Exception as exc:  # noqa: BLE001
+                if self._stop_event.is_set():
                     return
                 failures += 1
-                delay = min(self._RESTART_MAX_DELAY,
-                            self._RESTART_BASE_DELAY * 2 ** (failures - 1))
-                log.warning("nettop terminó inesperadamente; reintento %d/%d en %.0fs.",
-                            failures, self._MAX_RESTARTS, delay)
+                if failures >= self._MAX_FAILURES:
+                    log.error("nettop: %d snapshots fallidos seguidos (%s); "
+                              "abandono la captura nativa.", failures, exc)
+                    self._give_up()
+                    return
+                delay = min(self._FAILURE_MAX_DELAY,
+                            self._FAILURE_BASE_DELAY * 2 ** (failures - 1))
+                log.warning("nettop: snapshot falló (%s); reintento %d/%d en %.0fs.",
+                            exc, failures, self._MAX_FAILURES, delay)
                 if self._stop_event.wait(delay):
                     return
-                try:
-                    self._respawn()
-                    break
-                except Exception:  # noqa: BLE001
-                    log.exception("nettop: no se pudo relanzar")
-
-    def _pump(self, on_sample: Callable[[TrafficSample], None]) -> int:
-        """Consume la salida del nettop actual hasta EOF o stop().
-        Devuelve cuántos bloques procesó."""
-        blocks = 0
-        try:
-            lines = iter_lines_from_fd(self._master_fd, self._stop_event)
-            for block in split_into_blocks(lines):
-                if self._stop_event.is_set():
-                    break
-                blocks += 1
-                try:
-                    parsed = parse_nettop_block(block)
-                    # Resolver el nombre real por PID (T-025) antes de los deltas:
-                    # nettop trunca el nombre a un ancho fijo (y puede partir un
-                    # carácter multibyte -> U+FFFD/"cajas" en la UI).
-                    resolved = {
-                        pid: (self._resolve_name(pid, name), bin_, bout)
-                        for pid, (name, bin_, bout) in parsed.items()
-                    }
-                    self._emit_deltas(resolved, on_sample)
-                except Exception:  # noqa: BLE001
-                    log.exception("nettop: fallo procesando un bloque; se descarta")
-        except Exception:  # noqa: BLE001
-            log.exception("nettop: error leyendo salida")
-        return blocks
+                continue
+            failures = 0
+            try:
+                # Nombre real por PID (T-025) antes de los deltas.
+                resolved = {
+                    pid: (self._resolve_name(pid, name), bin_, bout)
+                    for pid, (name, bin_, bout) in parsed.items()
+                }
+                self._emit_deltas(resolved, on_sample)
+            except Exception:  # noqa: BLE001
+                log.exception("nettop: fallo procesando un snapshot; se descarta")
+            remaining = self.interval - (time.monotonic() - started)
+            if self._stop_event.wait(max(0.0, remaining)):
+                return
 
     def _emit_deltas(
         self,
@@ -453,10 +336,10 @@ class NettopCaptureService(CaptureService):
                     )
                 )
 
-        # PIDs que tenían base previa pero no aparecieron en este bloque:
+        # PIDs que tenían base previa pero no aparecieron en este snapshot:
         # conservar su última lectura conocida (no perder la base de delta
         # por una ausencia transitoria) salvo que ya lleven demasiados
-        # bloques ausentes, en cuyo caso se asume que el proceso terminó.
+        # snapshots ausentes, en cuyo caso se asume que el proceso terminó.
         for pid, (bytes_in, bytes_out, missing) in self._prev.items():
             if pid in new_prev:
                 continue
@@ -471,7 +354,7 @@ class NettopCaptureService(CaptureService):
             # futuro reaparición se trata como primer sample, no como reset.
 
         # La base se actualiza ANTES de emitir: si un on_sample falla, el
-        # próximo bloque no re-cuenta lo ya emitido.
+        # próximo snapshot no re-cuenta lo ya emitido.
         self._prev = new_prev
         for sample in samples:
             try:
@@ -487,7 +370,7 @@ class NettopCaptureService(CaptureService):
         U+FFFD ("cajas" en la UI). `psutil.Process(pid).name()` da el nombre
         completo y bien codificado. Se cachea por PID; si psutil no puede
         resolver (proceso ya terminado / sin permisos), cae al nombre de
-        nettop SIN cachear, para reintentar en el próximo bloque.
+        nettop SIN cachear, para reintentar en el próximo snapshot.
         """
         cached = self._name_cache.get(pid)
         if cached is not None:
@@ -505,12 +388,12 @@ class NettopCaptureService(CaptureService):
         self._stop_event.set()
         with self._proc_lock:
             proc, self._proc = self._proc, None
-        self._terminate(proc)  # EOF en el PTY: desbloquea el loop
+        if proc is not None:  # snapshot en vuelo: cortarlo ya
+            try:
+                proc.kill()
+            except Exception:  # noqa: BLE001
+                pass
         thread, self._thread = self._thread, None
         # on_failure -> FallbackCaptureService -> stop() corre en el propio hilo.
         if thread is not None and thread is not threading.current_thread():
-            thread.join(timeout=self._interval + 2)
-        # El fd se cierra DESPUÉS del join: evita que el loop lea un fd reciclado.
-        with self._proc_lock:
-            fd, self._master_fd = self._master_fd, None
-        self._close_fd(fd)
+            thread.join(timeout=self._SNAPSHOT_TIMEOUT + 2)

@@ -5,6 +5,13 @@ versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 ### Fixed
+- **macOS:** `nettop` consumía ~100-120 % de CPU permanente mientras NetGauge
+  estaba abierta. Causa: el modo streaming (`-L 0`) mantiene una suscripción
+  persistente a NetworkStatistics que procesa cada evento de cada flow del
+  kernel. Ahora se hace polling de snapshots one-shot (`nettop -L 1`, cada 2 s,
+  ~0.08 s de CPU c/u): ~4-5 % de un core con la misma exactitud (10 MB medidos
+  como 10.02 MB). Limitación: flows que nacen y mueren entre dos snapshots no
+  se ven. La tasa en vivo se suaviza ahora sobre 4 lecturas (cadencia de 2 s).
 - Docs: la sección *Code signing policy* del README atribuía la firma a SignPath
   Foundation, pero nunca se aprobó ni se usó. Ahora refleja el estado real:
   macOS firmado y notarizado (Apple Developer ID), Windows sin firmar.

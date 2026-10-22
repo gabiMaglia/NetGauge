@@ -115,12 +115,12 @@ class MonitorService:
         self._rate_recv = 0
         self._live_up = 0.0      # bytes/seg (suavizado, lo que se muestra)
         self._live_down = 0.0
-        # Suavizado de la tasa mostrada (T-012): nettop entrega ~1 bloque/s
-        # pero su reloj no está en fase con _rate_tick (también 1s) -> deltas
-        # tipo [0, 2x, 0, 2x] (aliasing). Promedio móvil de las últimas 3
-        # lecturas crudas de 1s absorbe esa alternancia sin introducir
-        # demasiado lag (responde a un cambio real en ~3s).
-        self._RATE_WINDOW = 3
+        # Suavizado de la tasa mostrada (T-012): nettop entrega un snapshot
+        # cada 2 s (polling) y _rate_tick corre cada 1s -> deltas tipo
+        # [0, 2x, 0, 2x]. Un promedio móvil de las últimas 4 lecturas crudas
+        # (2 periodos completos de snapshot) da exactamente x y es estable
+        # (con 3 oscilaba entre 0.67x y 1.33x). Responde a un cambio real en ~4s.
+        self._RATE_WINDOW = 4
         self._raw_up_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
         self._raw_down_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
 

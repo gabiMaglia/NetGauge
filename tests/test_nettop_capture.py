@@ -6,28 +6,15 @@ de parseo y la lógica de deltas/fallback con fakes.
 from __future__ import annotations
 
 import os
-import sys
 import threading
-import types
 
 import pytest
 
 from src.infrastructure.capture.nettop_capture import (
     NettopCaptureService,
     _is_own_nettop_cmdline,
-    iter_lines_from_fd,
     parse_nettop_block,
-    split_into_blocks,
 )
-
-
-@pytest.fixture
-def fake_pty(monkeypatch):
-    """`pty` no existe en Windows: lo suplantamos con pipes (mismo contrato de
-    fd crudo) para testear la lógica de `start()` en cualquier plataforma."""
-    mod = types.ModuleType("pty")
-    mod.openpty = os.pipe
-    monkeypatch.setitem(sys.modules, "pty", mod)
 
 
 def test_parse_nettop_block_basic():
@@ -69,71 +56,13 @@ def test_parse_nettop_block_strips_carriage_return():
     assert result[811] == ("Google Chrome H", 4485341, 355531)
 
 
-def test_split_into_blocks_groups_by_header_with_carriage_return():
-    stream = [
-        ",bytes_in,bytes_out,\r\n",
-        "A.1,10,20,\r\n",
-        ",bytes_in,bytes_out,\r\n",
-        "A.1,15,25,\r\n",
-        "B.2,5,5,\r\n",
-    ]
-    blocks = list(split_into_blocks(stream))
-    assert len(blocks) == 2
-    assert parse_nettop_block(blocks[0]) == {1: ("A", 10, 20)}
-    assert parse_nettop_block(blocks[1]) == {1: ("A", 15, 25), 2: ("B", 5, 5)}
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32",
-    reason="select() sobre pipes no existe en Windows; el backend nettop es solo macOS",
-)
-def test_iter_lines_from_fd_yields_decoded_lines_until_eof():
-    """Simula el extremo maestro de un PTY: escribe en el extremo write de un
-    pipe os.pipe() (mismo contrato de fd crudo que un PTY) con "\\r\\n" y
-    confirma que iter_lines_from_fd reconstruye las líneas completas."""
-    read_fd, write_fd = os.pipe()
-    stop_event = threading.Event()
-
-    def writer():
-        os.write(write_fd, b",bytes_in,bytes_out,\r\n")
-        os.write(write_fd, b"App.1,10,20,\r\n")
-        os.close(write_fd)
-
-    t = threading.Thread(target=writer)
-    t.start()
-    lines = list(iter_lines_from_fd(read_fd, stop_event))
-    t.join()
-    os.close(read_fd)
-
-    assert lines == [",bytes_in,bytes_out,\r", "App.1,10,20,\r"]
 
 
-def test_iter_lines_from_fd_stops_when_stop_event_set():
-    read_fd, write_fd = os.pipe()
-    stop_event = threading.Event()
-    stop_event.set()  # ya detenido antes de empezar a leer
-
-    lines = list(iter_lines_from_fd(read_fd, stop_event))
-
-    os.close(read_fd)
-    os.close(write_fd)
-    assert lines == []
 
 
-def test_split_into_blocks_groups_by_header():
-    stream = [
-        ",bytes_in,bytes_out,\n",
-        "A.1,10,20,\n",
-        ",bytes_in,bytes_out,\n",
-        "A.1,15,25,\n",
-        "B.2,5,5,\n",
-    ]
-    blocks = list(split_into_blocks(stream))
-    assert len(blocks) == 2
-    assert blocks[0] == [",bytes_in,bytes_out,\n", "A.1,10,20,\n"]
-    assert blocks[1] == [
-        ",bytes_in,bytes_out,\n", "A.1,15,25,\n", "B.2,5,5,\n",
-    ]
+
 
 
 def test_emit_deltas_skips_first_sample_then_emits_delta():
@@ -237,47 +166,6 @@ def test_is_available_reflects_shutil_which(monkeypatch):
         "src.infrastructure.capture.nettop_capture.shutil.which", lambda name: None
     )
     assert NettopCaptureService.is_available() is False
-
-
-def test_build_command_raises_when_nettop_missing(monkeypatch):
-    from src.infrastructure.capture.nettop_capture import CaptureUnavailable
-
-    monkeypatch.setattr(
-        "src.infrastructure.capture.nettop_capture.shutil.which", lambda name: None
-    )
-    svc = NettopCaptureService()
-    try:
-        svc._build_command()
-        assert False, "debía lanzar CaptureUnavailable"
-    except CaptureUnavailable:
-        pass
-
-
-def test_start_raises_capture_unavailable_when_popen_fails(monkeypatch, fake_pty):
-    """Si Popen falla, start() degrada a CaptureUnavailable (no a un OSError
-    crudo por doble-close del slave_fd) para que la factory caiga a psutil.
-    Regresión T-011 (defecto QA: except + finally cerraban slave_fd dos veces)."""
-    from src.infrastructure.capture.nettop_capture import CaptureUnavailable
-
-    monkeypatch.setattr(
-        "src.infrastructure.capture.nettop_capture.shutil.which",
-        lambda name: "/usr/bin/nettop",
-    )
-
-    def _boom(*args, **kwargs):
-        raise OSError("no se pudo ejecutar nettop")
-
-    monkeypatch.setattr(
-        "src.infrastructure.capture.nettop_capture.subprocess.Popen", _boom
-    )
-    svc = NettopCaptureService()
-    try:
-        svc.start(lambda sample: None)
-        assert False, "debía lanzar CaptureUnavailable"
-    except CaptureUnavailable:
-        pass
-    except OSError as exc:  # el doble-close se manifestaba acá (Bad file descriptor)
-        assert False, f"esperaba CaptureUnavailable, no OSError crudo: {exc}"
 
 
 def test_factory_returns_nettop_backend_on_macos(monkeypatch):
@@ -433,56 +321,6 @@ def test_reap_orphans_is_safe_without_psutil(monkeypatch):
     assert mod.NettopCaptureService.reap_orphans() == 0
 
 
-def test_start_calls_reap_orphans_before_launching(monkeypatch, fake_pty):
-    """start() debe reapear huérfanos ANTES de lanzar el nuevo nettop (T-023)."""
-    calls: list[str] = []
-
-    monkeypatch.setattr(
-        "src.infrastructure.capture.nettop_capture.shutil.which",
-        lambda name: "/usr/bin/nettop",
-    )
-    monkeypatch.setattr(
-        NettopCaptureService, "reap_orphans",
-        staticmethod(lambda: calls.append("reap") or 0),
-    )
-
-    def _boom(*args, **kwargs):
-        calls.append("popen")
-        raise OSError("no se ejecuta de verdad en el test")
-
-    monkeypatch.setattr(
-        "src.infrastructure.capture.nettop_capture.subprocess.Popen", _boom
-    )
-
-    svc = NettopCaptureService()
-    try:
-        svc.start(lambda sample: None)
-    except Exception:
-        pass
-
-    assert calls == ["reap", "popen"]
-
-
-# --- T-025: resolución del nombre real por PID (nettop trunca a ~15 chars) ---
-
-def test_resolve_name_usa_nombre_completo_de_psutil(monkeypatch):
-    """nettop entrega 'Google Chrome H' (truncado); _resolve_name debe devolver
-    el nombre completo de psutil y cachearlo por PID."""
-    import psutil
-
-    class _FakeProc:
-        def __init__(self, pid):
-            self.pid = pid
-
-        def name(self):
-            return "Google Chrome Helper"
-
-    monkeypatch.setattr(psutil, "Process", _FakeProc)
-    svc = NettopCaptureService()
-    assert svc._resolve_name(811, "Google Chrome H") == "Google Chrome Helper"
-    assert svc._name_cache[811] == "Google Chrome Helper"  # cacheado
-
-
 def test_resolve_name_cae_al_fallback_sin_cachear(monkeypatch):
     """Si psutil no puede resolver (proceso terminado/sin permisos), devuelve el
     nombre de nettop SIN cachearlo, para reintentar en el próximo bloque."""
@@ -506,15 +344,164 @@ def _no_resolve(svc, monkeypatch):
     monkeypatch.setattr(svc, "_resolve_name", lambda pid, fallback: fallback)
 
 
-def test_loop_survives_on_sample_error_without_double_counting(monkeypatch):
+class _Runner:
+    """Runner inyectable: devuelve snapshots (str) o lanza si el item es Exception."""
+
+    def __init__(self, items, on_empty=None):
+        self.items = list(items)
+        self.cmds: list[list[str]] = []
+        self.on_empty = on_empty
+        self.exhausted = threading.Event()
+
+    def __call__(self, cmd, timeout):
+        self.cmds.append(list(cmd))
+        if not self.items:
+            self.exhausted.set()
+            if self.on_empty is not None:
+                return self.on_empty
+            raise RuntimeError("sin más snapshots")
+        item = self.items.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+def _svc(monkeypatch, runner, **kw):
     import src.infrastructure.capture.nettop_capture as mod
 
-    stream = [_HDR, "A.1,100,100,", _HDR, "A.1,200,200,", _HDR, "A.1,300,300,"]
-    monkeypatch.setattr(mod, "iter_lines_from_fd", lambda fd, ev: iter(stream))
-    svc = NettopCaptureService()
-    svc._master_fd = -1
-    svc._MAX_RESTARTS = 0          # sin relanzar: al cortarse el stream se rinde
-    _no_resolve(svc, monkeypatch)
+    monkeypatch.setattr(mod.shutil, "which", lambda name: "/usr/bin/nettop")
+    monkeypatch.setattr(NettopCaptureService, "reap_orphans", staticmethod(lambda: 0))
+    svc = NettopCaptureService(interval=kw.pop("interval", 0.01), runner=runner, **kw)
+    monkeypatch.setattr(svc, "_resolve_name", lambda pid, fallback: fallback)
+    svc._FAILURE_BASE_DELAY = 0.0
+    return svc
+
+
+# --- fix/nettop-cpu: polling de snapshots `-L 1` en vez de `-L 0` persistente ---
+# `nettop -L 0` mantiene una suscripción persistente a NetworkStatistics (~100%
+# de CPU constante). Un snapshot one-shot cuesta ~0.08 s de CPU.
+
+def _snap(*rows: str) -> str:
+    return "\n".join([_HDR, *rows, ""])
+
+
+class _Runner:
+    """Runner inyectable: devuelve snapshots (str) o lanza si el item es Exception."""
+
+    def __init__(self, items, on_empty=None):
+        self.items = list(items)
+        self.cmds: list[list[str]] = []
+        self.on_empty = on_empty
+        self.exhausted = threading.Event()
+
+    def __call__(self, cmd, timeout):
+        self.cmds.append(list(cmd))
+        if not self.items:
+            self.exhausted.set()
+            if self.on_empty is not None:
+                return self.on_empty
+            raise RuntimeError("sin más snapshots")
+        item = self.items.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+def _svc(monkeypatch, runner, **kw):
+    import src.infrastructure.capture.nettop_capture as mod
+
+    monkeypatch.setattr(mod.shutil, "which", lambda name: "/usr/bin/nettop")
+    monkeypatch.setattr(NettopCaptureService, "reap_orphans", staticmethod(lambda: 0))
+    svc = NettopCaptureService(interval=kw.pop("interval", 0.01), runner=runner, **kw)
+    monkeypatch.setattr(svc, "_resolve_name", lambda pid, fallback: fallback)
+    svc._FAILURE_BASE_DELAY = 0.0
+    return svc
+
+
+def test_snapshot_command_is_one_shot_and_not_persistent(monkeypatch):
+    svc = _svc(monkeypatch, _Runner([]))
+    cmd = svc._build_command()
+    assert cmd[1:] == ["-P", "-x", "-L", "1", "-J", "bytes_in,bytes_out"]
+    assert "0" not in cmd and "-s" not in cmd
+
+
+def test_default_interval_is_2_seconds():
+    assert NettopCaptureService().interval == 2.0
+
+
+def test_service_polls_snapshots_with_configured_interval(monkeypatch):
+    import time
+
+    runner = _Runner([_snap("A.1,100,100,")] * 3, on_empty=_snap("A.1,100,100,"))
+    svc = _svc(monkeypatch, runner, interval=0.05)
+    t0 = time.monotonic()
+    svc.start(lambda s: None)
+    while len(runner.cmds) < 4 and time.monotonic() - t0 < 5:
+        time.sleep(0.005)
+    elapsed = time.monotonic() - t0
+    svc.stop()
+    assert len(runner.cmds) >= 4
+    assert all(c[1:] == ["-P", "-x", "-L", "1", "-J", "bytes_in,bytes_out"]
+               for c in runner.cmds)
+    assert elapsed >= 3 * 0.05 * 0.9  # respeta el intervalo entre snapshots
+
+
+def test_deltas_between_consecutive_snapshots(monkeypatch):
+    runner = _Runner([_snap("A.1,100,10,"), _snap("A.1,300,40,"), _snap("A.1,350,40,")])
+    svc = _svc(monkeypatch, runner)
+    samples = []
+    svc._MAX_FAILURES = 1
+    svc._loop(samples.append)
+    assert [(s.bytes_recv, s.bytes_sent) for s in samples] == [(200, 30), (50, 0)]
+
+
+def test_transient_pid_absence_across_snapshots_does_not_duplicate(monkeypatch):
+    runner = _Runner([_snap("A.1,100,0,"), _snap("B.2,5,5,"), _snap("A.1,400,0,")])
+    svc = _svc(monkeypatch, runner)
+    svc._MAX_FAILURES = 1
+    samples = []
+    svc._loop(samples.append)
+    a = [s for s in samples if s.pid == 1]
+    assert [s.bytes_recv for s in a] == [300]  # una vez, sin duplicar ni perder
+
+
+def test_decreasing_counter_never_yields_negative_delta(monkeypatch):
+    runner = _Runner([_snap("A.1,1000,1000,"), _snap("A.1,200,200,"), _snap("A.1,260,230,")])
+    svc = _svc(monkeypatch, runner)
+    svc._MAX_FAILURES = 1
+    samples = []
+    svc._loop(samples.append)
+    assert all(s.bytes_recv >= 0 and s.bytes_sent >= 0 for s in samples)
+    assert [(s.bytes_recv, s.bytes_sent) for s in samples] == [(60, 30)]
+
+
+def test_gives_up_after_consecutive_failures_and_notifies(monkeypatch):
+    runner = _Runner([_snap("A.1,100,100,"), RuntimeError("x"), RuntimeError("y"),
+                      TimeoutError("z")])
+    svc = _svc(monkeypatch, runner)
+    svc._MAX_FAILURES = 3
+    failed = []
+    svc.on_failure = lambda: failed.append(True)
+    svc._loop(lambda s: None)
+    assert svc.failed is True and failed == [True]
+    assert len(runner.cmds) == 4
+
+
+def test_empty_output_counts_as_failure_and_success_resets_counter(monkeypatch):
+    runner = _Runner([_snap("A.1,1,1,"), "", "", _snap("A.1,2,2,"), "", ""])
+    svc = _svc(monkeypatch, runner)
+    svc._MAX_FAILURES = 3
+    samples = []
+    svc._loop(samples.append)
+    # 2 fallos + éxito (resetea) + 2 fallos + runner agotado (3º) => se rinde
+    assert svc.failed is True
+    assert [s.bytes_recv for s in samples] == [1]
+
+
+def test_on_sample_error_does_not_double_count(monkeypatch):
+    runner = _Runner([_snap("A.1,100,100,"), _snap("A.1,200,200,"), _snap("A.1,300,300,")])
+    svc = _svc(monkeypatch, runner)
+    svc._MAX_FAILURES = 1
     calls = []
 
     def on_sample(sample):
@@ -526,28 +513,41 @@ def test_loop_survives_on_sample_error_without_double_counting(monkeypatch):
     assert [c.bytes_recv for c in calls] == [100, 100]
 
 
-def test_loop_restarts_nettop_with_backoff_and_gives_up(monkeypatch):
-    import src.infrastructure.capture.nettop_capture as mod
+def test_stop_cuts_loop_quickly_and_leaves_no_process(monkeypatch):
+    import time
 
-    feeds = iter([[_HDR, "A.1,100,100,"], [_HDR, "A.1,150,150,"]])
+    runner = _Runner([], on_empty=_snap("A.1,1,1,"))
+    svc = _svc(monkeypatch, runner, interval=30.0)  # sin stop() tardaría 30 s
+    svc.start(lambda s: None)
+    runner.exhausted.wait(2) or time.sleep(0.05)
+    t0 = time.monotonic()
+    svc.stop()
+    assert time.monotonic() - t0 < 1.0
+    assert svc._thread is None and svc._proc is None
+
+
+def test_build_command_raises_when_nettop_missing(monkeypatch):
+    from src.infrastructure.capture.nettop_capture import CaptureUnavailable
+
     monkeypatch.setattr(
-        mod, "iter_lines_from_fd", lambda fd, ev: iter(next(feeds, []))
+        "src.infrastructure.capture.nettop_capture.shutil.which", lambda name: None
     )
-    svc = NettopCaptureService()
-    svc._master_fd = -1
-    svc._RESTART_BASE_DELAY = 0.0
-    _no_resolve(svc, monkeypatch)
-    respawns = []
-    monkeypatch.setattr(svc, "_respawn", lambda: respawns.append(1))
-    failed = []
-    svc.on_failure = lambda: failed.append(True)
-    samples = []
+    with pytest.raises(CaptureUnavailable):
+        NettopCaptureService().start(lambda s: None)
 
-    svc._loop(samples.append)
 
-    # El 2º nettop retoma con la base previa: delta 50, sin perder ni duplicar.
-    assert [(s.bytes_recv, s.bytes_sent) for s in samples] == [(50, 50)]
-    # 2 corridas con datos (cada una resetea el contador) + _MAX_RESTARTS
-    # relanzamientos seguidos sin datos -> se rinde y avisa.
-    assert len(respawns) == svc._MAX_RESTARTS + 1
-    assert svc.failed is True and failed == [True]
+def test_start_calls_reap_orphans_before_first_snapshot(monkeypatch):
+    calls: list[str] = []
+    runner = _Runner([], on_empty=_snap("A.1,1,1,"))
+
+    def run(cmd, timeout):
+        calls.append("snapshot")
+        return runner(cmd, timeout)
+
+    svc = _svc(monkeypatch, run, interval=30.0)
+    monkeypatch.setattr(NettopCaptureService, "reap_orphans",
+                        staticmethod(lambda: calls.append("reap") or 0))
+    svc.start(lambda s: None)
+    runner.exhausted.wait(2)
+    svc.stop()
+    assert calls[:2] == ["reap", "snapshot"]
