@@ -22,3 +22,36 @@ def test_setup_logging_writes_rotating_netgauge_log(tmp_path):
         root.removeHandler(handler)
         handler.close()            # Windows: liberar el archivo antes de borrar tmp_path
         root.setLevel(old_level)
+
+
+class _Repo:
+    def __init__(self) -> None:
+        self.closed = False
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_shutdown_closes_repository_even_if_stop_fails():
+    from main import _shutdown
+
+    class BoomMonitor:
+        def generate_session_report(self): return ""
+        def stop(self): raise RuntimeError("timer colgado")
+
+    repo = _Repo()
+    _shutdown(BoomMonitor(), repo)        # no propaga
+    assert repo.closed is True
+
+
+def test_shutdown_stops_monitor_even_if_report_fails():
+    from main import _shutdown
+
+    class Monitor:
+        stopped = False
+        def generate_session_report(self): raise OSError("disco lleno")
+        def stop(self): Monitor.stopped = True
+
+    repo = _Repo()
+    _shutdown(Monitor(), repo)
+    assert Monitor.stopped is True and repo.closed is True

@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.application.monitor_service import MonitorService
+from src.domain.ports import UsageRepository
 from src.infrastructure.capture.connections import PsutilConnectionProvider
 from src.infrastructure.capture.factory import create_capture_service
 from src.infrastructure.capture.geoip_ipapi import IpApiGeoIp
@@ -113,6 +114,24 @@ def _setup_logging(data_dir: Path) -> logging.Handler:
     return handler
 
 
+def _shutdown(monitor: MonitorService, repository: UsageRepository) -> None:
+    """Cierre ordenado: informe de sesión, stop del monitor y cierre de la DB.
+
+    El repositorio se cierra SIEMPRE, aunque stop() falle (antes, una
+    excepción en stop() dejaba la DB abierta).
+    """
+    try:
+        try:
+            monitor.generate_session_report()
+        except Exception:  # noqa: BLE001
+            logging.exception("Fallo generando informe de cierre")
+        monitor.stop()
+    except Exception:  # noqa: BLE001
+        logging.exception("Fallo deteniendo el monitor")
+    finally:
+        repository.close()
+
+
 def main() -> None:
     data_dir = _data_dir()
 
@@ -158,12 +177,7 @@ def main() -> None:
 
     # Red de seguridad: informe + flush ante cierre del sistema o crash controlado.
     def _on_exit() -> None:
-        try:
-            monitor.generate_session_report()
-        except Exception:  # noqa: BLE001
-            logging.exception("Fallo generando informe de cierre")
-        monitor.stop()
-        repository.close()
+        _shutdown(monitor, repository)
 
     atexit.register(_on_exit)
 
