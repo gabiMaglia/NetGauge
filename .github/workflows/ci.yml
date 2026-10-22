@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  tests:
+  tests-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +28,62 @@ jobs:
       - name: Run tests
         run: pytest
 
-  # T-004: build/test/package macOS en ambas arquitecturas. No reemplaza ni
-  # modifica el job Windows de arriba (mismo trigger, jobs corren en paralelo).
+  # Suite en Linux: detecta imports/rutas Windows-only y valida la logica pura.
+  # QT_QPA_PLATFORM=offscreen permite que los tests que importan PySide6 corran
+  # sin display. NO bloqueante hasta confirmar que la suite pasa completa en
+  # ubuntu (los tests Windows-only ya hacen skipif); quitar continue-on-error
+  # cuando este verde.
+  tests-linux:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Qt runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest
+
+  # Auditoria de vulnerabilidades de dependencias de runtime. No bloqueante:
+  # un CVE nuevo en una dependencia no debe romper PRs ajenos; se revisa el log.
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pip-audit
+        run: |
+          pip install pip-audit && pip-audit -r requirements.txt
+
+  # T-004: build/test/package macOS en ambas arquitecturas (mismos runners que
+  # release.yml). No reemplaza el job Windows (corren en paralelo).
   macos:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15-intel
             arch: x86_64
           - os: macos-14
             arch: arm64
