@@ -490,14 +490,18 @@ class MainWindow(QWidget):
         self._spark_up.append(tot_sent)
         self._spark_total.append(total)
 
+        prev = (None if self._period == "session"
+                else self._monitor.previous_period_breakdown(self._period))
+        prev_sent, prev_recv = prev if prev else (None, None)
+
         v, u = _fmt(tot_recv, self._unit)
         self._card_down.set_values(
             v, u, t("card.pct_of_total", p=f"{share_pct(tot_recv, total):.0f}"),
-            spark=list(self._spark_down))
+            *self._trend_text(tot_recv, prev_recv), spark=list(self._spark_down))
         v, u = _fmt(tot_sent, self._unit)
         self._card_up.set_values(
             v, u, t("card.pct_of_total", p=f"{share_pct(tot_sent, total):.0f}"),
-            spark=list(self._spark_up))
+            *self._trend_text(tot_sent, prev_sent), spark=list(self._spark_up))
         v, u = _fmt(total, self._unit)
         label, level = self._period_trend(total)
         self._card_total.set_values(
@@ -512,23 +516,30 @@ class MainWindow(QWidget):
         self._rebuild_apps(rows, total)
         self._refresh_connections()
 
+    def _trend_text(self, current: float, previous: float | None) -> tuple[str, str]:
+        """Rótulo de tendencia vs el período previo; ("", "none") si no hay."""
+        text, level = trend_label(trend_pct(current, previous))
+        if not text:
+            return "", "none"
+        return t("card.vs_prev", p=text, prev=t("card.prev." + self._period)), level
+
     def _period_trend(self, total: float) -> tuple[str, str]:
         """(texto, nivel) del rótulo derecho de la tarjeta Total: tendencia contra
         el período previo, o el nombre del período si no hay con qué comparar."""
         if self._period == "session":
             return t("card.this_session"), "flat"
         prev = self._monitor.previous_period_total(self._period)
-        text, level = trend_label(trend_pct(total, prev))
-        if not text:
-            return t("period." + self._period), "flat"
-        return t("card.vs_prev", p=text, prev=t("card.prev." + self._period)), level
+        text, level = self._trend_text(total, prev)
+        return (text, level) if text else (t("period." + self._period), "flat")
 
     @staticmethod
     def _set_limit(card: LimitCard, status, title_key: str, empty_key: str) -> None:
         if status.has_limit:
             used = (f"{loc_bytes(status.used_bytes)} / {loc_bytes(status.limit_bytes)}"
                     f" · {status.percent:.0f} %")
-            card.set_state(t(title_key), used, status.percent, True, t("limit.hint_80"))
+            hint = ("limit.hint_reached" if status.percent >= 100
+                    else "limit.hint_over" if status.percent >= 80 else "limit.hint_80")
+            card.set_state(t(title_key), used, status.percent, True, t(hint))
         else:
             card.set_state(t(empty_key), "", 0, False, t("limit.none"))
 

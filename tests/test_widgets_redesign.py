@@ -114,29 +114,54 @@ def test_metric_card_trend_and_spark(qapp):
 
 
 def _window(prev):
+    """prev: (sent, recv) del período previo o None."""
     QApplication.instance() or QApplication([])
     set_language("es")
     m = MonitorService(FakeCapture(), FakeRepo(), FakeReporter(),
                        FakeStore(Settings()), FakeNotifier())
     m._on_sample(TrafficSample(1, "A", bytes_sent=0, bytes_recv=1120))
-    m.previous_period_total = lambda period: prev  # type: ignore[method-assign]
+    m.previous_period_breakdown = lambda period: prev  # type: ignore[method-assign]
+    m.previous_period_total = lambda period: sum(prev) if prev else None  # type: ignore[method-assign]
     return MainWindow(m, per_process=True)
 
 
-def test_window_total_card_shows_trend_for_period(qapp):
-    w = _window(1000)
-    w._set_period("day")
-    # el período "day" aún no calculado puede devolver None: se fuerza el snapshot
+def test_window_cards_show_per_direction_trend(qapp):
+    w = _window((100, 200))
+    w._period = "day"
     w._monitor.usage_for_period = lambda p: [type("R", (), dict(
-        app_name="A", bytes_sent=0, bytes_recv=1120))()]  # type: ignore[method-assign]
+        app_name="A", bytes_sent=96, bytes_recv=224))()]  # type: ignore[method-assign]
     w._refresh()
-    texts = [lb.text() for lb in w._card_total.findChildren(QLabel)]
-    assert any(t.startswith("▲ 12 %") for t in texts)
+    assert w._card_down.trend_text() == "▲ 12 % vs ayer"
+    assert w._card_up.trend_text() == "▼ 4 % vs ayer"
+    assert w._card_total.trend_text().startswith("▲ 7 %")  # 320 vs 300
+    w.close()
+
+
+def test_window_no_previous_hides_card_trends(qapp):
+    w = _window(None)
+    w._period = "day"
+    w._monitor.usage_for_period = lambda p: [type("R", (), dict(
+        app_name="A", bytes_sent=96, bytes_recv=224))()]  # type: ignore[method-assign]
+    w._refresh()
+    assert w._card_down.trend_text() == "" and w._card_up.trend_text() == ""
+    w.close()
+
+
+@pytest.mark.parametrize("pct,key", [(50, "limit.hint_80"), (85, "limit.hint_over"),
+                                     (100, "limit.hint_reached")])
+def test_limit_hint_depends_on_state(qapp, pct, key):
+    from src.presentation.qt.i18n import t
+    set_language("es")
+    w = _window(None)
+    status = type("S", (), dict(has_limit=True, used_bytes=pct, limit_bytes=100,
+                                percent=float(pct)))()
+    w._set_limit(w._daily_card, status, "quota.daily", "limit.daily")
+    assert w._daily_card._hint.text() == t(key)
     w.close()
 
 
 def test_window_session_has_no_trend(qapp):
-    w = _window(1000)
+    w = _window((500, 500))
     w._refresh()
     assert w._card_total.trend_text() == "esta sesión"
     assert w._card_down.trend_text() == ""

@@ -19,7 +19,9 @@ from src.presentation.qt import theme  # noqa: E402
 theme.load_app_fonts()
 from conftest import FakeCapture, FakeNotifier, FakeRepo, FakeReporter, FakeStore  # noqa: E402
 from src.application.monitor_service import MonitorService  # noqa: E402
-from src.domain.models import Settings, TrafficSample  # noqa: E402
+from datetime import datetime  # noqa: E402
+
+from src.domain.models import Settings, TrafficSample, UsageRecord  # noqa: E402
 from src.presentation.qt.main_window import MainWindow  # noqa: E402
 
 APPS = [("Google Chrome", 1, 900e6, 60e6), ("Dropbox", 2, 300e6, 250e6),
@@ -44,6 +46,17 @@ def main(out: Path) -> None:
         w._refresh()
         app.processEvents()
         w.grab().save(str(out / f"ui_{name}.png"))
+    # Vista "Día" con tendencias: el FakeRepo no tiene período previo, se simula aquí.
+    mb = 1024 * 1024
+    m.previous_period_breakdown = lambda period: (400 * mb, 700 * mb)  # type: ignore[method-assign]
+    m.previous_period_total = lambda period: 1100 * mb  # type: ignore[method-assign]
+    m.usage_for_period = lambda period: [  # type: ignore[method-assign]
+        UsageRecord(u.app_name, u.bytes_sent, u.bytes_recv, datetime.now())
+        for u in m.session_usage()]
+    w._tabs.setCurrentIndex(0)
+    w._set_period("day")
+    app.processEvents()
+    w.grab().save(str(out / "ui_global_day.png"))
     print("ok", out)
 
 

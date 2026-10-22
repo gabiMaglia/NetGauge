@@ -49,6 +49,23 @@ def test_previous_day_total_sums_yesterday(notifier):
     assert end - start == timedelta(days=1)
 
 
+def test_previous_day_breakdown_sums_sent_and_recv_separately(notifier):
+    repo = DateRepo([_rec(100, 50), _rec(10, 5)])
+    m = _service(notifier, repo)
+    assert m.previous_period_breakdown("day") is None  # aún no calculado
+    m.usage_for_period("day")
+    m.refresh_snapshot()
+    assert m.previous_period_breakdown("day") == (110, 55)
+    assert m.previous_period_breakdown("session") is None
+
+
+def test_breakdown_none_when_both_zero(notifier):
+    m = _service(notifier, DateRepo([_rec(0, 0)]))
+    m.usage_for_period("day")
+    m.refresh_snapshot()
+    assert m.previous_period_breakdown("day") is None
+
+
 def test_previous_week_and_month_windows(notifier):
     repo = DateRepo([_rec(1, 1)])
     m = _service(notifier, repo)

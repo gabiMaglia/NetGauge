@@ -140,7 +140,7 @@ class MonitorService:
         self._snap_daily: QuotaStatus | None = None
         self._snap_monthly: QuotaStatus | None = None
         self._snap_periods: dict[str, list[UsageRecord]] = {}
-        self._snap_prev_totals: dict[str, int] = {}
+        self._snap_prev: dict[str, tuple[int, int]] = {}  # (sent, recv)
         self._wanted_period: str | None = None
         self._snap_trust: dict[str, TrustInfo] = {}
         self._trust_requested: set[str] = set()
@@ -479,13 +479,13 @@ class MonitorService:
         if period is None:
             return
         rows = self._compute_usage_for_period(period)
-        prev = self._compute_previous_total(period)
+        prev = self._compute_previous_breakdown(period)
         with self._snap_lock:
             self._snap_periods[period] = rows
             if prev is None:
-                self._snap_prev_totals.pop(period, None)
+                self._snap_prev.pop(period, None)
             else:
-                self._snap_prev_totals[period] = prev
+                self._snap_prev[period] = prev
 
     # ---- consultas para la UI -----------------------------------------
     def session_usage(self) -> list[AppUsage]:
@@ -508,7 +508,7 @@ class MonitorService:
         return self._repo.totals_by_app(self._period_start(period),
                                         now + timedelta(seconds=1))
 
-    def _compute_previous_total(self, period: str) -> int | None:
+    def _compute_previous_breakdown(self, period: str) -> tuple[int, int] | None:
         """Consulta SQLite: SÓLO desde el worker. Ventana inmediatamente
         anterior de igual duración (el fin es el inicio del período actual)."""
         if period not in ("day", "week", "month"):
@@ -519,14 +519,20 @@ class MonitorService:
         else:
             start = end - timedelta(days=1 if period == "day" else 7)
         rows = self._repo.totals_by_app(start, end)
-        return sum(r.bytes_sent + r.bytes_recv for r in rows)
+        return (sum(r.bytes_sent for r in rows), sum(r.bytes_recv for r in rows))
+
+    def previous_period_breakdown(self, period: str) -> tuple[int, int] | None:
+        """Para la UI (sin IO): (enviados, recibidos) del período previo, del
+        snapshot del worker. None si 'session', si no se calculó o ambos son 0."""
+        with self._snap_lock:
+            prev = self._snap_prev.get(period)
+        return prev if prev and sum(prev) > 0 else None
 
     def previous_period_total(self, period: str) -> int | None:
         """Para la UI (sin IO): bytes del período previo, del snapshot del
         worker. None si 'session', si aún no se calculó o si no hay datos."""
-        with self._snap_lock:
-            total = self._snap_prev_totals.get(period)
-        return total or None
+        prev = self.previous_period_breakdown(period)
+        return sum(prev) if prev else None
 
     def usage_for_period(self, period: str) -> list[UsageRecord] | None:
         """Para la UI. period in {'day', 'week', 'month'}. Lee el snapshot (sin
