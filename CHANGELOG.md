@@ -66,6 +66,10 @@ versionado [SemVer](https://semver.org/lang/es/).
 - `pyinstaller` pasa a dependencias de desarrollo y los majors de las
   dependencias quedan acotados.
 - Chequeo de actualizaciones cada 24 h; el aviso es clicable y abre la release.
+- La búsqueda automática de actualizaciones (api.github.com) ahora se puede
+  desactivar en Ajustes (*Buscar actualizaciones automáticamente*); sigue
+  activada por defecto y el cambio aplica sin reiniciar. `PRIVACY.md` y el
+  README reflejan la nueva opción.
 - Se conservan solo los últimos 20 informes en `reports/`.
 - "Acerca de" ya no dice "para Windows" (también macOS).
 

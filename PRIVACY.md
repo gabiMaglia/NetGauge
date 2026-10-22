@@ -17,15 +17,14 @@ queda en tu equipo.
 
 | Qué | A quién | Cuándo | Qué se envía | ¿Se puede desactivar? |
 |---|---|---|---|---|
-| Búsqueda de actualizaciones | `api.github.com` (HTTPS) | Automático: al iniciar la app y luego cada 24 h | Un `GET` a `/repos/gabiMaglia/NetGauge/releases/latest`. GitHub ve, como en cualquier request, tu IP y el `User-Agent: NetGauge-updater`. No se envía ningún dato de uso. No descarga ni instala nada: solo avisa si hay una versión más nueva. | **No hay opción en Ajustes** (ver nota abajo). |
+| Búsqueda de actualizaciones | `api.github.com` (HTTPS) | Automático (**activado por defecto**): al iniciar la app y luego cada 24 h | Un `GET` a `/repos/gabiMaglia/NetGauge/releases/latest`. GitHub ve, como en cualquier request, tu IP y el `User-Agent: NetGauge-updater`. No se envía ningún dato de uso. No descarga ni instala nada: solo avisa si hay una versión más nueva. | Sí: desactivá *Buscar actualizaciones automáticamente* en Ajustes. |
 | **GeoIP** | `ip-api.com` por **HTTP sin cifrar** | Solo si activás *GeoIP* en Ajustes (**apagado por defecto**), por cada IP remota nueva de la pestaña Conexiones | La **IP remota** consultada. Al ser HTTP, cualquiera en tu red puede ver esas consultas. El plan gratuito de ip-api.com es solo para uso no comercial. | Sí: desactivá *GeoIP* en Ajustes. |
 | **Reputación VirusTotal** | `www.virustotal.com` (HTTPS) | Solo si activás VirusTotal y cargás tu propia API key (**apagado por defecto**) | El **hash SHA-256** del ejecutable de cada app (nunca el archivo) y tu API key en el header `x-apikey`. Al usar "Probar key" se consulta además el hash público de EICAR. La API pública gratuita es solo para uso no comercial. | Sí: desactivá VirusTotal en Ajustes. |
 
-**Nota sobre la búsqueda de actualizaciones:** hoy esta consulta es automática y
-no tiene una opción para desactivarla desde la app. Es una única consulta HTTPS
-de solo lectura a GitHub. Si no la querés, podés bloquear `api.github.com` para
-`NetGauge.exe` / `NetGauge.app` con tu firewall; la app sigue funcionando
-(la consulta falla en silencio).
+**Nota sobre la búsqueda de actualizaciones:** viene activada por defecto y es
+una única consulta HTTPS de solo lectura a GitHub. Podés desactivarla en
+Ajustes (*Buscar actualizaciones automáticamente*); el cambio se aplica al
+instante, sin reiniciar, y si la volvés a activar se consulta de inmediato.
 
 El índice de confianza (firma/ruta del ejecutable) se calcula **localmente** y
 no envía nada.
@@ -75,15 +74,14 @@ history stays on your machine.
 
 | What | To whom | When | What is sent | Can it be disabled? |
 |---|---|---|---|---|
-| Update check | `api.github.com` (HTTPS) | Automatic: at app start, then every 24 h | A `GET` to `/repos/gabiMaglia/NetGauge/releases/latest`. GitHub sees, as with any request, your IP and the `User-Agent: NetGauge-updater`. No usage data is sent. It downloads and installs nothing: it only notifies you of a newer version. | **No setting in the app** (see note below). |
+| Update check | `api.github.com` (HTTPS) | Automatic (**on by default**): at app start, then every 24 h | A `GET` to `/repos/gabiMaglia/NetGauge/releases/latest`. GitHub sees, as with any request, your IP and the `User-Agent: NetGauge-updater`. No usage data is sent. It downloads and installs nothing: it only notifies you of a newer version. | Yes: turn off *Check for updates automatically* in Settings. |
 | **GeoIP** | `ip-api.com` over **unencrypted HTTP** | Only if you enable *GeoIP* in Settings (**off by default**), for each new remote IP in the Connections tab | The queried **remote IP**. Being HTTP, anyone on your network can see those lookups. ip-api.com's free plan is for non-commercial use only. | Yes: turn *GeoIP* off in Settings. |
 | **VirusTotal reputation** | `www.virustotal.com` (HTTPS) | Only if you enable VirusTotal and enter your own API key (**off by default**) | The **SHA-256 hash** of each app's executable (never the file) and your API key in the `x-apikey` header. "Test key" also queries the public EICAR hash. The free public API is for non-commercial use only. | Yes: turn VirusTotal off in Settings. |
 
-**Note on the update check:** this request is currently automatic and the app
-has no option to turn it off. It is a single read-only HTTPS request to GitHub.
-If you do not want it, block `api.github.com` for `NetGauge.exe` /
-`NetGauge.app` in your firewall; the app keeps working (the check fails
-silently).
+**Note on the update check:** it is on by default and is a single read-only
+HTTPS request to GitHub. You can turn it off in Settings (*Check for updates
+automatically*); the change applies immediately, without a restart, and
+turning it back on checks right away.
 
 The trust index (executable signature/path) is computed **locally** and sends
 nothing.

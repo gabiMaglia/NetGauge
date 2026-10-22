@@ -105,7 +105,7 @@ lo que puede salir por la red:
 
 | Qué | A quién | Cuándo | Qué se envía |
 |---|---|---|---|
-| Búsqueda de actualizaciones | `api.github.com` (HTTPS) | En segundo plano al iniciar y periódicamente | Una consulta `GET` a la última release del repo. GitHub ve, como en cualquier request, tu IP y el `User-Agent`. No se envía ningún dato de uso. |
+| Búsqueda de actualizaciones | `api.github.com` (HTTPS) | En segundo plano al iniciar y periódicamente (activado por defecto; se desactiva en Ajustes) | Una consulta `GET` a la última release del repo. GitHub ve, como en cualquier request, tu IP y el `User-Agent`. No se envía ningún dato de uso. |
 | **GeoIP** (opcional) | `ip-api.com` por **HTTP sin cifrar** | Solo si activás *GeoIP* en Ajustes (**apagado por defecto**), por cada IP remota nueva de la pestaña Conexiones | La **IP remota** consultada. Al ser HTTP, cualquiera en tu red puede ver esas consultas. El plan gratuito de ip-api.com es **solo para uso no comercial**. |
 | **VirusTotal** (opcional) | `www.virustotal.com` (HTTPS) | Solo si activás VirusTotal y cargás tu propia API key (**apagado por defecto**) | Únicamente el **hash SHA-256** del ejecutable; nunca el archivo. La API pública gratuita es solo para uso no comercial. |
 
@@ -140,7 +140,9 @@ information to other networked systems unless specifically requested by the user
 or the person installing or operating it. Concretely, NetGauge only connects to:
 
 - `api.github.com` (HTTPS) — automatic update check at start and every 24 h; sends
-  no usage data. / búsqueda automática de actualizaciones al iniciar y cada 24 h.
+  no usage data; on by default, can be turned off in Settings. / búsqueda
+  automática de actualizaciones al iniciar y cada 24 h; activada por defecto,
+  se desactiva en Ajustes.
 - `ip-api.com` (HTTP) — only if you enable *GeoIP* in Settings (off by default);
   sends the remote IP. / solo si activás *GeoIP* (apagado por defecto).
 - `www.virustotal.com` (HTTPS) — only if you enable VirusTotal and enter your own
