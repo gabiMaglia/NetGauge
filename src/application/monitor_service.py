@@ -502,17 +502,17 @@ class MonitorService:
         return self._repo.totals_by_app(self._period_start(period),
                                         now + timedelta(seconds=1))
 
-    def usage_for_period(self, period: str) -> list[UsageRecord]:
+    def usage_for_period(self, period: str) -> list[UsageRecord] | None:
         """Para la UI. period in {'day', 'week', 'month'}. Lee el snapshot (sin
-        IO); si es un período nuevo despierta al worker UNA vez y devuelve lo
-        último conocido (o vacío) hasta que llegue el dato."""
+        IO); si es un período nuevo despierta al worker UNA vez y devuelve None
+        ("no calculado") hasta que llegue el dato. [] significa calculado y vacío."""
         with self._snap_lock:
             rows = self._snap_periods.get(period)
             changed = period != self._wanted_period
             self._wanted_period = period
         if changed:
             self._refresher.trigger()
-        return list(rows) if rows is not None else []
+        return list(rows) if rows is not None else None
 
     # ---- índice de confianza / conexiones -----------------------------
     def _refresh_exe_paths(self) -> None:

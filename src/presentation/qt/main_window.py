@@ -365,11 +365,15 @@ class MainWindow(QWidget):
         if self._period == "session":
             return [(u.app_name, u.bytes_sent, u.bytes_recv)
                     for u in self._monitor.session_usage()]
-        return [(r.app_name, r.bytes_sent, r.bytes_recv)
-                for r in self._monitor.usage_for_period(self._period)]
+        recs = self._monitor.usage_for_period(self._period)
+        if recs is None:        # período aún no calculado: esperar al snapshot
+            return None
+        return [(r.app_name, r.bytes_sent, r.bytes_recv) for r in recs]
 
     def _refresh(self) -> None:
         rows = self._rows()
+        if rows is None:
+            return
         tot_sent = sum(s for _, s, _ in rows)
         tot_recv = sum(r for _, _, r in rows)
         total = tot_sent + tot_recv

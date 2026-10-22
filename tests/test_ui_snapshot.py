@@ -88,9 +88,16 @@ def test_quota_limit_follows_settings_without_refresh(settings, notifier):
 def test_period_snapshot_after_request(settings, notifier):
     repo = SpyRepo([UsageRecord("A", 1, 2, datetime.now())])
     m = make_monitor(settings, notifier, repo)
-    assert m.usage_for_period("week") == []     # pedido nuevo: vacío y despierta
+    assert m.usage_for_period("week") is None   # pedido nuevo: "no calculado" y despierta
     m.refresh_snapshot()
     assert [r.app_name for r in m.usage_for_period("week")] == ["A"]
+
+
+def test_period_computed_empty_is_list_not_none(settings, notifier):
+    m = make_monitor(settings, notifier, SpyRepo([]))
+    assert m.usage_for_period("week") is None
+    m.refresh_snapshot()
+    assert m.usage_for_period("week") == []     # calculado y vacío != no calculado
 
 
 def test_period_request_wakes_worker_once(settings, notifier):
