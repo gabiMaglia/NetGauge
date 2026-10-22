@@ -22,4 +22,4 @@ Qué esperabas y qué pasó.
 - Modo de captura que muestra la barra: ETW / Global
 
 **Log**
-Pegá lo relevante de `%LOCALAPPDATA%\NetGauge\monitor.log`.
+Pegá lo relevante de `%LOCALAPPDATA%\NetGauge\netgauge.log`.

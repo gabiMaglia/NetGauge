@@ -127,6 +127,6 @@ multiplataforma.
 2. Aceptá el prompt de UAC al abrir.
 3. Generá algo de tráfico unos segundos.
 4. La pestaña **Por aplicación** debe poblarse. Si solo ves Global, revisá
-   `%LOCALAPPDATA%\NetGauge\monitor.log`:
+   `%LOCALAPPDATA%\NetGauge\netgauge.log`:
    - `Captura ETW por proceso activada.` → todo bien.
    - `Fallo inicializando ETW (...)` → faltó `etw` en el build o no hay admin.

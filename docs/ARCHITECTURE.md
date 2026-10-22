@@ -88,4 +88,4 @@ ETW / psutil ──TrafficSample──▶ MonitorService ──UsageRecord──
 ```
 
 Datos persistidos en `%LOCALAPPDATA%\NetGauge\`:
-`usage.db`, `settings.json`, `monitor.log`, `reports\`.
+`usage.db`, `settings.json`, `netgauge.log` (rotativo, 1 MB x 3), `reports\`.

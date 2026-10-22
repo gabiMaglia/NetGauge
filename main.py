@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 import shutil
 import signal
@@ -36,6 +37,11 @@ _LEGACY_APP_NAME = "trafficMe"  # nombre previo al rename (T-016); migrar su his
 # Qué llevar de la carpeta vieja a la nueva al actualizar desde trafficMe.
 _MIGRATE_FILES = ("usage.db", "settings.json", "monitor.log")
 _MIGRATE_DIRS = ("reports",)
+
+# Log de la app (spec release-audit): rotativo para no crecer sin límite.
+_LOG_FILE = "netgauge.log"
+_LOG_MAX_BYTES = 1_000_000
+_LOG_BACKUPS = 3
 
 
 def _base_for(app_name: str) -> Path:
@@ -85,23 +91,41 @@ def _data_dir() -> Path:
     return base
 
 
+def _setup_logging(data_dir: Path) -> logging.Handler:
+    """Instala el log rotativo `data_dir/netgauge.log` en el root logger.
+
+    Idempotente: si ya está instalado devuelve el mismo handler. No usa
+    basicConfig porque es no-op si el root ya tiene handlers.
+    """
+    path = os.path.abspath(data_dir / _LOG_FILE)
+    root = logging.getLogger()
+    for h in root.handlers:
+        if isinstance(h, RotatingFileHandler) and h.baseFilename == path:
+            return h
+    handler = RotatingFileHandler(
+        path, maxBytes=_LOG_MAX_BYTES, backupCount=_LOG_BACKUPS, encoding="utf-8"
+    )
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    )
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    return handler
+
+
 def main() -> None:
     data_dir = _data_dir()
 
     # Migración única desde la instalación previa "trafficMe" (rename T-016): si el
     # usuario actualiza, traemos su historial para que no "desaparezca". Antes de
-    # configurar logging para que el monitor.log viejo también se preserve.
+    # configurar logging para que el monitor.log de trafficMe también se preserve.
     migrated = False
     try:
         migrated = _migrate_legacy_data(data_dir, _base_for(_LEGACY_APP_NAME))
     except Exception:  # noqa: BLE001 — la migración nunca debe impedir el arranque
         pass
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        filename=str(data_dir / "monitor.log"),
-    )
+    _setup_logging(data_dir)
     if migrated:
         logging.info("Historial migrado desde la instalación previa (trafficMe).")
 

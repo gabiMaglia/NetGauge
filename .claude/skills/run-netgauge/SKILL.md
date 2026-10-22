@@ -31,7 +31,7 @@ python -m venv .venv
 No hay ventana de consola con stdout útil (la app loguea a archivo). Revisar:
 
 ```bash
-tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetGauge/monitor.log"
+tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetGauge/netgauge.log"
 ```
 
 - `[WARNING] ... Sin privilegios de Administrador: no se puede usar ETW.` → normal si la
@@ -42,7 +42,7 @@ tail -10 "/c/Users/Gabriel Maglia/AppData/Local/NetGauge/monitor.log"
 
 ## Datos de la app (settings, DB, reportes, log)
 
-`%LOCALAPPDATA%\NetGauge\` → `monitor.log`, `settings.json`, `usage.db`, `reports/`.
+`%LOCALAPPDATA%\NetGauge\` → `netgauge.log`, `settings.json`, `usage.db`, `reports/`.
 
 ## Frenarla
 
