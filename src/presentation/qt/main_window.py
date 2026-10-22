@@ -4,6 +4,7 @@ from __future__ import annotations
 import html
 import ipaddress
 import sys
+from collections import deque
 
 from PySide6.QtCore import QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
@@ -32,11 +33,13 @@ from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
 from .settings_dialog import SettingsDialog
 from .theme import DARK, LIGHT, app_qss
-from .widgets import AppRow, BarsLogo, ConnRow, LiveChart, MetricCard, QuotaBar
+from .viewmodel import share_pct, trend_label, trend_pct
+from .widgets import AppRow, BarsLogo, ConnRow, LimitCard, LiveChart, MetricCard
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
 _PERIOD_CODES = ["session", "day", "week", "month"]
+_SPARK_POINTS = 24
 
 
 def trust_tooltip_text(info, translate) -> str:
@@ -119,6 +122,11 @@ class MainWindow(QWidget):
         self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
         self._period_chips: list[tuple[QPushButton, str]] = []
         self._legends: list[tuple[QLabel, str]] = []
+        self._legend_dashes: list[QLabel] = []
+        # Un punto por refresco para las mini curvas de las tarjetas.
+        self._spark_down: deque[float] = deque(maxlen=_SPARK_POINTS)
+        self._spark_up: deque[float] = deque(maxlen=_SPARK_POINTS)
+        self._spark_total: deque[float] = deque(maxlen=_SPARK_POINTS)
         self._maximized = False
         self._restore_geom = None
         self._native = False
@@ -341,33 +349,34 @@ class MainWindow(QWidget):
         lay.setContentsMargins(0, 16, 0, 0)
         lay.setSpacing(14)
 
-        cards = QGridLayout()
+        cards = QHBoxLayout()
         cards.setSpacing(14)
-        self._card_down = MetricCard(self._theme, "#3b82f6", t("card.download"))
-        self._card_up = MetricCard(self._theme, "#10b981", t("card.upload"))
-        self._card_total = MetricCard(self._theme, "", t("card.total"), is_total=True)
-        cards.addWidget(self._card_down, 0, 0)
-        cards.addWidget(self._card_up, 0, 1)
-        cards.addWidget(self._card_total, 0, 2)
+        self._card_down = MetricCard(self._theme, "down", t("card.download"))
+        self._card_up = MetricCard(self._theme, "upload", t("card.upload"))
+        self._card_total = MetricCard(self._theme, "total_fg", t("card.total"),
+                                      is_total=True)
+        for card in (self._card_down, self._card_up, self._card_total):
+            cards.addWidget(card, 1)
         lay.addLayout(cards)
 
         chart_card = QFrame()
         self._chart_card = chart_card
         chart_card.setObjectName("ChartCard")
         cc = QVBoxLayout(chart_card)
-        cc.setContentsMargins(16, 14, 16, 14)
+        cc.setContentsMargins(14, 14, 14, 14)
         cc.setSpacing(10)
         head = QHBoxLayout()
         self._chart_title = QLabel(t("chart.title"))
         self._chart_title.setObjectName("SectionTitle")
         head.addWidget(self._chart_title)
-        head.addStretch()
+        head.addSpacing(10)
         self._peak_chip = QLabel(t("chart.peak", v="0 B"))
         self._peak_chip.setObjectName("Chip")
         head.addWidget(self._peak_chip)
+        head.addStretch()
+        head.addWidget(self._legend(t("legend.download"), "down"))
         head.addSpacing(8)
-        head.addWidget(self._legend(t("legend.download"), self._theme["accent"]))
-        head.addWidget(self._legend(t("legend.upload"), self._theme["upload"]))
+        head.addWidget(self._legend(t("legend.upload"), "upload"))
         cc.addLayout(head)
         self._chart = LiveChart(self._theme)
         cc.addWidget(self._chart, 1)
@@ -375,8 +384,14 @@ class MainWindow(QWidget):
 
         chart_card.setMinimumHeight(170)  # el gráfico no se aplasta a 0 en alto chico
 
-        self._daily_lbl, self._daily_val, self._daily_bar = self._quota_row(lay)
-        self._month_lbl, self._month_val, self._month_bar = self._quota_row(lay, warn=True)
+        limits = QHBoxLayout()
+        limits.setSpacing(14)
+        self._daily_card = LimitCard(self._theme)
+        self._month_card = LimitCard(self._theme)
+        for card in (self._daily_card, self._month_card):
+            card.define_clicked.connect(lambda: self._open_quota())
+            limits.addWidget(card, 1)
+        lay.addLayout(limits)
 
         # Scrollable: si la ventana queda baja, no se corta el ancho de banda.
         scroll = QScrollArea()
@@ -386,14 +401,15 @@ class MainWindow(QWidget):
         scroll.setWidget(page)
         return scroll
 
-    def _legend(self, text: str, color: str) -> QWidget:
+    def _legend(self, text: str, color_key: str) -> QWidget:
         w = QWidget()
         lay = QHBoxLayout(w)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(6)
         dash = QLabel()
-        dash.setFixedSize(10, 3)
-        dash.setStyleSheet(f"background:{color}; border-radius:1px;")
+        dash.setFixedSize(14, 3)
+        dash.setProperty("color_key", color_key)
+        dash.setStyleSheet(f"background:{self._theme[color_key]}; border-radius:1px;")
         lbl = QLabel(text)
         lbl.setObjectName("LegendText")
         lay.addWidget(dash)
@@ -401,25 +417,8 @@ class MainWindow(QWidget):
         # recordamos la clave (download/upload) por orden de creación
         key = "legend.download" if not self._legends else "legend.upload"
         self._legends.append((lbl, key))
+        self._legend_dashes.append(dash)
         return w
-
-    def _quota_row(self, parent_lay, warn: bool = False):
-        box = QVBoxLayout()
-        box.setSpacing(6)
-        head = QHBoxLayout()
-        lbl = QLabel("")
-        lbl.setObjectName("QuotaLabel")
-        val = QLabel("")
-        val.setObjectName("QuotaValue")
-        val.setAlignment(Qt.AlignmentFlag.AlignRight)
-        head.addWidget(lbl)
-        head.addStretch()
-        head.addWidget(val)
-        box.addLayout(head)
-        bar = QuotaBar(self._theme, warn=warn)
-        box.addWidget(bar)
-        parent_lay.addLayout(box)
-        return lbl, val, bar
 
     def _build_apps_tab(self) -> QWidget:
         scroll = QScrollArea()
@@ -487,39 +486,51 @@ class MainWindow(QWidget):
         tot_recv = sum(r for _, _, r in rows)
         total = tot_sent + tot_recv
 
-        v, u = _fmt(tot_recv, self._unit)
-        pct_d = (tot_recv / total * 100) if total else 0
-        self._card_down.set_values(v, u, t("card.pct_of_total", p=f"{pct_d:.0f}"))
-        v, u = _fmt(tot_sent, self._unit)
-        pct_u = (tot_sent / total * 100) if total else 0
-        self._card_up.set_values(v, u, t("card.pct_of_total", p=f"{pct_u:.0f}"))
-        v, u = _fmt(total, self._unit)
-        self._card_total.set_values(v, u, t("card.period_usage"))
+        self._spark_down.append(tot_recv)
+        self._spark_up.append(tot_sent)
+        self._spark_total.append(total)
 
-        # Barras de cuota
-        d = self._monitor.daily_status()
-        self._daily_lbl.setText(t("quota.daily"))
-        if d.has_limit:
-            self._daily_val.setText(
-                f"{loc_bytes(d.used_bytes)} / {loc_bytes(d.limit_bytes)} "
-                f"({d.percent:.0f}%)")
-            self._daily_bar.set_percent(d.percent)
-        else:
-            self._daily_val.setText(f"{loc_bytes(d.used_bytes)} · {t('quota.no_limit')}")
-            self._daily_bar.set_percent(0)
-        m = self._monitor.quota_status()
-        self._month_lbl.setText(t("quota.monthly"))
-        if m.has_limit:
-            self._month_val.setText(
-                f"{loc_bytes(m.used_bytes)} / {loc_bytes(m.limit_bytes)} "
-                f"({m.percent:.0f}%)")
-            self._month_bar.set_percent(m.percent)
-        else:
-            self._month_val.setText(f"{loc_bytes(m.used_bytes)} · {t('quota.no_limit')}")
-            self._month_bar.set_percent(0)
+        v, u = _fmt(tot_recv, self._unit)
+        self._card_down.set_values(
+            v, u, t("card.pct_of_total", p=f"{share_pct(tot_recv, total):.0f}"),
+            spark=list(self._spark_down))
+        v, u = _fmt(tot_sent, self._unit)
+        self._card_up.set_values(
+            v, u, t("card.pct_of_total", p=f"{share_pct(tot_sent, total):.0f}"),
+            spark=list(self._spark_up))
+        v, u = _fmt(total, self._unit)
+        label, level = self._period_trend(total)
+        self._card_total.set_values(
+            v, u, t("card.peak", v=loc_bytes(self._chart.peak())),
+            label, level, list(self._spark_total))
+
+        self._set_limit(self._daily_card, self._monitor.daily_status(),
+                        "quota.daily", "limit.daily")
+        self._set_limit(self._month_card, self._monitor.quota_status(),
+                        "quota.monthly", "limit.monthly")
 
         self._rebuild_apps(rows, total)
         self._refresh_connections()
+
+    def _period_trend(self, total: float) -> tuple[str, str]:
+        """(texto, nivel) del rótulo derecho de la tarjeta Total: tendencia contra
+        el período previo, o el nombre del período si no hay con qué comparar."""
+        if self._period == "session":
+            return t("card.this_session"), "flat"
+        prev = self._monitor.previous_period_total(self._period)
+        text, level = trend_label(trend_pct(total, prev))
+        if not text:
+            return t("period." + self._period), "flat"
+        return t("card.vs_prev", p=text, prev=t("card.prev." + self._period)), level
+
+    @staticmethod
+    def _set_limit(card: LimitCard, status, title_key: str, empty_key: str) -> None:
+        if status.has_limit:
+            used = (f"{loc_bytes(status.used_bytes)} / {loc_bytes(status.limit_bytes)}"
+                    f" · {status.percent:.0f} %")
+            card.set_state(t(title_key), used, status.percent, True, t("limit.hint_80"))
+        else:
+            card.set_state(t(empty_key), "", 0, False, t("limit.none"))
 
     def _rebuild_apps(self, rows, total) -> None:
         """Reconciliación in-place: reutiliza filas, no las recrea cada segundo."""
@@ -605,6 +616,8 @@ class MainWindow(QWidget):
     # ---- acciones ------------------------------------------------------
     def _set_period(self, value: str) -> None:
         self._period = value
+        for spark in (self._spark_down, self._spark_up, self._spark_total):
+            spark.clear()  # escalas distintas por período: no mezclar curvas
         self._refresh()
 
     def _set_unit(self, unit: str) -> None:
@@ -661,6 +674,8 @@ class MainWindow(QWidget):
         self._card_up.set_name(t("card.upload"))
         self._card_total.set_name(t("card.total"))
         self._chart_title.setText(t("chart.title"))
+        for card in (self._daily_card, self._month_card):
+            card.retranslate()
         for lbl, key in self._legends:
             lbl.setText(t(key))
         self._conn_subtitle.setText(t("conn.subtitle"))
@@ -671,8 +686,13 @@ class MainWindow(QWidget):
         self._theme = DARK if self._dark else LIGHT
         self._apply_theme()
         self._chart.set_theme(self._theme)
-        for bar in (self._daily_bar, self._month_bar):
-            bar.set_theme(self._theme)
+        for card in (self._card_down, self._card_up, self._card_total):
+            card.set_theme(self._theme)
+        for card in (self._daily_card, self._month_card):
+            card.set_theme(self._theme)
+        for dash in self._legend_dashes:
+            dash.setStyleSheet(
+                f"background:{self._theme[dash.property('color_key')]}; border-radius:1px;")
         for row in self._app_rows.values():
             row.set_theme(self._theme)
 

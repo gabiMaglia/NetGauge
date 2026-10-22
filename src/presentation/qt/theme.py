@@ -20,6 +20,8 @@ LIGHT = {
     "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff",
     "total_grad_a": "#eff5ff", "total_grad_b": "#e7f0ff", "total_grad_bd": "#d7e6ff",
     "shadow_rgba": "rgba(15,23,42,0.32)",
+    "dashed_bd": "#cbd5e1", "accent_text": "#2563eb",
+    "total_fg": "#2563eb", "total_fg2": "#3b82f6",
 }
 
 DARK = {
@@ -37,6 +39,8 @@ DARK = {
     "on_accent": "#06101f", "selected_bg": "#13233f", "selected_bd": "#2a4a85",
     "total_grad_a": "#13233f", "total_grad_b": "#13233f", "total_grad_bd": "#2a4a85",
     "shadow_rgba": "rgba(2,6,23,0.6)",
+    "dashed_bd": "#2a3a58", "accent_text": "#8cbcff",
+    "total_fg": "#9cc4ff", "total_fg2": "#c7dcff",
 }
 
 APP_ICONS = {
@@ -141,29 +145,57 @@ def app_qss(t: dict) -> str:
     QTabBar::tab:selected {{ color: {t['text_strong']}; font-weight: 700;
                              border-bottom: 2px solid {t['accent']}; }}
 
-    #Card {{ background: {t['card_bg']}; border: 1px solid {t['hairline']};
+    #Card {{ background: {t['card_bg']}; border: 1px solid {t['border']};
              border-radius: {RADIUS['card']}px; }}
-    #ChartCard {{ background: {t['chart_bg']}; border: 1px solid {t['hairline']};
+    #ChartCard {{ background: {t['chart_bg']}; border: 1px solid {t['border']};
                   border-radius: {RADIUS['card']}px; }}
     #TotalCard {{
-        border: 1px solid {t['total_grad_bd']}; border-radius: {RADIUS['card']}px;
-        background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                    stop:0 {t['total_grad_a']}, stop:1 {t['total_grad_b']});
+        border: 1px solid {t['selected_bd']}; border-radius: {RADIUS['card']}px;
+        background: {t['selected_bg']};
     }}
+    #Card QLabel, #TotalCard QLabel, #LimitCard QLabel {{ background: transparent; }}
 
-    #MetricName  {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
-    #MetricHero  {{ font-size: 27px; font-weight: 800; color: {t['text']}; }}
-    #MetricUnit  {{ font-size: 15px; font-weight: 700; color: {t['text_faint']}; }}
-    #MetricSub   {{ font-size: 12px; font-weight: 600; color: {t['text_faint']}; }}
-    #TotalName   {{ font-size: 12px; font-weight: 700; color: {t['accent']}; }}
-    #TotalSub    {{ font-size: 12px; font-weight: 700; color: {t['accent']}; }}
+    #MetricName  {{ font-size: 13px; font-weight: 600; color: {t['text_muted']}; }}
+    #MetricHero  {{ font-family: {MONO_FAMILY}; font-size: 30px; font-weight: 700;
+                    color: {t['text']}; }}
+    #MetricUnit  {{ font-size: 13px; font-weight: 600; color: {t['text_muted']}; }}
+    #TotalUnit   {{ font-size: 13px; font-weight: 600; color: {t['total_fg']}; }}
+    #MetricSub   {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
+    #TotalName   {{ font-size: 13px; font-weight: 700; color: {t['total_fg']}; }}
+    #TotalSub    {{ font-size: 12px; font-weight: 600; color: {t['total_fg2']}; }}
+    #MetricTrend {{ font-size: 12px; font-weight: 700; color: {t['text_muted']}; }}
+    #MetricTrend[level="up"] {{ color: {t['upload']}; }}
+    #MetricTrend[level="down"] {{ color: {t['warning']}; }}
+    #TotalCard #MetricTrend[level="flat"] {{ color: {t['total_fg2']}; }}
 
-    #SectionTitle {{ font-size: 13px; font-weight: 700; color: {t['text_strong']}; }}
-    #Chip {{ background: {t['segment_bg']}; color: {t['text_muted']};
-             border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }}
-    #LegendText {{ font-size: 11px; font-weight: 600; color: {t['text_muted']}; }}
+    #SectionTitle {{ font-size: 14px; font-weight: 700; color: {t['text_strong']}; }}
+    #Chip {{ background: {t['track']}; color: {t['text_secondary']};
+             border: 1px solid {t['border']}; border-radius: 7px; padding: 3px 8px;
+             font-family: {MONO_FAMILY}; font-size: 12px; font-weight: 600; }}
+    #LegendText {{ font-size: 12px; font-weight: 600; color: {t['text_secondary']}; }}
     #QuotaLabel {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
     #QuotaValue {{ font-size: 12px; font-weight: 700; color: {t['text']}; }}
+
+    /* Tarjetas de límite */
+    #LimitCard {{ background: {t['card_bg']}; border: 1px solid {t['border']};
+                  border-radius: {RADIUS['card']}px; }}
+    #LimitCard[state="empty"] {{ border: 1px dashed {t['dashed_bd']}; }}
+    #LimitTitle {{ font-size: 13px; font-weight: 700; color: {t['text_strong']}; }}
+    #LimitValue {{ font-family: {MONO_FAMILY}; font-size: 13px; font-weight: 700;
+                   color: {t['accent']}; }}
+    #LimitValue[level="warn"] {{ color: {t['warning']}; }}
+    #LimitValue[level="danger"] {{ color: {t['danger']}; }}
+    #LimitHint {{ font-size: 12px; color: {t['text_muted']}; }}
+    QPushButton#LimitDefineBtn {{
+        background: transparent; border: 1px solid {t['accent']}; border-radius: 10px;
+        color: {t['accent_text']}; font-size: 13px; font-weight: 700; padding: 0 16px;
+    }}
+    QPushButton#LimitDefineBtn:hover {{ background: {t['selected_bg']}; }}
+    QPushButton#LimitEditBtn {{
+        background: transparent; border: none; color: {t['accent_text']};
+        font-size: 12px; font-weight: 700; padding: 2px 4px;
+    }}
+    QPushButton#LimitEditBtn:hover {{ text-decoration: underline; }}
 
     /* Vista Por aplicación: el viewport del scroll es blanco por defecto;
        hay que pintarlo con el fondo de la ventana o el texto claro se pierde. */
