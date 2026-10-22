@@ -134,10 +134,21 @@ class MainWindow(QWidget):
         body = QFrame()
         body.setObjectName("Body")
         body_lay = QVBoxLayout(body)
-        body_lay.setContentsMargins(20, 16, 20, 20)
-        body_lay.setSpacing(18)
+        body_lay.setContentsMargins(0, 14, 0, 0)
+        body_lay.setSpacing(0)
+        tabs = self._build_tabs()
         body_lay.addLayout(self._build_toolbar())
-        body_lay.addWidget(self._build_tabs(), 1)
+        rule = QFrame()
+        rule.setObjectName("NavRule")
+        rule.setFixedHeight(1)
+        rule_lay = QHBoxLayout()
+        rule_lay.setContentsMargins(20, 0, 20, 0)
+        rule_lay.addWidget(rule)
+        body_lay.addLayout(rule_lay)
+        tabs_lay = QVBoxLayout()
+        tabs_lay.setContentsMargins(20, 18, 20, 20)
+        tabs_lay.addWidget(tabs)
+        body_lay.addLayout(tabs_lay, 1)
         root_lay.addWidget(body, 1)
 
     def _build_titlebar(self) -> QWidget:
@@ -222,10 +233,23 @@ class MainWindow(QWidget):
         for b in (self._about_btn, self._settings_btn, self._theme_btn,
                   self._min_btn, self._max_btn, self._close_btn):
             b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
+        self._unit_chevron.setPixmap(svg_icon("chevron-down", color, 16).pixmap(16, 16))
 
     def _build_toolbar(self) -> QHBoxLayout:
+        """Fila única: pestañas a la izquierda, período y unidad a la derecha."""
         lay = QHBoxLayout()
-        lay.setSpacing(12)
+        self._nav_row = lay
+        lay.setContentsMargins(20, 0, 20, 0)
+        lay.setSpacing(8)
+
+        bar = self._tabs.tabBar()
+        bar.setParent(None)  # el QTabWidget conserva el stack; la barra vive en esta fila
+        bar.setDrawBase(False)
+        bar.setExpanding(False)
+        bar.setUsesScrollButtons(False)
+        bar.setFixedHeight(40)
+        lay.addWidget(bar)
+        lay.addStretch()
 
         seg = QFrame()
         seg.setObjectName("Segment")
@@ -246,24 +270,34 @@ class MainWindow(QWidget):
             seg_lay.addWidget(chip)
             self._period_chips.append((chip, value))
         lay.addWidget(seg)
-        lay.addStretch()
+        lay.addSpacing(6)
+
+        self._unit_caption = QLabel(t("unit.caption"))
+        self._unit_caption.setObjectName("UnitCaption")
+        lay.addWidget(self._unit_caption)
 
         self._unit_box = QComboBox()
         self._unit_box.setObjectName("UnitBox")
         self._unit_box.addItems(list(_UNITS.keys()))
         self._unit_box.setCurrentText(self._unit)
         self._unit_box.currentTextChanged.connect(self._set_unit)
-        lay.addWidget(self._unit_box)
-
-        self._quota_btn = QPushButton(t("btn.quota"))
-        self._quota_btn.setObjectName("QuotaBtn")
-        self._quota_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._quota_btn.clicked.connect(self._open_quota)
-        lay.addWidget(self._quota_btn)
+        # El chevron es una capa sobre el combo: el QSS no dibuja SVG recoloreables.
+        unit_wrap = QWidget()
+        unit_grid = QGridLayout(unit_wrap)
+        unit_grid.setContentsMargins(0, 0, 0, 0)
+        unit_grid.addWidget(self._unit_box, 0, 0)
+        self._unit_chevron = QLabel()
+        self._unit_chevron.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._unit_chevron.setFixedSize(16, 16)
+        unit_grid.addWidget(self._unit_chevron, 0, 0,
+                            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        unit_grid.setColumnMinimumWidth(0, 0)
+        lay.addWidget(unit_wrap)
         return lay
 
     def _build_tabs(self) -> QTabWidget:
         self._tabs = QTabWidget()
+        self._tabs.setDocumentMode(True)
         self._tabs.addTab(self._build_global_tab(), t("tab.global"))
         self._tabs.addTab(self._build_apps_tab(), t("tab.apps"))
         self._tabs.addTab(self._build_connections_tab(), t("tab.connections"))
@@ -585,7 +619,7 @@ class MainWindow(QWidget):
         self._about_btn.setToolTip(t("btn.about"))
         self._settings_btn.setToolTip(t("btn.settings"))
         self._theme_btn.setToolTip(t("btn.theme"))
-        self._quota_btn.setText(t("btn.quota"))
+        self._unit_caption.setText(t("unit.caption"))
         for chip, value in self._period_chips:
             chip.setText(t("period." + value))
         self._tabs.setTabText(0, t("tab.global"))

@@ -91,15 +91,19 @@ def app_qss(t: dict) -> str:
     QPushButton#IconBtn:hover, QPushButton#WinBtn:hover {{ background: {t['segment_bg']}; }}
     QPushButton#WinBtn[class="CloseBtn"]:hover {{ background: {t['danger']}; }}
 
-    /* Segmented (período) */
-    #Segment {{ background: {t['segment_bg']}; border-radius: {RADIUS['segment']}px; }}
+    /* Fila de navegación */
+    #NavRule {{ background: {t['border']}; border: none; }}
+    #Segment {{ background: {t['card_bg']}; border: 1px solid {t['border']};
+                border-radius: {RADIUS['input']}px; }}
     QPushButton#SegChip {{
         background: transparent; border: none; color: {t['text_muted']};
-        font-size: 12px; font-weight: 600; padding: 7px 15px; border-radius: 8px;
+        font-size: 13px; font-weight: 600; padding: 0 12px; min-height: 30px;
+        max-height: 30px; border-radius: 8px;
     }}
     QPushButton#SegChip:checked {{
-        background: {t['window_bg']}; color: {t['text_strong']}; font-weight: 700;
+        background: {t['accent']}; color: {t['on_accent']}; font-weight: 700;
     }}
+    #UnitCaption {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
 
     /* Combo genérico (ej. idioma en Ajustes) */
     QComboBox {{
@@ -111,10 +115,13 @@ def app_qss(t: dict) -> str:
     QComboBox::drop-down {{ border: none; width: 22px; }}
 
     QComboBox#UnitBox {{
-        background: {t['segment_bg']}; border: none; border-radius: 9px;
-        padding: 6px 12px; color: {t['text']}; font-weight: 600; min-width: 64px;
+        background: {t['card_bg']}; border: 1px solid {t['border']};
+        border-radius: {RADIUS['input']}px; padding: 0 30px 0 12px;
+        min-height: 34px; max-height: 34px;
+        color: {t['text']}; font-size: 13px; font-weight: 700; min-width: 56px;
     }}
-    QComboBox#UnitBox::drop-down {{ border: none; width: 18px; }}
+    QComboBox#UnitBox:hover {{ border: 1px solid {t['accent']}; }}
+    QComboBox#UnitBox::drop-down {{ border: none; width: 0; }}
     QComboBox QAbstractItemView {{
         background: {t['window_bg']}; color: {t['text']};
         selection-background-color: {t['accent']}; selection-color: #fff;
@@ -123,21 +130,15 @@ def app_qss(t: dict) -> str:
     }}
     QComboBox QAbstractItemView::item {{ min-height: 26px; padding: 2px 8px; }}
 
-    QPushButton#QuotaBtn {{
-        background: {t['accent_soft_bg']}; border: 1px solid {t['accent_soft_bd']};
-        color: {t['accent_strong']}; border-radius: {RADIUS['button']}px;
-        padding: 7px 14px; font-weight: 700;
-    }}
-
-    /* Tabs */
+    /* Pestañas */
     QTabWidget::pane {{ border: none; }}
     QTabBar {{ background: transparent; }}
     QTabBar::tab {{
-        background: transparent; color: {t['text_faint']};
-        font-size: 13px; font-weight: 600; padding: 9px 14px 11px;
-        border-bottom: 2px solid transparent; margin-right: 6px;
+        background: transparent; color: {t['text_muted']};
+        font-size: 14px; font-weight: 600; padding: 0 12px; height: 38px;
+        border-bottom: 2px solid transparent; margin-right: 4px;
     }}
-    QTabBar::tab:selected {{ color: {t['accent']}; font-weight: 700;
+    QTabBar::tab:selected {{ color: {t['text_strong']}; font-weight: 700;
                              border-bottom: 2px solid {t['accent']}; }}
 
     #Card {{ background: {t['card_bg']}; border: 1px solid {t['hairline']};
