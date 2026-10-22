@@ -8,4 +8,4 @@ pyinstaller>=6.0,<7
 # Pillow: solo para build/make_icon.py (generación de assets/icon.ico/.icns
 # en build-time). No se usa en runtime (la UI/tray son Qt) ni se empaqueta
 # en el binario final.
-Pillow>=10.0,<13
+Pillow>=13.0.0,<14
