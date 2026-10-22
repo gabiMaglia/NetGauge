@@ -60,8 +60,9 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.anomaly": "Alertas de anomalías (picos / apps nuevas en red)",
         "dlg.settings.privacy": "Privacidad: VirusTotal envía solo el hash SHA-256 "
                                 "del ejecutable; GeoIP envía la IP remota a ip-api.com. "
-                                "Nada más sale de tu equipo, y ambas están apagadas por "
-                                "defecto.",
+                                "Ambas están apagadas por defecto. Además de eso, solo "
+                                "se consulta api.github.com para buscar actualizaciones "
+                                "(desactivable abajo).",
         "alert.scope.daily": "diaria", "alert.scope.monthly": "mensual",
         "alert.quota.title": "Cuota {scope}",
         "alert.quota.body": "Alcanzaste el {pct}% de tu cuota {scope} "
@@ -144,8 +145,9 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.anomaly": "Anomaly alerts (spikes / new apps on network)",
         "dlg.settings.privacy": "Privacy: VirusTotal sends only the executable's "
                                 "SHA-256 hash; GeoIP sends the remote IP to ip-api.com. "
-                                "Nothing else leaves your machine, and both are off by "
-                                "default.",
+                                "Both are off by default. Apart from that, only "
+                                "api.github.com is queried to check for updates "
+                                "(can be turned off below).",
         "alert.scope.daily": "daily", "alert.scope.monthly": "monthly",
         "alert.quota.title": "{scope} quota",
         "alert.quota.body": "You reached {pct}% of your {scope} quota "
@@ -228,8 +230,9 @@ _STR: dict[str, dict[str, str]] = {
         "dlg.settings.anomaly": "Alertas de anomalias (picos / apps novos na rede)",
         "dlg.settings.privacy": "Privacidade: o VirusTotal envia só o hash SHA-256 "
                                 "do executável; o GeoIP envia o IP remoto ao ip-api.com. "
-                                "Nada mais sai do seu equipamento, e ambos vêm "
-                                "desligados por padrão.",
+                                "Ambos vêm desligados por padrão. Além disso, só "
+                                "o api.github.com é consultado para buscar "
+                                "atualizações (pode ser desativado abaixo).",
         "alert.scope.daily": "diária", "alert.scope.monthly": "mensal",
         "alert.quota.title": "Cota {scope}",
         "alert.quota.body": "Você atingiu {pct}% da sua cota {scope} "
