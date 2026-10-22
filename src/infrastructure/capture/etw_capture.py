@@ -53,6 +53,8 @@ class EtwCaptureService(CaptureService):
         # (lo engancha FallbackCaptureService para degradar a psutil).
         self.failed = False
         self.on_failure: Callable[[], None] | None = None
+        self._watchdog_interval = 2.0
+        self._stop_evt = threading.Event()
 
     def _resolve_name(self, pid: int) -> str:
         # Corre DENTRO del callback de ETW. El primer evento de un PID hace IO
@@ -108,6 +110,7 @@ class EtwCaptureService(CaptureService):
     def start(self, on_sample: Callable[[TrafficSample], None]) -> None:
         self._on_sample = on_sample
         self.failed = False
+        self._stop_evt = threading.Event()
         self._etw = self._build_session()
         self._thread = threading.Thread(
             target=self._run, args=(self._etw,), daemon=True
@@ -115,19 +118,37 @@ class EtwCaptureService(CaptureService):
         self._thread.start()
 
     def _run(self, session) -> None:
+        stop_evt = self._stop_evt
         try:
+            # pywintrace: start() NO bloquea; el trabajo queda en un hilo consumer.
             session.start()
         except Exception:  # noqa: BLE001
             log.exception("ETW: la sesión de captura falló")
-            self.failed = True
-            callback = self.on_failure
-            if callback is not None:
-                try:
-                    callback()
-                except Exception:  # noqa: BLE001
-                    log.exception("ETW: fallo activando el fallback")
+            self._fail()
+            return
+        # Watchdog: si el consumer muere sin stop() (p.ej. `logman stop`), degradar.
+        while not stop_evt.wait(self._watchdog_interval):
+            consumer = getattr(session, "consumer", None)
+            thread = getattr(consumer, "process_thread", None)
+            if thread is None:
+                log.debug("ETW: sin consumer.process_thread; watchdog inactivo")
+                return
+            if not thread.is_alive():
+                log.error("ETW: el hilo consumidor murió; degradando la captura")
+                self._fail()
+                return
+
+    def _fail(self) -> None:
+        self.failed = True
+        callback = self.on_failure
+        if callback is not None:
+            try:
+                callback()
+            except Exception:  # noqa: BLE001
+                log.exception("ETW: fallo activando el fallback")
 
     def stop(self) -> None:
+        self._stop_evt.set()
         session, self._etw = self._etw, None
         if session is not None:
             try:

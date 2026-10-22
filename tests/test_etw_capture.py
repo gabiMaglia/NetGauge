@@ -12,20 +12,59 @@ if sys.platform == "win32":
     from src.infrastructure.capture.etw_capture import EtwCaptureService
 
 
+class _FakeConsumer:
+    def __init__(self) -> None:
+        self.release = threading.Event()
+        self.process_thread = threading.Thread(
+            target=lambda: self.release.wait(10), daemon=True)
+
+
 class _FakeSession:
-    """Doble de la sesión pywintrace: start() bloquea hasta stop() o falla."""
+    """Doble de pywintrace: start() retorna de inmediato (como el real) y el
+    trabajo corre en consumer.process_thread."""
 
     def __init__(self, fail: bool = False) -> None:
         self.fail = fail
         self.stopped = threading.Event()
+        self.consumer = _FakeConsumer()
 
     def start(self) -> None:
         if self.fail:
             raise RuntimeError("StartTrace falló")
-        self.stopped.wait(5)
+        self.consumer.process_thread.start()
 
     def stop(self) -> None:
         self.stopped.set()
+        self.consumer.release.set()
+
+
+def test_etw_consumer_thread_death_triggers_on_failure(monkeypatch):
+    svc = EtwCaptureService()
+    svc._watchdog_interval = 0.05
+    session = _FakeSession()
+    monkeypatch.setattr(svc, "_build_session", lambda: session)
+    fired = threading.Event()
+    svc.on_failure = fired.set
+    svc.start(lambda sample: None)
+    try:
+        assert not fired.wait(0.3), "falso positivo con el consumer vivo"
+        session.consumer.release.set()   # muere en silencio (logman stop)
+        assert fired.wait(2), "la muerte del consumer no se detectó"
+        assert svc.failed is True
+    finally:
+        svc.stop()
+
+
+def test_etw_stop_does_not_trigger_on_failure(monkeypatch):
+    svc = EtwCaptureService()
+    svc._watchdog_interval = 0.05
+    monkeypatch.setattr(svc, "_build_session", lambda: _FakeSession())
+    fired = threading.Event()
+    svc.on_failure = fired.set
+    svc.start(lambda sample: None)
+    svc.stop()
+    assert not fired.wait(0.3)
+    assert svc.failed is False
 
 
 def test_etw_session_failure_sets_failed_and_calls_on_failure(monkeypatch):
