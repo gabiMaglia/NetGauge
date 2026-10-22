@@ -117,10 +117,10 @@ def app_qss(t: dict) -> str:
     QComboBox#UnitBox {{
         background: {t['card_bg']}; border: 1px solid {t['border']};
         border-radius: {RADIUS['input']}px; padding: 0 30px 0 12px;
-        min-height: 34px; max-height: 34px;
+        min-height: 36px; max-height: 36px;
         color: {t['text']}; font-size: 13px; font-weight: 700; min-width: 56px;
     }}
-    QComboBox#UnitBox:hover {{ border: 1px solid {t['accent']}; }}
+    QComboBox#UnitBox:focus {{ border: 1px solid {t['accent']}; }}
     QComboBox#UnitBox::drop-down {{ border: none; width: 0; }}
     QComboBox QAbstractItemView {{
         background: {t['window_bg']}; color: {t['text']};

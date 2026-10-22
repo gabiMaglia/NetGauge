@@ -16,7 +16,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
-    QTabWidget,
+    QSizePolicy,
+    QStackedWidget,
+    QTabBar,
     QVBoxLayout,
     QWidget,
 )
@@ -67,6 +69,32 @@ def _fmt(num: float, unit: str) -> tuple[str, str]:
     return fmt_number(num / div, 1, group=True), unit
 
 
+class NavTabs:
+    """QTabBar suelto (vive en la fila de navegación) + QStackedWidget sincronizados.
+
+    QTabWidget re-posiciona su barra en cada resize, así que no sirve para
+    sacarla de su layout; esta API mínima cubre lo que usa MainWindow.
+    """
+
+    def __init__(self) -> None:
+        self.bar = QTabBar()
+        self.stack = QStackedWidget()
+        self.bar.currentChanged.connect(self.stack.setCurrentIndex)
+
+    def addTab(self, page: QWidget, text: str) -> None:
+        self.stack.addWidget(page)
+        self.bar.addTab(text)
+
+    def currentIndex(self) -> int:
+        return self.bar.currentIndex()
+
+    def setCurrentIndex(self, i: int) -> None:
+        self.bar.setCurrentIndex(i)
+
+    def setTabText(self, i: int, text: str) -> None:
+        self.bar.setTabText(i, text)
+
+
 class MainWindow(QWidget):
     # Aviso del worker de MonitorService: "hay snapshot nuevo". Se emite desde
     # OTRO hilo; la conexión encolada garantiza que _refresh corre en el GUI.
@@ -100,7 +128,9 @@ class MainWindow(QWidget):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(786, 720)
-        self.setMinimumSize(420, 360)  # límite para que el resize no rompa el layout
+        # 680 = ancho que necesita la fila de navegación (pestañas + período +
+        # unidad) sin solaparse; Qt sube a este mínimo cualquier geometría guardada menor.
+        self.setMinimumSize(680, 360)
         self._restore_geometry()
 
         self._build_ui()
@@ -136,7 +166,7 @@ class MainWindow(QWidget):
         body_lay = QVBoxLayout(body)
         body_lay.setContentsMargins(0, 14, 0, 0)
         body_lay.setSpacing(0)
-        tabs = self._build_tabs()
+        self._build_tabs()
         body_lay.addLayout(self._build_toolbar())
         rule = QFrame()
         rule.setObjectName("NavRule")
@@ -145,10 +175,10 @@ class MainWindow(QWidget):
         rule_lay.setContentsMargins(20, 0, 20, 0)
         rule_lay.addWidget(rule)
         body_lay.addLayout(rule_lay)
-        tabs_lay = QVBoxLayout()
-        tabs_lay.setContentsMargins(20, 18, 20, 20)
-        tabs_lay.addWidget(tabs)
-        body_lay.addLayout(tabs_lay, 1)
+        pages_lay = QVBoxLayout()
+        pages_lay.setContentsMargins(20, 0, 20, 20)
+        pages_lay.addWidget(self._tabs.stack)
+        body_lay.addLayout(pages_lay, 1)
         root_lay.addWidget(body, 1)
 
     def _build_titlebar(self) -> QWidget:
@@ -233,7 +263,9 @@ class MainWindow(QWidget):
         for b in (self._about_btn, self._settings_btn, self._theme_btn,
                   self._min_btn, self._max_btn, self._close_btn):
             b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
-        self._unit_chevron.setPixmap(svg_icon("chevron-down", color, 16).pixmap(16, 16))
+        if hasattr(self, "_unit_chevron"):
+            self._unit_chevron.setPixmap(
+                svg_icon("chevron-down", color, 16).pixmap(16, 16))
 
     def _build_toolbar(self) -> QHBoxLayout:
         """Fila única: pestañas a la izquierda, período y unidad a la derecha."""
@@ -242,13 +274,13 @@ class MainWindow(QWidget):
         lay.setContentsMargins(20, 0, 20, 0)
         lay.setSpacing(8)
 
-        bar = self._tabs.tabBar()
-        bar.setParent(None)  # el QTabWidget conserva el stack; la barra vive en esta fila
+        bar = self._tabs.bar
         bar.setDrawBase(False)
         bar.setExpanding(False)
         bar.setUsesScrollButtons(False)
         bar.setFixedHeight(40)
-        lay.addWidget(bar)
+        bar.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        lay.addWidget(bar, 0, Qt.AlignmentFlag.AlignBottom)
         lay.addStretch()
 
         seg = QFrame()
@@ -269,12 +301,12 @@ class MainWindow(QWidget):
             self._seg_group.addButton(chip)
             seg_lay.addWidget(chip)
             self._period_chips.append((chip, value))
-        lay.addWidget(seg)
+        lay.addWidget(seg, 0, Qt.AlignmentFlag.AlignVCenter)
         lay.addSpacing(6)
 
         self._unit_caption = QLabel(t("unit.caption"))
         self._unit_caption.setObjectName("UnitCaption")
-        lay.addWidget(self._unit_caption)
+        lay.addWidget(self._unit_caption, 0, Qt.AlignmentFlag.AlignVCenter)
 
         self._unit_box = QComboBox()
         self._unit_box.setObjectName("UnitBox")
@@ -292,12 +324,12 @@ class MainWindow(QWidget):
         unit_grid.addWidget(self._unit_chevron, 0, 0,
                             Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         unit_grid.setColumnMinimumWidth(0, 0)
-        lay.addWidget(unit_wrap)
+        self._unit_box.setMinimumWidth(84)
+        lay.addWidget(unit_wrap, 0, Qt.AlignmentFlag.AlignVCenter)
         return lay
 
-    def _build_tabs(self) -> QTabWidget:
-        self._tabs = QTabWidget()
-        self._tabs.setDocumentMode(True)
+    def _build_tabs(self) -> NavTabs:
+        self._tabs = NavTabs()
         self._tabs.addTab(self._build_global_tab(), t("tab.global"))
         self._tabs.addTab(self._build_apps_tab(), t("tab.apps"))
         self._tabs.addTab(self._build_connections_tab(), t("tab.connections"))
