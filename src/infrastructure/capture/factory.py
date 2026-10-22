@@ -7,6 +7,7 @@ import logging
 import sys
 
 from ...domain.ports import CaptureService
+from .fallback import FallbackCaptureService
 from .psutil_fallback import PsutilCaptureService
 
 log = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ def _create_windows(prefer_etw: bool) -> tuple[CaptureService, bool]:
             # Validamos que pywintrace exista antes de comprometernos.
             service._build_session().stop()
             log.info("Captura ETW por proceso activada.")
-            return EtwCaptureService(), True
+            # Si la sesión ETW muere en runtime, degrada a psutil (plan 03).
+            return FallbackCaptureService(EtwCaptureService(), PsutilCaptureService), True
         except CaptureUnavailable as exc:
             log.warning("ETW no disponible (%s). Uso fallback psutil.", exc)
         except Exception as exc:  # noqa: BLE001
@@ -49,7 +51,8 @@ def _create_macos(prefer_native: bool) -> tuple[CaptureService, bool]:
             if not NettopCaptureService.is_available():
                 raise CaptureUnavailable("`nettop` no está disponible.")
             log.info("Captura nettop por proceso activada (best-effort).")
-            return NettopCaptureService(), True
+            # Si nettop no se puede sostener, degrada a psutil (plan 03).
+            return FallbackCaptureService(NettopCaptureService(), PsutilCaptureService), True
         except CaptureUnavailable as exc:
             log.warning("nettop no disponible (%s). Uso fallback psutil.", exc)
         except Exception as exc:  # noqa: BLE001

@@ -32,3 +32,60 @@ def test_psutil_loop_survives_on_sample_error(monkeypatch):
     finally:
         svc.stop()
     assert calls[1].bytes_sent == 100   # delta normal, sin re-contar el fallido
+
+
+class FakeBackend:
+    def __init__(self, fail_on_start: bool = False) -> None:
+        self.on_failure = None
+        self.fail_on_start = fail_on_start
+        self.started_with = None
+        self.stopped = 0
+
+    def start(self, on_sample):
+        if self.fail_on_start:
+            raise RuntimeError("sin sesión")
+        self.started_with = on_sample
+
+    def stop(self):
+        self.stopped += 1
+
+
+def _wrap(primary):
+    from src.infrastructure.capture.fallback import FallbackCaptureService
+
+    made = []
+
+    def make_fallback():
+        made.append(FakeBackend())
+        return made[-1]
+
+    return FallbackCaptureService(primary, make_fallback), made
+
+
+def test_fallback_switches_once_when_primary_fails():
+    primary = FakeBackend()
+    svc, made = _wrap(primary)
+    cb = lambda sample: None
+    svc.start(cb)
+    assert svc.degraded is False
+    primary.on_failure()                # el hilo nativo murió
+    primary.on_failure()                # un segundo aviso no duplica
+    assert svc.degraded is True and len(made) == 1
+    assert made[0].started_with is cb and primary.stopped == 1
+    svc.stop()
+    assert made[0].stopped == 1
+
+
+def test_fallback_when_primary_start_raises():
+    svc, made = _wrap(FakeBackend(fail_on_start=True))
+    svc.start(lambda sample: None)
+    assert svc.degraded is True and len(made) == 1
+
+
+def test_failure_after_stop_is_ignored():
+    primary = FakeBackend()
+    svc, made = _wrap(primary)
+    svc.start(lambda sample: None)
+    svc.stop()
+    primary.on_failure()
+    assert made == [] and svc.degraded is False

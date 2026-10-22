@@ -62,3 +62,17 @@ def test_etw_stop_joins_thread_and_clears_callback(monkeypatch):
     assert session.stopped.is_set()
     assert thread is not None and not thread.is_alive()
     assert svc._thread is None and svc._on_sample is None
+
+
+def test_factory_wraps_etw_with_psutil_fallback(monkeypatch):
+    import src.infrastructure.capture.factory as factory_mod
+    from src.infrastructure.capture.fallback import FallbackCaptureService
+
+    monkeypatch.setattr(factory_mod.sys, "platform", "win32")
+    monkeypatch.setattr(factory_mod, "_is_admin", lambda: True)
+    monkeypatch.setattr(EtwCaptureService, "_build_session",
+                        lambda self: _FakeSession())
+    service, per_process = factory_mod.create_capture_service()
+    assert isinstance(service, FallbackCaptureService)
+    assert isinstance(service.primary, EtwCaptureService)
+    assert per_process is True

@@ -289,9 +289,11 @@ def test_factory_returns_nettop_backend_on_macos(monkeypatch):
         staticmethod(lambda: True),
     )
     service, per_process = factory_mod.create_capture_service()
+    from src.infrastructure.capture.fallback import FallbackCaptureService
     from src.infrastructure.capture.nettop_capture import NettopCaptureService
 
-    assert isinstance(service, NettopCaptureService)
+    assert isinstance(service, FallbackCaptureService)
+    assert isinstance(service.primary, NettopCaptureService)
     assert per_process is True
 
 
