@@ -1,200 +1,163 @@
 # NetGauge
 
 [![CI](https://github.com/gabiMaglia/NetGauge/actions/workflows/ci.yml/badge.svg)](https://github.com/gabiMaglia/NetGauge/actions/workflows/ci.yml)
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 
-Monitor de consumo de red para Windows x64. Vive en la bandeja del sistema,
-trackea subida/bajada **por aplicación**, persiste el historial en SQLite y
-genera un informe CSV al cerrar.
+**Monitor de consumo de red para Windows y macOS.** Vive en la bandeja del
+sistema, mide subida y bajada **por aplicación**, guarda el historial en SQLite
+y exporta informes en CSV, Excel y PDF.
 
-Repo: **https://github.com/gabiMaglia/NetGauge** · UI en **PySide6** (LGPL).
+> **English (short):** NetGauge is a free, open-source (MIT) per-application
+> network usage monitor for Windows 10/11 x64 and macOS. System-tray app with
+> live bandwidth chart, daily/monthly quotas, history, connection list and
+> CSV/XLSX/PDF reports. UI in Spanish, English and Portuguese. Per-app
+> breakdown on Windows needs administrator rights (ETW); otherwise it falls
+> back to global totals. No telemetry. Optional features that contact third
+> parties (GeoIP, VirusTotal) are **off by default** — see
+> [Privacidad](#privacidad).
 
-## ⚠️ El punto técnico que tenés que entender
+## Descargar
 
-`psutil` **no mide tráfico por proceso** en Windows. Sus contadores de red son
-globales y `Process.io_counters()` es de **disco**, no de red.
+Bajá la última versión desde
+**[GitHub Releases](https://github.com/gabiMaglia/NetGauge/releases/latest)**:
 
-El desglose real por aplicación se obtiene con **ETW** (Event Tracing for
-Windows), provider de kernel `Microsoft-Windows-Kernel-Network`, que emite un
-evento por cada operación TCP/UDP con el **PID** y los **bytes**. Eso exige:
+| Sistema | Archivo |
+|---|---|
+| Windows 10/11 x64 | `NetGauge-Setup-<versión>-x64.exe` (instalador) |
+| macOS Apple Silicon (M1+) | `NetGauge-<versión>-arm64.dmg` |
+| macOS Intel | `NetGauge-<versión>-x86_64.dmg` |
 
-1. Ejecutar como **Administrador**.
-2. Tener instalado **`pywintrace`** (módulo `etw`).
+Cada release incluye un archivo `SHA256SUMS` para verificar la descarga.
 
-Si falta cualquiera de los dos, la app cae automáticamente a un **modo global**
-(psutil): funciona, pero sin desglose por app. La UI te avisa cuál modo está activo.
+### Aviso de firma (importante)
 
-## Arquitectura (Clean Architecture)
+Los binarios **todavía no están firmados** con certificado de código. Es normal
+que el sistema muestre una advertencia la primera vez:
 
-```
-NetGauge/
-├─ main.py                      # Composition Root: arma dependencias
-├─ requirements.txt             # runtime (PySide6, psutil, pywintrace)
-├─ requirements-dev.txt         # + pytest
-├─ pytest.ini
-├─ build/
-│  ├─ network_monitor.spec      # PyInstaller (one-file, uac_admin)
-│  ├─ installer.iss             # Inno Setup (instalador x64)
-│  ├─ make_icon.py              # genera assets/icon.ico
-│  └─ sign.cmd                  # pipeline de firma de código (signtool)
-├─ tests/                       # pytest (dominio + aplicación + infra)
-└─ src/
-   ├─ version.py                # versión + coordenadas del repo (auto-update)
-   ├─ domain/                   # Núcleo: NO depende de nada externo
-   │  ├─ models.py              # TrafficSample, AppUsage, UsageRecord, Settings,
-   │  │                         #   QuotaStatus, TrustInfo, Connection, human_bytes
-   │  └─ ports.py               # interfaces: Capture/Repository/Reporter/Notifier/
-   │                            #   SettingsStore/TrustEvaluator/ConnectionProvider/
-   │                            #   ReputationService/GeoIpService
-   ├─ application/
-   │  └─ monitor_service.py     # caso de uso: captura→acumula→persiste→consulta,
-   │                            #   cuotas, anomalías, retención, confianza, conexiones
-   ├─ infrastructure/           # Detalles concretos (implementan ports)
-   │  ├─ capture/
-   │  │  ├─ etw_capture.py       # ETW por proceso
-   │  │  ├─ psutil_fallback.py   # fallback global
-   │  │  ├─ factory.py           # elige ETW o fallback según admin/pywintrace
-   │  │  ├─ app_names.py         # nombre amigable de la app (version.dll)
-   │  │  ├─ trust.py             # índice de confianza (firma Authenticode/ruta)
-   │  │  ├─ connections.py       # conexiones activas por proceso (psutil)
-   │  │  ├─ geoip_ipapi.py       # país/proveedor de IPs remotas (ip-api, opt-in)
-   │  │  └─ reputation_virustotal.py  # reputación por hash (VirusTotal, opt-in)
-   │  ├─ persistence/            # sqlite_repository.py (+ versión de esquema),
-   │  │                          #   settings_store.py (JSON)
-   │  ├─ reporting/report_generator.py   # CSV
-   │  └─ update/github_updater.py        # chequeo de versión vs GitHub Releases
-   └─ presentation/
-      └─ qt/                    # UI PySide6 (frameless, tema claro/oscuro)
-         ├─ app.py              # arranque: ventana + tray + notifier + update + sparkline
-         ├─ main_window.py      # ventana: tabs Global / Por aplicación / Conexiones
-         ├─ native_window.py    # chrome nativo (resize esquinas + Aero Snap)
-         ├─ single_instance.py  # instancia única (QLocalServer)
-         ├─ widgets.py          # gráficos, tarjetas, badges, logo (QPainter)
-         ├─ theme.py            # tokens de diseño + QSS (claro/oscuro)
-         ├─ i18n.py             # es/en/pt + formato de números por locale
-         ├─ quota_dialog.py · settings_dialog.py · about_dialog.py
-```
+- **Windows (SmartScreen):** "Windows protegió su PC" → **Más información** →
+  **Ejecutar de todas formas**.
+- **macOS (Gatekeeper):** arrastrá `NetGauge.app` a *Aplicaciones*. Si macOS
+  dice que no se puede verificar, hacé clic derecho → **Abrir**, o quitá la
+  cuarentena desde Terminal:
 
-**Regla de dependencia:** `presentation → application → domain ← infrastructure`.
-El dominio no importa nada de afuera; la infraestructura implementa los puertos.
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/NetGauge.app
+  ```
 
-Datos en `%LOCALAPPDATA%\NetGauge\`: `usage.db`, `monitor.log`, `reports\`.
+Si preferís no confiar en un binario sin firma, podés compilarlo vos mismo desde
+el código fuente: ver [`docs/BUILD.md`](docs/BUILD.md).
 
-## Ejecutar en desarrollo
+## Requisitos
+
+- **Windows:** 10 u 11, x64. Para el desglose **por aplicación** hay que
+  ejecutar como **Administrador** (el instalador y el `.exe` piden elevación);
+  usa ETW (Event Tracing for Windows). Sin admin la app funciona igual pero en
+  **modo global** (totales de la máquina, sin desglose por app) y la ventana
+  lo indica.
+- **macOS:** 12 (Monterey) o superior, Intel o Apple Silicon. Usa `nettop`
+  (incluido en el sistema) para medir por aplicación.
+- Para correr desde fuente: Python 3.10+ y las dependencias de
+  `requirements.txt`.
+
+## Funciones
+
+- Consumo **por aplicación** (ETW en Windows, `nettop` en macOS) o global (fallback).
+- Velocidad en vivo ↑/↓ en la cabecera, gráfico de ancho de banda de los últimos
+  ~2 minutos y mini-gráfico (sparkline) en el ícono de la bandeja.
+- **Cuotas** diaria y mensual con día de corte configurable y alertas al 80 % y
+  100 % (umbrales configurables). Avisa, **no corta** el tráfico.
+- **Historial** por sesión, día, semana y mes, con retención configurable
+  (por defecto 180 días).
+- Pestañas **Global**, **Por aplicación** y **Conexiones** (IP remota, puerto,
+  estado, por proceso; opción de ocultar localhost).
+- **Índice de confianza local** por app (firma Authenticode en Windows,
+  ubicación del ejecutable y metadata). Es un veredicto basado en señales
+  verificables, no un porcentaje inventado.
+- **Alertas de anomalías**: picos inusuales (≥ 3× el promedio reciente) y apps
+  que usan la red por primera vez.
+- **Informes** CSV, Excel (.xlsx) y PDF: al salir o a pedido desde el menú de la
+  bandeja.
+- Tema claro/oscuro, selector de unidad (Auto/KB/MB/GB), formato numérico por
+  idioma e interfaz en **español, inglés y portugués**.
+- Aviso de nuevas versiones (solo avisa; no descarga ni instala nada).
+- Opcional (apagado por defecto): **GeoIP** de IPs remotas y **reputación de
+  VirusTotal** por hash. Ver [Privacidad](#privacidad).
+
+## Privacidad
+
+NetGauge **no tiene telemetría ni analítica**, no crea cuentas y no sube tu
+historial de uso. Todo el historial queda en tu equipo. Esto es *exactamente*
+lo que puede salir por la red:
+
+| Qué | A quién | Cuándo | Qué se envía |
+|---|---|---|---|
+| Búsqueda de actualizaciones | `api.github.com` (HTTPS) | En segundo plano al iniciar y periódicamente | Una consulta `GET` a la última release del repo. GitHub ve, como en cualquier request, tu IP y el `User-Agent`. No se envía ningún dato de uso. |
+| **GeoIP** (opcional) | `ip-api.com` por **HTTP sin cifrar** | Solo si activás *GeoIP* en Ajustes (**apagado por defecto**), por cada IP remota nueva de la pestaña Conexiones | La **IP remota** consultada. Al ser HTTP, cualquiera en tu red puede ver esas consultas. El plan gratuito de ip-api.com es **solo para uso no comercial**. |
+| **VirusTotal** (opcional) | `www.virustotal.com` (HTTPS) | Solo si activás VirusTotal y cargás tu propia API key (**apagado por defecto**) | Únicamente el **hash SHA-256** del ejecutable; nunca el archivo. La API pública gratuita es solo para uso no comercial. |
+
+Notas:
+
+- La **API key de VirusTotal se guarda en texto plano** en `settings.json`
+  (ver rutas abajo). Cualquier proceso o usuario con acceso a tu carpeta de
+  datos puede leerla; usá una key de cuenta gratuita y no la reutilices.
+- Desactivar GeoIP o VirusTotal en Ajustes detiene de inmediato esas consultas.
+- El índice de confianza se calcula **localmente**; no envía nada.
+
+## Datos locales
+
+| Sistema | Carpeta |
+|---|---|
+| Windows | `%LOCALAPPDATA%\NetGauge\` |
+| macOS | `~/Library/Application Support/NetGauge/` |
+
+Contiene `usage.db` (historial), `settings.json` (preferencias y, si la
+cargaste, la API key de VirusTotal), el log (`netgauge.log`) y
+`reports\` (informes exportados). Borrar esa carpeta elimina todo lo que
+NetGauge guardó.
+
+## Desarrollo
 
 ```powershell
-cd "network Monitor"
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-
-# Para desglose por app, abrí PowerShell COMO ADMINISTRADOR:
-python main.py
+python main.py                          # en Windows, PowerShell como Administrador para ver el desglose por app
 ```
 
-### Tests
+Tests:
 
 ```powershell
 pip install -r requirements-dev.txt
-pytest
+python -m pytest -q
 ```
 
-## Generar el .exe (PyInstaller)
+La arquitectura (Clean Architecture: `presentation → application → domain ←
+infrastructure`) está en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Cómo
+generar el `.exe`, el instalador y firmar el código:
+[`docs/BUILD.md`](docs/BUILD.md); el `.app`/`.dmg` de macOS:
+[`build/README_macos.md`](build/README_macos.md). Historial de cambios:
+[`CHANGELOG.md`](CHANGELOG.md).
 
-```powershell
-cd "network Monitor"
-.\.venv\Scripts\Activate.ps1
-pip install pyinstaller
-pyinstaller build\network_monitor.spec --noconfirm
-# Resultado: dist\NetGauge.exe  (one-file, pide elevación al abrir)
-```
-
-## Generar el instalador (Inno Setup)
-
-1. Instalá Inno Setup 6+ (https://jrsoftware.org/isdl.php).
-2. Asegurate de tener `dist\NetGauge.exe` ya compilado.
-3. Compilá el instalador:
-
-```powershell
-& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\installer.iss
-# Resultado: build\Output\NetGauge-Setup-<versión>-x64.exe
-```
-
-> Detalle completo de firma de código y troubleshooting en [`docs/BUILD.md`](docs/BUILD.md).
-
-El instalador pide privilegios de admin, ofrece autoarranque con Windows y crea
-accesos directos.
-
-## Funcionalidades (MVP comercial)
-
-Basadas en lo que ofrecen GlassWire, NetWorx y DU Meter:
-
-- **Consumo por aplicación** (ETW) o global (fallback psutil).
-- **Velocidad en vivo** ↑/↓: en la cabecera de la ventana y en el tooltip del tray.
-- **Gráfico de ancho de banda en vivo** (últimos ~2 min, subida y bajada).
-- **Cuotas diaria y mensual con alertas**: configurás límites en GB y el día de
-  corte del ciclo; la app te notifica al 80% y 100% (umbrales configurables).
-  Barra de progreso con color (verde / amarillo / rojo). *La feature clave para
-  conexiones medidas.* La cuota diaria avisa, no corta el tráfico.
-- **Historial Sesión / Día / Semana / Mes** (SQLite).
-- **Selector de unidad** Auto / KB / MB / GB.
-- **Dashboard en dos vistas**: Global y Por aplicación.
-- **Tema claro/oscuro** y ventana sin marco con barra de título propia.
-- **Informe CSV / Excel / PDF**: al "Salir", al cierre del sistema (`atexit`) o
-  on-demand desde el menú del tray.
-- **Settings persistentes** en `settings.json`.
-- **Acerca de** con botón de donación (Ko-fi), en la barra de título (ⓘ) y el tray.
-- **Multi-idioma**: español, inglés y portugués (cambia en vivo desde Ajustes ⚙).
-- **Índice de confianza local** por app: verifica la **firma Authenticode** (embebida
-  y por catálogo, vía `WinVerifyTrust`), la **ubicación** del ejecutable y la
-  **metadata**. Badge ✓/!/⚠ con el desglose en el tooltip. NO inventa un "%": es un
-  veredicto a partir de señales reales y verificables. Se puede apagar en Ajustes.
-- **Reputación VirusTotal** (opt-in): con tu API key, consulta el **ratio de
-  detección** por SHA-256 (ej. "3/72 motores lo marcan"). Solo se envía el hash,
-  nunca el archivo. No bloqueante (worker en segundo plano con throttle del free
-  tier). Apagado por defecto.
-- **Conexiones activas por aplicación** (IP remota · puerto · estado) vía psutil,
-  con **GeoIP/ASN** opt-in (país y proveedor de cada IP remota, vía ip-api.com) y
-  toggle para **ocultar conexiones a localhost**.
-- **Mini-gráfico (sparkline) en el ícono del tray** + tooltip con velocidad y app top.
-- **Alertas de anomalías**: pico de tráfico inusual (≥3× el promedio reciente) y
-  apps que empiezan a usar la red por primera vez. Configurable en Ajustes.
-- **Indicador de modo de captura** (ETW · por app / Global) en la barra de título,
-  para saber si estás viendo desglose real o el fallback global.
-- **Maximizar / restaurar** (botón + doble clic en la barra) y **persistencia** de
-  posición y tamaño de la ventana entre sesiones.
-- **Aviso de actualizaciones** vía GitHub Releases (chequeo en segundo plano; no
-  descarga nada, solo te avisa y deja el link).
-- **Formato de números por idioma** (es/pt: `1.234,5` · en: `1,234.5`).
-- **Disclosure de privacidad** en Ajustes: explica exactamente qué envían VT y GeoIP.
-- **Retención del histórico** configurable: purga automática de datos viejos para
-  que `usage.db` no crezca sin techo.
-
-Archivos en `%LOCALAPPDATA%\NetGauge\`: `usage.db`, `settings.json`,
-`monitor.log`, `reports\`.
-
-## Apoyar el proyecto ☕
+## Apoyar el proyecto
 
 NetGauge es software libre y gratuito. Si te resulta útil, podés invitar un café:
+**[ko-fi.com/gabrielmaglia](https://ko-fi.com/gabrielmaglia)** (también dentro de
+la app, en *Acerca de*).
 
-**[ko-fi.com/gabrielmaglia](https://ko-fi.com/gabrielmaglia)**
+## Seguridad
 
-El botón también está dentro de la app, en **Acerca de** (ícono ⓘ de la barra de
-título, o el menú del ícono de bandeja).
+Para reportar una vulnerabilidad de forma privada, ver [`SECURITY.md`](SECURITY.md).
 
 ## Licencia
 
-Distribuido bajo licencia **MIT** — software libre. Podés usar, modificar y
-redistribuir, conservando el aviso de copyright. Ver [LICENSE](LICENSE).
+NetGauge se distribuye bajo licencia **MIT**: ver [LICENSE](LICENSE).
 
-### Licencias de terceros (importante para distribución)
+Incluye componentes de terceros (PySide6/Qt bajo **LGPL v3**, psutil, pywintrace,
+reportlab, openpyxl, fuentes Plus Jakarta Sans bajo SIL OFL) con sus propias
+licencias, y cómo obtener su código fuente / usar tu propia versión de Qt:
+[`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
 
-- **PySide6** — LGPLv3. Elegido a propósito sobre PyQt6 (GPL/comercial) porque
-  **permite distribución gratuita y comercial / closed-source**. La app se enlaza
-  dinámicamente con Qt; se puede reemplazar la librería Qt del bundle.
-- **psutil** — BSD-3. **pywintrace** — BSD.
-- **VirusTotal (API pública)** e **ip-api.com (free)**: ambos prohíben el uso
-  **comercial** en su free tier. Si en el futuro se vende la app, esas dos
-  funciones (opt-in) requieren plan de pago o quedar deshabilitadas en la build
-  comercial. El resto de la app no tiene esa restricción.
-
-Más documentación en [`docs/`](docs/): arquitectura y guía de build.
+Los servicios opcionales **ip-api.com** (plan gratuito) y **VirusTotal** (API
+pública) restringen su uso a fines **no comerciales**; si redistribuís NetGauge
+comercialmente, esas dos funciones requieren plan de pago o deben quedar
+deshabilitadas.
