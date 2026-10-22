@@ -20,6 +20,12 @@ build/Output/
 settings.json
 reports/
 
+# Secretos / certificados de firma (nunca al repo)
+.env
+.env.*
+*.pfx
+*.p12
+
 # SO / editor
 Thumbs.db
 .DS_Store
