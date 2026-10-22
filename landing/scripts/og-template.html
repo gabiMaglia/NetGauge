@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 200 800; src: url('../public/fonts/PlusJakartaSans-latin-wght.woff2') format('woff2'); }
+  @font-face { font-family: 'JetBrains Mono'; font-weight: 700; src: url('../public/fonts/JetBrainsMono-latin-700.woff2') format('woff2'); }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: #070b14; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif; color: #e6f0fa;
+    background: radial-gradient(900px 520px at 20% -10%, rgba(69,139,248,.28), transparent 62%),
+                radial-gradient(700px 480px at 100% 100%, rgba(45,212,191,.14), transparent 60%), #070b14;
+    padding: 64px 72px; position: relative;
+  }
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .brand svg { width: 76px; height: 76px; border-radius: 20px; box-shadow: 0 0 40px -4px rgba(69,139,248,.7); }
+  .brand span { font-size: 56px; font-weight: 800; letter-spacing: -.02em; }
+  .brand b { color: #458bf8; }
+  h1 { margin-top: 56px; font-size: 76px; line-height: 1.04; font-weight: 800; letter-spacing: -.03em; max-width: 720px; color: #f3f9ff; }
+  h1 em { font-style: normal; color: #458bf8; }
+  .chips { position: absolute; left: 72px; bottom: 60px; display: flex; gap: 14px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 24px; }
+  .chips span { padding: 10px 18px; border: 1px solid #284a85; border-radius: 12px; background: rgba(69,139,248,.1); color: #9db1c9; }
+  .chart { position: absolute; right: 56px; top: 120px; width: 400px; height: 400px; border-radius: 28px; background: #0a0f1c; border: 1px solid #16203a; box-shadow: 0 40px 90px -30px rgba(2,8,20,.9), 0 0 80px -20px rgba(69,139,248,.4); padding: 28px; }
+  .chart .lbl { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: #34d399; letter-spacing: .06em; }
+  .chart .big { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 64px; color: #38bdf8; margin-top: 10px; letter-spacing: -.02em; }
+  .chart .big small { font-size: 26px; color: #7e93ab; }
+  .chart svg { position: absolute; left: 20px; right: 20px; bottom: 24px; width: 360px; height: 190px; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#1e1e2e"/><rect x="12" y="38" width="10" height="14" rx="2" fill="url(#g)"/><rect x="27" y="24" width="10" height="28" rx="2" fill="url(#g)"/><rect x="42" y="12" width="10" height="40" rx="2" fill="url(#g)"/></svg>
+    <span>Net<b>Gauge</b></span>
+  </div>
+  <h1>Per-app <em>network</em> monitor</h1>
+  <div class="chart">
+    <div class="lbl">LIVE ●</div>
+    <div class="big">8.42 <small>MB/s</small></div>
+    <svg viewBox="0 0 360 190" preserveAspectRatio="none"><defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#458bf8" stop-opacity=".45"/><stop offset="1" stop-color="#458bf8" stop-opacity="0"/></linearGradient></defs>
+      <path d="M0,160 L24,162 L48,158 L72,160 L96,150 L120,154 L144,140 L168,120 L186,80 L204,30 L216,14 L230,50 L246,110 L262,40 L276,22 L296,96 L318,132 L336,100 L360,150 L360,190 L0,190 Z" fill="url(#a)"/>
+      <path d="M0,160 L24,162 L48,158 L72,160 L96,150 L120,154 L144,140 L168,120 L186,80 L204,30 L216,14 L230,50 L246,110 L262,40 L276,22 L296,96 L318,132 L336,100 L360,150" fill="none" stroke="#458bf8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+  </div>
+  <div class="chips"><span>Windows</span><span>macOS</span><span>Open source</span></div>
+</body>
+</html>
