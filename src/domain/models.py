@@ -62,6 +62,7 @@ class Settings:
     anomaly_alerts_enabled: bool = True    # avisos de picos y apps nuevas en red
     window_geometry: str = ""              # "x,y,w,h" para restaurar la ventana
     hide_localhost: bool = True            # oculta conexiones a 127.0.0.1/::1
+    check_updates: bool = True             # busca releases nuevas en api.github.com
 
     def to_dict(self) -> dict:
         return {
@@ -79,6 +80,7 @@ class Settings:
             "anomaly_alerts_enabled": self.anomaly_alerts_enabled,
             "window_geometry": self.window_geometry,
             "hide_localhost": self.hide_localhost,
+            "check_updates": self.check_updates,
         }
 
     @classmethod
@@ -98,6 +100,7 @@ class Settings:
             anomaly_alerts_enabled=bool(data.get("anomaly_alerts_enabled", True)),
             window_geometry=str(data.get("window_geometry", "")),
             hide_localhost=bool(data.get("hide_localhost", True)),
+            check_updates=bool(data.get("check_updates") is not False),
         )
 
 

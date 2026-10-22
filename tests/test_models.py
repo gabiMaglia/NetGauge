@@ -87,3 +87,21 @@ def test_worst_trust_tie_keeps_first():
     a = TrustInfo(level=TRUST_CAUTION, exe_path="a")
     b = TrustInfo(level=TRUST_CAUTION, exe_path="b")
     assert worst_trust([a, b]) is a
+
+
+# ---- búsqueda automática de actualizaciones (opt-out) -----------------------
+def test_settings_check_updates_default_on():
+    assert Settings().check_updates is True
+
+
+def test_settings_check_updates_roundtrip_off():
+    back = Settings.from_dict(Settings(check_updates=False).to_dict())
+    assert back.check_updates is False
+
+
+def test_settings_check_updates_missing_field_defaults_on():
+    assert Settings.from_dict({"language": "en"}).check_updates is True
+
+
+def test_settings_check_updates_null_defaults_on():
+    assert Settings.from_dict({"check_updates": None}).check_updates is True
