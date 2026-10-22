@@ -22,19 +22,33 @@ _API = "https://www.virustotal.com/api/v3/files/"
 _API_USERS = "https://www.virustotal.com/api/v3/users/"
 _MIN_INTERVAL = 16.0   # seg entre consultas (≈4/min, dentro del free tier)
 _UNKNOWN = "unknown"   # VT no conoce el archivo
+_ERROR = "error"       # irrecuperable (p.ej. archivo ilegible); set_api_key lo limpia
+_IDLE_TIMEOUT = 60.0   # seg sin trabajo antes de que el worker termine
+_BACKOFF_BASE = 300.0  # reintento tras error transitorio: 5 min, x2 por fallo
+_BACKOFF_MAX = 3600.0
 
 
 class VirusTotalReputation(ReputationService):
-    def __init__(self, api_key: str = "") -> None:
+    def __init__(self, api_key: str = "", clock=time.monotonic) -> None:
         self._api_key = api_key
-        self._cache: dict[str, object] = {}   # path -> (m,total) | _UNKNOWN | "error"
+        self._clock = clock
+        self._cache: dict[str, object] = {}   # path -> (m,total) | _UNKNOWN | _ERROR
         self._queued: set[str] = set()
+        self._retry_at: dict[str, float] = {}  # path -> instante (clock) del próx. intento
+        self._fails: dict[str, int] = {}
         self._lock = threading.Lock()
         self._q: "queue.Queue[str]" = queue.Queue()
         self._worker: threading.Thread | None = None
 
     def set_api_key(self, key: str) -> None:
-        self._api_key = key
+        """Cambia la key. Los errores (cacheados o en backoff) se descartan: con
+        otra key pueden andar. Los resultados válidos se conservan."""
+        with self._lock:
+            self._api_key = key
+            for p in [p for p, v in self._cache.items() if v == _ERROR]:
+                del self._cache[p]
+            self._retry_at.clear()
+            self._fails.clear()
 
     def test_api_key(self, key: str) -> bool:
         """Valida una key contra VT sin gastar cuota de análisis.
@@ -65,17 +79,22 @@ class VirusTotalReputation(ReputationService):
             cached = self._cache.get(exe_path)
             if isinstance(cached, tuple):
                 return cached
-            if cached is not None:        # _UNKNOWN o "error": no reintentar
+            if cached is not None:        # _UNKNOWN o _ERROR: no reintentar
                 return None
             if exe_path in self._queued:
                 return None
+            if self._clock() < self._retry_at.get(exe_path, 0.0):
+                return None               # en backoff por un error transitorio
             self._queued.add(exe_path)
-        self._ensure_worker()
-        self._q.put(exe_path)
+            # put + asegurar worker BAJO EL MISMO LOCK con el que el worker decide
+            # salir por idle: nunca queda un item en la cola sin worker vivo.
+            self._q.put(exe_path)
+            self._ensure_worker_locked()
         return None
 
-    def _ensure_worker(self) -> None:
-        if self._worker and self._worker.is_alive():
+    def _ensure_worker_locked(self) -> None:
+        """Arranca el worker si no hay uno vivo. Llamar con self._lock tomado."""
+        if self._worker is not None and self._worker.is_alive():
             return
         self._worker = threading.Thread(target=self._run, daemon=True)
         self._worker.start()
@@ -83,23 +102,42 @@ class VirusTotalReputation(ReputationService):
     def _run(self) -> None:
         while True:
             try:
-                path = self._q.get(timeout=60)
+                path = self._q.get(timeout=_IDLE_TIMEOUT)
             except queue.Empty:
-                return
-            try:
-                result = self._query(path)
-            except Exception as exc:  # noqa: BLE001
-                log.debug("VT fallo en %s: %s", path, exc)
-                result = "error"
-            with self._lock:
-                self._cache[path] = result
-                self._queued.discard(path)
+                with self._lock:
+                    if self._q.empty():   # nadie encoló mientras decidíamos salir
+                        self._worker = None
+                        return
+                continue
+            self._process(path)
             time.sleep(_MIN_INTERVAL)  # respeta el rate limit del free tier
+
+    def _process(self, path: str) -> None:
+        """Consulta un path y actualiza cache/backoff. Los errores de red o HTTP
+        (401/403/429/5xx) son transitorios: NO se cachean, se reintenta luego."""
+        failed = False
+        result: object = None
+        try:
+            result = self._query(path)
+        except Exception as exc:  # noqa: BLE001
+            log.debug("VT fallo en %s: %s", path, exc)
+            failed = True
+        with self._lock:
+            self._queued.discard(path)
+            if failed:
+                n = self._fails.get(path, 0) + 1
+                self._fails[path] = n
+                delay = min(_BACKOFF_BASE * (2 ** (n - 1)), _BACKOFF_MAX)
+                self._retry_at[path] = self._clock() + delay
+            else:
+                self._fails.pop(path, None)
+                self._retry_at.pop(path, None)
+                self._cache[path] = result
 
     def _query(self, path: str):
         sha = _sha256(path)
         if not sha:
-            return "error"
+            return _ERROR
         req = urllib.request.Request(
             _API + sha, headers={"x-apikey": self._api_key,
                                  "Accept": "application/json"})
