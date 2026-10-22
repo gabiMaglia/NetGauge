@@ -15,10 +15,12 @@ log = logging.getLogger(__name__)
 _API = "https://api.github.com/repos/{owner}/{repo}/releases/latest"
 
 
-def _parse(version: str) -> tuple[int, ...]:
-    """'v1.5.0' / '1.5.0' -> (1,5,0). Ignora sufijos no numéricos."""
-    nums = re.findall(r"\d+", version or "")
-    return tuple(int(n) for n in nums[:3]) or (0,)
+def _parse(version: str) -> tuple[int, int, int]:
+    """'v1.5.0' / '1.5' -> (1,5,0). Ignora sufijos no numéricos y rellena a 3
+    componentes (así '2.0' y '2.0.0' comparan como iguales)."""
+    nums = [int(n) for n in re.findall(r"\d+", version or "")[:3]]
+    nums += [0] * (3 - len(nums))
+    return tuple(nums)  # type: ignore[return-value]
 
 
 def is_newer(latest: str, current: str) -> bool:
@@ -26,7 +28,7 @@ def is_newer(latest: str, current: str) -> bool:
 
 
 def check_latest(owner: str, repo: str, current: str) -> tuple[str, str] | None:
-    """(versión, url_html) si hay una release MÁS nueva; None si no/又 error."""
+    """(versión, url_html) si hay una release MÁS nueva; None si no hay o hubo error."""
     req = urllib.request.Request(
         _API.format(owner=owner, repo=repo),
         headers={"Accept": "application/vnd.github+json",
