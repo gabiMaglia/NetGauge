@@ -3,6 +3,43 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased]
+### Fixed
+- **Windows:** crash potencial en la verificación de firma (llamadas `ctypes`
+  sin tipos de retorno/argumentos y fuga de contexto de certificado) y la
+  colección de tests ya no falla en Windows por un `import pty` a nivel de módulo.
+- Persistencia: el historial ahora se **agrega por (app, minuto)** en vez de
+  crecer indefinidamente; migración automática que consolida las filas
+  existentes. `settings.json` se escribe de forma atómica y tolera archivos
+  corruptos (respaldo en `settings.json.bak`); la base usa WAL, se recupera de
+  corrupción y la purga de retención se hace por lotes.
+- Resiliencia: los ciclos de captura/cuotas se reprograman aunque falle un tick,
+  no se pierde el lote pendiente si falla el guardado, `stop()` espera el tick
+  en curso, y los hilos de captura (ETW, nettop, psutil) ya no mueren en
+  silencio: se degrada a psutil si la captura nativa falla.
+- Conexiones y confianza: la ruta del ejecutable se resuelve por ruta y el
+  veredicto de confianza es el **peor** entre ejecutables homónimos; la caché de
+  nombres por PID se invalida por `create_time`.
+- Rendimiento de la UI: firma/ruta de ejecutables, conexiones, cuotas y
+  períodos se calculan fuera del hilo de la interfaz (sin congelamientos con
+  muchas apps).
+- Release: la versión sale de una única fuente (`src/version.py`) en el
+  instalador, el `.exe`, los specs y los `.dmg`.
+### Security
+- Comparaciones de rutas de confianza con separador (evita falsos positivos
+  tipo `C:\Windows` vs `C:\WindowsEvil`).
+- Aviso explícito en Ajustes de que GeoIP envía IPs por **HTTP sin cifrar** a
+  ip-api.com.
+- Pipeline de release con gate de tests, permisos mínimos, acciones pineadas y
+  `SHA256SUMS`; CI con `pip-audit` y Dependabot.
+### Changed
+- README reescrito (descarga, requisitos, aviso de firma, privacidad y datos
+  locales); nuevos `THIRD_PARTY_LICENSES.md` (incluido en el instalador y los
+  bundles) y `SECURITY.md`; `.gitignore` ignora `.env*`, `*.pfx`, `*.p12`.
+- El log ahora es `netgauge.log` con rotación.
+- `pyinstaller` pasa a dependencias de desarrollo y los majors de las
+  dependencias quedan acotados.
+
 ## [2.0.1] - 2026-06-24
 ### Fixed
 - **macOS:** los procesos `nettop` ya no quedan huérfanos al cerrar la app de
