@@ -98,7 +98,7 @@ Para sumar/editar copy: agregar la clave en los 3 idiomas dentro de
   "Sugerido"). Android, iPhone e iPad (incluido iPadOS que se reporta como
   Macintosh con `maxTouchPoints > 1`): el CTA pasa a "Enviame el link"
   (`navigator.share` → portapapeles con aviso → `mailto:`).
-- Firma: macOS = `.dmg` firmado y notarizado por Apple (desde la v2.0.2);
+- Firma: macOS = `.dmg` firmado y notarizado por Apple (desde la v2.0.3);
   Windows = `.exe` sin firmar, SmartScreen puede avisar (enlace a la Code
   signing policy del README principal).
 

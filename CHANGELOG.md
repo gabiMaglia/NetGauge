@@ -5,7 +5,7 @@ versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-## [2.0.2] - 2026-10-22
+## [2.0.3] - 2026-10-22
 ### Added
 - **macOS:** firma *Developer ID* (hardened runtime + `build/entitlements.plist`)
   y notarización de Apple **opcionales** en el build: `build/make_dmg.sh` firma

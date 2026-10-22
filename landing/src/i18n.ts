@@ -197,7 +197,7 @@ const es: Dict = {
   'download.acc.win':
     '"Más información" → <b style="color:#eaf2fb;font-weight:700">Ejecutar de todas formas</b>',
   'download.acc.mac':
-    '<b style="color:#eaf2fb;font-weight:700">Firmado y notarizado por Apple</b> (desde la v2.0.2): el .dmg abre sin avisos.',
+    '<b style="color:#eaf2fb;font-weight:700">Firmado y notarizado por Apple</b> (desde la v2.0.3): el .dmg abre sin avisos.',
 
   'faq.label': 'Preguntas',
   'faq.title': 'Lo que te estás preguntando',
@@ -209,7 +209,7 @@ const es: Dict = {
     'No manda tu historial ni usa cuentas: no hay telemetría. Solo consulta GitHub para avisarte de versiones nuevas (se puede apagar en Ajustes). La reputación de VirusTotal y la geolocalización de IPs son opcionales y vienen apagadas; si las prendés, solo viaja un hash o una IP, nunca tus archivos. <a href="https://github.com/gabiMaglia/NetGauge/blob/main/PRIVACY.md" target="_blank" rel="noopener" class="ng-inline-link">Detalle completo en la política de privacidad ↗</a>',
   'faq.q3.q': '¿Por qué Windows me avisa al abrirlo?',
   'faq.q3.a':
-    'En Windows el instalador (.exe) todavía no está firmado, así que SmartScreen puede mostrar un aviso: tocá "Más información" → "Ejecutar de todas formas". Es por la falta de firma, no por riesgo: el código es abierto y lo podés revisar (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). En macOS el .dmg está firmado y notarizado por Apple (desde la v2.0.2) y abre sin avisos.',
+    'En Windows el instalador (.exe) todavía no está firmado, así que SmartScreen puede mostrar un aviso: tocá "Más información" → "Ejecutar de todas formas". Es por la falta de firma, no por riesgo: el código es abierto y lo podés revisar (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). En macOS el .dmg está firmado y notarizado por Apple (desde la v2.0.3) y abre sin avisos.',
   'faq.q4.q': '¿Necesito permisos de administrador?',
   'faq.q4.a':
     'Para leer el tráfico de red, en la primera ejecución puede pedir permisos elevados. Nada más que eso.',
@@ -422,7 +422,7 @@ const en: Dict = {
     'The Windows installer (.exe) is <b style="color:#cdddee">not signed yet</b>, so SmartScreen may show a warning. It\'s due to the lack of a signature, <b style="color:#cdddee">not a risk</b>: the code is open and you can review it.',
   'download.acc.win': '"More info" → <b style="color:#eaf2fb;font-weight:700">Run anyway</b>',
   'download.acc.mac':
-    '<b style="color:#eaf2fb;font-weight:700">Signed and notarized by Apple</b> (since v2.0.2): the .dmg opens with no warnings.',
+    '<b style="color:#eaf2fb;font-weight:700">Signed and notarized by Apple</b> (since v2.0.3): the .dmg opens with no warnings.',
 
   'faq.label': 'Questions',
   'faq.title': 'What you\'re probably wondering',
@@ -433,7 +433,7 @@ const en: Dict = {
     'It doesn\'t send your history and has no accounts or telemetry. It only checks GitHub to tell you about new versions (you can turn that off in Settings). VirusTotal reputation and IP geolocation are optional and off by default; if you turn them on, only a hash or an IP is sent, never your files. <a href="https://github.com/gabiMaglia/NetGauge/blob/main/PRIVACY.md" target="_blank" rel="noopener" class="ng-inline-link">Full details in the privacy policy ↗</a>',
   'faq.q3.q': 'Why does Windows warn me when I open it?',
   'faq.q3.a':
-    'On Windows the installer (.exe) isn\'t signed yet, so SmartScreen may show a warning: click "More info" → "Run anyway". It\'s due to the lack of a signature, not a risk: the code is open and you can review it (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). On macOS the .dmg is signed and notarized by Apple (since v2.0.2) and opens with no warnings.',
+    'On Windows the installer (.exe) isn\'t signed yet, so SmartScreen may show a warning: click "More info" → "Run anyway". It\'s due to the lack of a signature, not a risk: the code is open and you can review it (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). On macOS the .dmg is signed and notarized by Apple (since v2.0.3) and opens with no warnings.',
   'faq.q4.q': 'Do I need admin permissions?',
   'faq.q4.a':
     'To read network traffic, the first run may ask for elevated permissions. Nothing more than that.',
@@ -647,7 +647,7 @@ const pt: Dict = {
   'download.acc.win':
     '"Mais informações" → <b style="color:#eaf2fb;font-weight:700">Executar assim mesmo</b>',
   'download.acc.mac':
-    '<b style="color:#eaf2fb;font-weight:700">Assinado e notarizado pela Apple</b> (desde a v2.0.2): o .dmg abre sem avisos.',
+    '<b style="color:#eaf2fb;font-weight:700">Assinado e notarizado pela Apple</b> (desde a v2.0.3): o .dmg abre sem avisos.',
 
   'faq.label': 'Perguntas',
   'faq.title': 'O que você deve estar se perguntando',
@@ -659,7 +659,7 @@ const pt: Dict = {
     'Não envia seu histórico nem usa contas: não há telemetria. Só consulta o GitHub para avisar sobre versões novas (dá para desativar em Configurações). A reputação do VirusTotal e a geolocalização de IPs são opcionais e vêm desativadas; se você as ativar, só viaja um hash ou um IP, nunca seus arquivos. <a href="https://github.com/gabiMaglia/NetGauge/blob/main/PRIVACY.md" target="_blank" rel="noopener" class="ng-inline-link">Detalhes completos na política de privacidade ↗</a>',
   'faq.q3.q': 'Por que o Windows me avisa ao abrir?',
   'faq.q3.a':
-    'No Windows o instalador (.exe) ainda não está assinado, então o SmartScreen pode mostrar um aviso: clique em "Mais informações" → "Executar assim mesmo". É pela falta de assinatura, não por risco: o código é aberto e você pode revisá-lo (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). No macOS o .dmg é assinado e notarizado pela Apple (desde a v2.0.2) e abre sem avisos.',
+    'No Windows o instalador (.exe) ainda não está assinado, então o SmartScreen pode mostrar um aviso: clique em "Mais informações" → "Executar assim mesmo". É pela falta de assinatura, não por risco: o código é aberto e você pode revisá-lo (<a href="https://github.com/gabiMaglia/NetGauge#code-signing-policy" target="_blank" rel="noopener" class="ng-inline-link">Code signing policy</a>). No macOS o .dmg é assinado e notarizado pela Apple (desde a v2.0.3) e abre sem avisos.',
   'faq.q4.q': 'Preciso de permissões de administrador?',
   'faq.q4.a':
     'Para ler o tráfego de rede, na primeira execução pode pedir permissões elevadas. Nada além disso.',
