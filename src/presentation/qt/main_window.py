@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from ...application.monitor_service import MonitorService
 from .about_dialog import AboutDialog
+from .geometry import available_screen_rects, clamp_to_screens
 from .i18n import fmt_number, loc_bytes, set_language, t
 from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
@@ -608,6 +609,8 @@ class MainWindow(QWidget):
         except (ValueError, AttributeError):
             return
         if w > 200 and h > 200:
+            # Si el monitor donde estaba ya no existe, no restaurar fuera de pantalla.
+            x, y, w, h = clamp_to_screens((x, y, w, h), available_screen_rects())
             self.setGeometry(x, y, w, h)
 
     def _save_geometry(self) -> None:
