@@ -140,6 +140,7 @@ class MonitorService:
         self._snap_daily: QuotaStatus | None = None
         self._snap_monthly: QuotaStatus | None = None
         self._snap_periods: dict[str, list[UsageRecord]] = {}
+        self._snap_prev_totals: dict[str, int] = {}
         self._wanted_period: str | None = None
         self._snap_trust: dict[str, TrustInfo] = {}
         self._trust_requested: set[str] = set()
@@ -478,8 +479,13 @@ class MonitorService:
         if period is None:
             return
         rows = self._compute_usage_for_period(period)
+        prev = self._compute_previous_total(period)
         with self._snap_lock:
             self._snap_periods[period] = rows
+            if prev is None:
+                self._snap_prev_totals.pop(period, None)
+            else:
+                self._snap_prev_totals[period] = prev
 
     # ---- consultas para la UI -----------------------------------------
     def session_usage(self) -> list[AppUsage]:
@@ -501,6 +507,26 @@ class MonitorService:
         now = datetime.now()
         return self._repo.totals_by_app(self._period_start(period),
                                         now + timedelta(seconds=1))
+
+    def _compute_previous_total(self, period: str) -> int | None:
+        """Consulta SQLite: SÓLO desde el worker. Ventana inmediatamente
+        anterior de igual duración (el fin es el inicio del período actual)."""
+        if period not in ("day", "week", "month"):
+            return None
+        end = self._period_start(period)
+        if period == "month":
+            start = (end - timedelta(days=1)).replace(day=1)
+        else:
+            start = end - timedelta(days=1 if period == "day" else 7)
+        rows = self._repo.totals_by_app(start, end)
+        return sum(r.bytes_sent + r.bytes_recv for r in rows)
+
+    def previous_period_total(self, period: str) -> int | None:
+        """Para la UI (sin IO): bytes del período previo, del snapshot del
+        worker. None si 'session', si aún no se calculó o si no hay datos."""
+        with self._snap_lock:
+            total = self._snap_prev_totals.get(period)
+        return total or None
 
     def usage_for_period(self, period: str) -> list[UsageRecord] | None:
         """Para la UI. period in {'day', 'week', 'month'}. Lee el snapshot (sin
@@ -526,6 +552,12 @@ class MonitorService:
             self._exe_paths_at = now
         except Exception:  # noqa: BLE001
             pass
+
+    def exe_path_for(self, app_name: str) -> str | None:
+        """Para la UI (sin IO): primera ruta conocida del ejecutable, o None.
+        Depende de las rutas que el worker ya haya refrescado."""
+        paths = self._exe_paths.get(app_name)
+        return sorted(paths)[0] if paths else None
 
     def trust_for(self, app_name: str) -> TrustInfo:
         """Para la UI: veredicto del snapshot (sin IO). Una app nunca vista
