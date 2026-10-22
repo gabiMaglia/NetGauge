@@ -55,6 +55,9 @@ class EtwCaptureService(CaptureService):
         self.on_failure: Callable[[], None] | None = None
 
     def _resolve_name(self, pid: int) -> str:
+        # Corre DENTRO del callback de ETW. El primer evento de un PID hace IO
+        # (psutil + version.dll); los siguientes son hits O(1) del cache de
+        # app_names, re-verificado por create_time cada pocos segundos.
         return friendly_name(pid)
 
     def _build_session(self):
