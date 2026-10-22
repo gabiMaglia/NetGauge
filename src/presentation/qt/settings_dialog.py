@@ -151,6 +151,15 @@ class SettingsDialog(QDialog):
         geoip_hint.setWordWrap(True)
         root.addWidget(geoip_hint)
 
+        self._updates = QCheckBox(t("dlg.settings.updates"))
+        self._updates.setChecked(settings.check_updates)
+        root.addWidget(self._updates)
+
+        updates_hint = QLabel(t("dlg.settings.updates_hint"))
+        updates_hint.setObjectName("FieldLabel")
+        updates_hint.setWordWrap(True)
+        root.addWidget(updates_hint)
+
         self._anomaly = QCheckBox(t("dlg.settings.anomaly"))
         self._anomaly.setChecked(settings.anomaly_alerts_enabled)
         root.addWidget(self._anomaly)
@@ -213,4 +222,5 @@ class SettingsDialog(QDialog):
         self._settings.virustotal_api_key = self._vt_key.text().strip()
         self._settings.geoip_enabled = self._geoip.isChecked()
         self._settings.anomaly_alerts_enabled = self._anomaly.isChecked()
+        self._settings.check_updates = self._updates.isChecked()
         return self._settings

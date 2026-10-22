@@ -70,6 +70,9 @@ class MainWindow(QWidget):
     # OTRO hilo; la conexión encolada garantiza que _refresh corre en el GUI.
     snapshot_ready = Signal()
 
+    # Callback opcional (lo cablea app.run) tras guardar Ajustes.
+    on_settings_saved = None
+
     def __init__(self, monitor: MonitorService, per_process: bool) -> None:
         super().__init__()
         self._monitor = monitor
@@ -540,6 +543,8 @@ class MainWindow(QWidget):
             set_language(new.language)
             self._retranslate()
             self._refresh()
+            if self.on_settings_saved is not None:
+                self.on_settings_saved(new)
 
     def _open_about(self) -> None:
         dlg = AboutDialog(self)

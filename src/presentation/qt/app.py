@@ -101,6 +101,11 @@ def _fix_dpi_rounding_policy() -> None:
         pass
 
 
+def should_check_updates(settings) -> bool:
+    """Decide, en el momento de disparar, si toca buscar actualizaciones."""
+    return bool(settings.check_updates)
+
+
 def create_app() -> QApplication:
     """Crea la QApplication (antes de abrir la DB: el chequeo de instancia única la usa)."""
     _set_app_user_model_id()
@@ -223,12 +228,26 @@ def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
                                  t("alert.update.body", v=ver, url=url), url)
 
     def start_update_check() -> None:
+        # Se lee la opción AL DISPARAR: apagarla en Ajustes frena los chequeos
+        # futuros sin reiniciar; encenderla los retoma.
+        if not should_check_updates(monitor.settings):
+            return
         threading.Thread(target=check_updates, daemon=True).start()
 
     start_update_check()
     update_timer = QTimer(window)
     update_timer.timeout.connect(start_update_check)
     update_timer.start(_UPDATE_CHECK_MS)
+
+    # Al pasar de apagado a encendido en Ajustes, chequear ya (sin esperar 24 h).
+    updates_were_on = [should_check_updates(monitor.settings)]
+
+    def on_settings_saved(settings) -> None:
+        now_on = should_check_updates(settings)
+        if now_on and not updates_were_on[0]:
+            start_update_check()
+        updates_were_on[0] = now_on
+    window.on_settings_saved = on_settings_saved
 
     tray.show()
     monitor.start()
