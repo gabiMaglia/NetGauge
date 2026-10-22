@@ -13,12 +13,15 @@ cae automáticamente al PsutilCaptureService (medición global).
 """
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Callable
 
 from ...domain.models import TrafficSample
 from ...domain.ports import CaptureService
 from .app_names import friendly_name
+
+log = logging.getLogger(__name__)
 
 
 class CaptureUnavailable(RuntimeError):
@@ -45,6 +48,11 @@ class EtwCaptureService(CaptureService):
         self._etw = None
         self._thread: threading.Thread | None = None
         self._on_sample: Callable[[TrafficSample], None] | None = None
+        self._sample_errors = 0
+        # Salud: si la sesión ETW muere, failed=True y se avisa a on_failure
+        # (lo engancha FallbackCaptureService para degradar a psutil).
+        self.failed = False
+        self.on_failure: Callable[[], None] | None = None
 
     def _resolve_name(self, pid: int) -> str:
         return friendly_name(pid)
@@ -69,7 +77,8 @@ class EtwCaptureService(CaptureService):
             size = int(data.get("size", data.get("Size", 0)))
         except (ValueError, TypeError, AttributeError):
             return
-        if pid <= 0 or size <= 0 or self._on_sample is None:
+        on_sample = self._on_sample
+        if pid <= 0 or size <= 0 or on_sample is None:
             return
 
         sent = size if event_id in _SENT_EVENTS or event_id in _UDP_SENT else 0
@@ -77,25 +86,53 @@ class EtwCaptureService(CaptureService):
         if sent == 0 and recv == 0:
             return
 
-        self._on_sample(
-            TrafficSample(
-                pid=pid,
-                app_name=self._resolve_name(pid),
-                bytes_sent=sent,
-                bytes_recv=recv,
+        try:
+            on_sample(
+                TrafficSample(
+                    pid=pid,
+                    app_name=self._resolve_name(pid),
+                    bytes_sent=sent,
+                    bytes_recv=recv,
+                )
             )
-        )
+        except Exception:  # noqa: BLE001
+            # Nunca propagar al callback de pywintrace (puede matar el consumer).
+            # Log con throttle: ETW emite cientos de eventos por segundo.
+            if self._sample_errors % 1000 == 0:
+                log.exception("ETW: on_sample falló (%d errores)", self._sample_errors + 1)
+            self._sample_errors += 1
 
     def start(self, on_sample: Callable[[TrafficSample], None]) -> None:
         self._on_sample = on_sample
+        self.failed = False
         self._etw = self._build_session()
-        self._thread = threading.Thread(target=self._etw.start, daemon=True)
+        self._thread = threading.Thread(
+            target=self._run, args=(self._etw,), daemon=True
+        )
         self._thread.start()
 
+    def _run(self, session) -> None:
+        try:
+            session.start()
+        except Exception:  # noqa: BLE001
+            log.exception("ETW: la sesión de captura falló")
+            self.failed = True
+            callback = self.on_failure
+            if callback is not None:
+                try:
+                    callback()
+                except Exception:  # noqa: BLE001
+                    log.exception("ETW: fallo activando el fallback")
+
     def stop(self) -> None:
-        if self._etw is not None:
+        session, self._etw = self._etw, None
+        if session is not None:
             try:
-                self._etw.stop()
-            except Exception:
-                pass
-            self._etw = None
+                session.stop()
+            except Exception:  # noqa: BLE001
+                log.debug("ETW: fallo al detener la sesión", exc_info=True)
+        thread, self._thread = self._thread, None
+        # on_failure -> FallbackCaptureService -> stop() corre en el propio hilo.
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=2.0)
+        self._on_sample = None
