@@ -27,6 +27,7 @@ from src.infrastructure.capture.trust import WindowsTrustEvaluator
 from src.infrastructure.persistence.settings_store import JsonSettingsStore
 from src.infrastructure.persistence.sqlite_repository import SqliteUsageRepository
 from src.infrastructure.reporting.report_generator import CsvReportGenerator
+from src.infrastructure.reporting.rotation import rotate_reports
 from src.infrastructure.reporting.pdf_report_generator import PdfReportGenerator
 from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerator
 from src.presentation.qt.app import QtNotifier, run
@@ -151,6 +152,12 @@ def main() -> None:
     capture, per_process = create_capture_service(prefer_etw=True)
     repository = SqliteUsageRepository(_data_dir() / "usage.db")
     reporter = CsvReportGenerator(_data_dir() / "reports")
+    # Informes de sesiones anteriores: conservar solo los últimos 20 (el de esta
+    # sesión se genera al cerrar, así que quedan <= 21 tras el cierre).
+    try:
+        rotate_reports(_data_dir() / "reports", keep=20)
+    except Exception:  # noqa: BLE001 — la limpieza nunca debe impedir el arranque
+        logging.exception("Fallo rotando informes viejos")
     settings_store = JsonSettingsStore(_data_dir() / "settings.json")
 
     # Notifier Qt: thread-safe vía señal; se enlaza al tray dentro de run().
