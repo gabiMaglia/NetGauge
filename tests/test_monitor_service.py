@@ -447,3 +447,19 @@ def test_update_settings_quota_change_rearms_alerts(settings, notifier):
         m.settings, daily_quota_gb=m.settings.daily_quota_gb * 0.9))
     m._check_quota_alerts()
     assert len(notifier.messages) == 4
+
+
+# ---- purga fallida: se loguea y se reintenta (re-auditoría A9) --------------
+class _BoomPurgeRepo(FakeRepo):
+    def purge_older_than(self, cutoff):
+        raise sqlite3.OperationalError("database is locked")
+
+
+def test_failed_purge_is_logged_and_not_marked_done(settings, notifier, caplog):
+    import logging
+    settings.retention_days = 30
+    m = make_monitor(settings, notifier, _BoomPurgeRepo())
+    with caplog.at_level(logging.ERROR):
+        m._purge_if_due()
+    assert "locked" in caplog.text
+    assert m._last_purge is None   # reintenta en el próximo tick

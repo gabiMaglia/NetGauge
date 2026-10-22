@@ -317,11 +317,12 @@ class MonitorService:
         # A lo sumo una purga cada 6 horas (barato y suficiente).
         if self._last_purge and (now - self._last_purge) < timedelta(hours=6):
             return
-        self._last_purge = now
         try:
             self._repo.purge_older_than(now - timedelta(days=days))
         except Exception:  # noqa: BLE001
-            pass
+            log.exception("Fallo purgando el histórico; se reintenta en el próximo tick")
+            return
+        self._last_purge = now  # sólo si tuvo éxito
 
     def _flush(self) -> None:
         with self._lock:
