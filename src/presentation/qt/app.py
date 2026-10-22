@@ -101,19 +101,19 @@ def _fix_dpi_rounding_policy() -> None:
         pass
 
 
-def run(monitor: MonitorService, per_process: bool, notifier: QtNotifier) -> int:
+def create_app() -> QApplication:
+    """Crea la QApplication (antes de abrir la DB: el chequeo de instancia única la usa)."""
     _set_app_user_model_id()
     _fix_dpi_rounding_policy()
-    app = QApplication(sys.argv)
+    return QApplication(sys.argv)
+
+
+def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
+        per_process: bool, notifier: QtNotifier) -> int:
     load_app_fonts()  # registrar Plus Jakarta Sans bundleada (no depende del SO)
     app.setQuitOnLastWindowClosed(False)  # cerrar la ventana NO cierra la app
     app_icon = make_app_qicon()
     app.setWindowIcon(app_icon)  # ícono de marca en diálogos (About, Cuota)
-
-    # Instancia única: si ya hay una corriendo, le pedimos que se muestre y salimos.
-    guard = SingleInstance()
-    if guard.already_running():
-        return 0
 
     monitor.set_translator(t)  # avisos (cuota/anomalías) en el idioma elegido
 

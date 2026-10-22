@@ -30,7 +30,8 @@ from src.infrastructure.reporting.report_generator import CsvReportGenerator
 from src.infrastructure.reporting.rotation import rotate_reports
 from src.infrastructure.reporting.pdf_report_generator import PdfReportGenerator
 from src.infrastructure.reporting.xlsx_report_generator import XlsxReportGenerator
-from src.presentation.qt.app import QtNotifier, run
+from src.presentation.qt.app import QtNotifier, create_app, run
+from src.presentation.qt.single_instance import SingleInstance
 
 
 _APP_NAME = "NetGauge"
@@ -133,8 +134,48 @@ def _shutdown(monitor: MonitorService, repository: UsageRepository) -> None:
         repository.close()
 
 
-def main() -> None:
+def _log_uncaught(exc_type, exc, tb) -> None:
+    """sys.excepthook: deja rastro en el log de excepciones no atrapadas (exe windowed)."""
+    logging.getLogger(__name__).critical(
+        "Excepción no atrapada", exc_info=(exc_type, exc, tb))
+
+
+def _show_fatal(exc: BaseException) -> None:
+    """Aviso mínimo best-effort al usuario: un exe windowed no tiene consola."""
+    try:
+        from PySide6.QtWidgets import QApplication, QMessageBox
+        _app = QApplication.instance() or QApplication(sys.argv)
+        QMessageBox.critical(
+            None, _APP_NAME,
+            f"{_APP_NAME} could not start / no pudo iniciar.\n\n{exc}\n\n"
+            f"Log: {_LOG_FILE}")
+    except Exception:  # noqa: BLE001 — nunca debe enmascarar el error original
+        pass
+
+
+def main() -> int:
+    """Arranca la app. Devuelve el código de salida; nunca propaga excepciones."""
+    try:
+        return _start()
+    except Exception as exc:  # noqa: BLE001
+        try:  # puede haber fallado antes de configurar el log
+            _setup_logging(_data_dir())
+        except Exception:  # noqa: BLE001
+            pass
+        logging.getLogger(__name__).exception("Fallo fatal en el arranque")
+        _show_fatal(exc)
+        return 1
+
+
+def _start() -> int:
     data_dir = _data_dir()
+
+    # Instancia única ANTES de tocar la DB: una 2ª instancia (tarea ONLOGON +
+    # doble clic) durante una migración larga no debe competir por el lock.
+    app = create_app()
+    guard = SingleInstance()
+    if guard.already_running():
+        return 0
 
     # Migración única desde la instalación previa "trafficMe" (rename T-016): si el
     # usuario actualiza, traemos su historial para que no "desaparezca". Antes de
@@ -146,6 +187,7 @@ def main() -> None:
         pass
 
     _setup_logging(data_dir)
+    sys.excepthook = _log_uncaught
     if migrated:
         logging.info("Historial migrado desde la instalación previa (trafficMe).")
 
@@ -205,8 +247,8 @@ def main() -> None:
         signal.signal(signal.SIGTERM, _on_signal)
         signal.signal(signal.SIGINT, _on_signal)
 
-    run(monitor, per_process, notifier)
+    return run(app, guard, monitor, per_process, notifier)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
