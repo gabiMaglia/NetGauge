@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
+import { LEGACY_HOST } from '../site.config.ts';
 import { DEFAULT_LANG, LANGS, LANG_PATH, type Lang } from '../src/lang.ts';
 import {
-  PREF_REDIRECT,
   langFromPath,
+  prefRedirect,
+  legacyHostRedirect,
   renderBody,
   renderHead,
   renderRobots,
@@ -22,6 +24,7 @@ const BODY = ['<!--ng:body-->', '<!--/ng:body-->'] as const;
  */
 export function prerender(opts: { siteUrl: string }): Plugin {
   let root = process.cwd();
+  let base = '/';
   const landing = () => fs.readFileSync(path.join(root, 'src/landing.html'), 'utf8');
   const block = (marks: readonly [string, string], inner: string) => `${marks[0]}${inner}${marks[1]}`;
   const replaceBlock = (html: string, marks: readonly [string, string], inner: string) => {
@@ -36,26 +39,27 @@ export function prerender(opts: { siteUrl: string }): Plugin {
     name: 'ng-prerender',
     configResolved(c) {
       root = c.root;
+      base = c.base; // misma base que usa Vite para los assets
     },
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        const lang = langFromPath(ctx.originalUrl ?? ctx.path ?? '/');
+        const lang = langFromPath(ctx.originalUrl ?? ctx.path ?? '/', base);
         let out = html
-          .replace('<!--ng:pref-redirect-->', () => `<script>${PREF_REDIRECT}</script>`)
+          .replace('<!--ng:pref-redirect-->', () => `<script>${legacyHostRedirect(LEGACY_HOST, opts.siteUrl, base)};${prefRedirect(base)}</script>`)
           .replace(HEAD[0] + HEAD[1], () => block(HEAD, renderHead(lang, opts.siteUrl)))
-          .replace(BODY[0] + BODY[1], () => block(BODY, renderBody(landing(), lang)));
+          .replace(BODY[0] + BODY[1], () => block(BODY, renderBody(landing(), lang, base)));
         out = setLang(out, lang);
         return out;
       },
     },
     writeBundle(options) {
       const dist = options.dir ?? path.join(root, 'dist');
-      const base = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
+      const built = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
       for (const lang of LANGS) {
         if (lang === DEFAULT_LANG) continue;
-        let html = replaceBlock(base, HEAD, renderHead(lang, opts.siteUrl));
-        html = replaceBlock(html, BODY, renderBody(landing(), lang));
+        let html = replaceBlock(built, HEAD, renderHead(lang, opts.siteUrl));
+        html = replaceBlock(html, BODY, renderBody(landing(), lang, base));
         html = setLang(html, lang);
         const dir = path.join(dist, LANG_PATH[lang]);
         fs.mkdirSync(dir, { recursive: true });

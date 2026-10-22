@@ -13,8 +13,10 @@ const escText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 const escAttr = (s: string) => escText(s).replace(/"/g, '&quot;');
 
 /** Idioma de una URL de la landing (`/en/…` → en; cualquier otra → ES). */
-export function langFromPath(path: string): Lang {
-  const seg = path.split(/[?#]/)[0].split('/').filter(Boolean)[0];
+export function langFromPath(path: string, base = '/'): Lang {
+  const clean = path.split(/[?#]/)[0];
+  const rest = clean.startsWith(base) ? clean.slice(base.length) : clean;
+  const seg = rest.split('/').filter(Boolean)[0];
   return (LANGS as string[]).includes(seg ?? '') && seg !== DEFAULT_LANG ? (seg as Lang) : DEFAULT_LANG;
 }
 
@@ -93,13 +95,23 @@ function runtimeJson(lang: Lang): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
-export function renderBody(landingHtml: string, lang: Lang): string {
+/** Base pública (`/apps/netgauge/`) derivada de la SITE_URL: única fuente, igual que el `base` de Vite. */
+export function baseOf(siteUrl: string): string {
+  return new URL(siteUrl).pathname.replace(/\/+$/, '') + '/';
+}
+
+/** Los hrefs absolutos del markup (`/`, `/en/`, `/pt/`) pasan a vivir bajo la base. */
+export function applyBase(html: string, base: string): string {
+  return html.replace(/(\shref=")\/(?!\/)/g, `$1${base}`);
+}
+
+export function renderBody(landingHtml: string, lang: Lang, base = '/'): string {
   const d = dictionaries[lang];
   const noscript =
     `<noscript><p style="margin:0;padding:16px 24px;background:#0a0f1a;color:#e6f0fa;font-family:system-ui,sans-serif;font-size:14px">` +
     `${escText(d['noscript.text'])} <a href="${REPO}/releases/latest" style="color:#7cc3f5">${escText(d['noscript.link'])}</a>.</p></noscript>`;
   return (
-    fillI18n(landingHtml, lang) +
+    applyBase(fillI18n(landingHtml, lang), base) +
     `\n<script type="application/json" id="ng-rt">${runtimeJson(lang)}</script>\n${noscript}\n`
   );
 }
@@ -147,7 +159,8 @@ export function renderHead(lang: Lang, siteUrl: string): string {
 }
 
 /** Script inline mínimo: si el usuario eligió otro idioma antes, `/` lo lleva a su ruta. */
-export const PREF_REDIRECT = `(function(){try{var l=localStorage.getItem('${LANG_STORAGE_KEY}');var p={en:'/en/',pt:'/pt/'}[l];if(p&&location.pathname==='/')location.replace(p+location.search+location.hash)}catch(e){}})()`;
+export const prefRedirect = (base: string) =>
+  `(function(){try{var l=localStorage.getItem('${LANG_STORAGE_KEY}');var p={en:'${base}en/',pt:'${base}pt/'}[l];if(p&&location.pathname==='${base}')location.replace(p+location.search+location.hash)}catch(e){}})()`;
 
 export function renderSitemap(siteUrl: string, lastmod: string): string {
   const links = (): string =>
@@ -166,3 +179,10 @@ export function renderSitemap(siteUrl: string, lastmod: string): string {
 export function renderRobots(siteUrl: string): string {
   return `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`;
 }
+
+/**
+ * Redirección del host viejo al canónico, preservando path/query/hash. Es client-side
+ * a propósito: ver LEGACY_HOST en site.config.ts (un 308 por host rompería el proxy).
+ */
+export const legacyHostRedirect = (legacyHost: string, siteUrl: string, base: string) =>
+  `(function(){if(location.hostname==='${legacyHost}'){location.replace('${new URL(siteUrl).origin}${base}'+location.pathname.replace(/^\\/+/,'')+location.search+location.hash)}})()`;

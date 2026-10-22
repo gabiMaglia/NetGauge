@@ -5,7 +5,7 @@ import { LANGS } from '../src/lang.ts';
 import { fillI18n, langFromPath, renderBody, renderHead, renderRobots, renderSitemap } from '../build/prerender.ts';
 
 const landing = fs.readFileSync(new URL('../src/landing.html', import.meta.url), 'utf8');
-const SITE = 'https://netgauge.app';
+const SITE = 'https://www.gabrielmaglia.me/apps/netgauge';
 
 test('langFromPath: raíz = ES, /en/ y /pt/ por prefijo', () => {
   assert.equal(langFromPath('/'), 'es');
@@ -40,10 +40,10 @@ test('la descripción de macOS firmado/Windows sin firmar está en los 3 idiomas
 
 test('head: canonical, hreflang x4, og:url/image absolutos y locale por idioma', () => {
   const head = renderHead('en', SITE);
-  assert.match(head, /<link rel="canonical" href="https:\/\/netgauge\.app\/en\/" \/>/);
+  assert.match(head, /<link rel="canonical" href="https:\/\/www\.gabrielmaglia\.me\/apps\/netgauge\/en\/" \/>/);
   for (const l of ['es', 'en', 'pt', 'x-default']) assert.match(head, new RegExp(`hreflang="${l}"`));
-  assert.match(head, /og:url" content="https:\/\/netgauge\.app\/en\/"/);
-  assert.match(head, /og:image" content="https:\/\/netgauge\.app\/og-image\.png"/);
+  assert.match(head, /og:url" content="https:\/\/www\.gabrielmaglia\.me\/apps\/netgauge\/en\/"/);
+  assert.match(head, /og:image" content="https:\/\/www\.gabrielmaglia\.me\/apps\/netgauge\/og-image\.png"/);
   assert.match(head, /og:locale" content="en_US"/);
   assert.match(head, /summary_large_image/);
 });
@@ -51,8 +51,8 @@ test('head: canonical, hreflang x4, og:url/image absolutos y locale por idioma',
 test('sitemap con alternates y robots con la URL absoluta', () => {
   const xml = renderSitemap(SITE, '2026-01-01');
   assert.equal((xml.match(/<url>/g) ?? []).length, 3);
-  assert.match(xml, /hreflang="x-default" href="https:\/\/netgauge\.app\/"/);
-  assert.match(renderRobots(SITE), /Sitemap: https:\/\/netgauge\.app\/sitemap\.xml/);
+  assert.match(xml, /hreflang="x-default" href="https:\/\/www\.gabrielmaglia\.me\/apps\/netgauge\/"/);
+  assert.match(renderRobots(SITE), /Sitemap: https:\/\/www\.gabrielmaglia\.me\/apps\/netgauge\/sitemap\.xml/);
 });
 
 test('SITE_URL personalizado se propaga a todo', () => {

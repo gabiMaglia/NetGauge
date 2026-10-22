@@ -23,13 +23,13 @@ npm test           # node --test (sin dependencias extra)
 ```
 
 Para verlo en local tal como sale a producción:
-`npm run build && npm run preview` y abrir `http://localhost:4173/`,
-`/en/` y `/pt/`.
+`npm run build && npm run preview` y abrir `http://localhost:4173/apps/netgauge/`,
+`/apps/netgauge/en/` y `/apps/netgauge/pt/`.
 
 ## Dominio (SITE_URL)
 
 La constante única vive en `site.config.ts` (`DEFAULT_SITE_URL`, hoy
-`https://netgauge.app`) y se puede sobreescribir por entorno:
+`https://www.gabrielmaglia.me/apps/netgauge`) y se puede sobreescribir por entorno:
 
 ```bash
 VITE_SITE_URL=https://otro-dominio.com npm run build
@@ -39,6 +39,20 @@ De ahí salen `canonical`, `hreflang`, `og:url`, `og:image` (absoluta),
 `sitemap.xml` y `robots.txt`. Si el dominio final es otro, cambiá el default en
 `site.config.ts` o definí `VITE_SITE_URL` en el CI/hosting y rebuild. Nada más
 hardcodea el dominio.
+
+### Base `/apps/netgauge/` y host viejo
+
+La landing vive en `https://www.gabrielmaglia.me/apps/netgauge/`: el portfolio
+hace un rewrite server-side a `net-gauge-brown.vercel.app` y los archivos siguen
+en la raíz del deploy. Vite usa `base: BASE_PATH` (`site.config.ts`) y el
+prerender reutiliza esa misma base para los links del switcher (`/en/`, `/pt/`)
+y el redirect de preferencia. El test `tests/base.test.ts` buildea y falla si
+algún asset/font/favicon no lleva la base o queda `netgauge.app`.
+
+El host viejo redirige **client-side** (script inline en `<head>`, solo si
+`location.hostname === 'net-gauge-brown.vercel.app'`). No se usó un redirect de
+`vercel.json` por host porque el request proxeado llega a Vercel con
+`Host: net-gauge-brown.vercel.app` y recibiría el 308, rompiendo el proxy.
 
 ## Rutas por idioma y prerender
 
