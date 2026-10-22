@@ -76,3 +76,42 @@ def test_valid_settings_do_not_create_backup(tmp_path):
 
     assert JsonSettingsStore(path).load().monthly_quota_gb == 10.0
     assert not (tmp_path / "settings.json.bak").exists()
+
+
+# ---- re-auditoría A8: error transitorio de lectura no pisa la config real ----
+def test_transient_read_error_does_not_overwrite_real_settings(tmp_path, monkeypatch):
+    path = tmp_path / "settings.json"
+    JsonSettingsStore(path).save(Settings(monthly_quota_gb=50.0))
+    store = JsonSettingsStore(path)
+    monkeypatch.setattr(ss.time, "sleep", lambda _s: None, raising=False)
+    real_read = type(path).read_text
+
+    def locked(self, *a, **k):
+        if self.name == "settings.json":
+            raise PermissionError("antivirus")
+        return real_read(self, *a, **k)
+
+    monkeypatch.setattr(type(path), "read_text", locked)
+    assert store.load() == Settings()          # defaults para poder arrancar
+    store.save(Settings(monthly_quota_gb=1.0))  # no debe pisar el archivo real
+
+    monkeypatch.undo()
+    assert json.loads(path.read_text("utf-8"))["monthly_quota_gb"] == 50.0
+
+
+def test_transient_read_error_is_retried(tmp_path, monkeypatch):
+    path = tmp_path / "settings.json"
+    JsonSettingsStore(path).save(Settings(monthly_quota_gb=7.0))
+    store = JsonSettingsStore(path)
+    monkeypatch.setattr(ss.time, "sleep", lambda _s: None, raising=False)
+    real_read = type(path).read_text
+    state = {"n": 0}
+
+    def flaky(self, *a, **k):
+        state["n"] += 1
+        if state["n"] < 3:
+            raise PermissionError("onedrive")
+        return real_read(self, *a, **k)
+
+    monkeypatch.setattr(type(path), "read_text", flaky)
+    assert store.load().monthly_quota_gb == 7.0

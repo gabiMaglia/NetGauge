@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import shutil
+import time
 from pathlib import Path
 
 from ...domain.models import Settings
@@ -12,17 +13,41 @@ from ...domain.ports import SettingsStore
 
 _log = logging.getLogger(__name__)
 
+_READ_RETRIES = 3
+_READ_RETRY_DELAY_S = 0.1
+
 
 class JsonSettingsStore(SettingsStore):
     def __init__(self, path: str | Path) -> None:
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
+        # True si no pudimos LEER un settings.json existente (AV/OneDrive): save()
+        # no-op para no pisar la config real con defaults.
+        self._read_failed = False
+
+    def _read_text(self) -> str:
+        for attempt in range(_READ_RETRIES):
+            try:
+                return self._path.read_text("utf-8")
+            except OSError:
+                if attempt == _READ_RETRIES - 1:
+                    raise
+                time.sleep(_READ_RETRY_DELAY_S)
+        raise AssertionError("unreachable")
 
     def load(self) -> Settings:
         if not self._path.exists():
             return Settings()
         try:
-            return Settings.from_dict(json.loads(self._path.read_text("utf-8")))
+            text = self._read_text()
+        except OSError:
+            self._read_failed = True
+            _log.warning("No se pudo leer %s (error transitorio): defaults en memoria y "
+                         "no se sobrescribe el archivo.", self._path.name, exc_info=True)
+            return Settings()
+        self._read_failed = False
+        try:
+            return Settings.from_dict(json.loads(text))
         except Exception as exc:  # noqa: BLE001 — JSON roto/tipos raros: nunca impedir el arranque
             self._backup_corrupt(exc)
             return Settings()
@@ -38,6 +63,10 @@ class JsonSettingsStore(SettingsStore):
                      self._path.name, exc, bak.name)
 
     def save(self, settings: Settings) -> None:
+        if self._read_failed:
+            _log.warning("Lectura previa fallida: no se guarda %s para no pisar la "
+                         "configuración real.", self._path.name)
+            return
         # Escritura atómica: tmp + os.replace. Un crash a mitad deja el archivo viejo.
         tmp = self._path.with_name(self._path.name + ".tmp")
         try:
