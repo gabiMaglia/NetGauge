@@ -34,3 +34,8 @@ Thumbs.db
 
 # Ledger local de ejecucion de planes
 .superpowers/
+
+# Material interno de trabajo (local, no publicar)
+engram/
+.claude/
+design_handoff_*/
