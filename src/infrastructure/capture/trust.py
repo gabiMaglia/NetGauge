@@ -94,6 +94,31 @@ class _WINTRUST_CATALOG_INFO(ctypes.Structure):
     ]
 
 
+class _BLOB(ctypes.Structure):
+    """CRYPT_INTEGER_BLOB / CERT_NAME_BLOB / CRYPT_OBJID_BLOB: {cbData, pbData}."""
+    _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.c_void_p)]
+
+
+class _CMSG_SIGNER_INFO(ctypes.Structure):
+    # Sólo el prefijo que usamos (el resto del struct no se accede).
+    _fields_ = [("dwVersion", wintypes.DWORD),
+                ("Issuer", _BLOB),
+                ("SerialNumber", _BLOB)]
+
+
+class _CRYPT_ALGORITHM_IDENTIFIER(ctypes.Structure):
+    _fields_ = [("pszObjId", ctypes.c_void_p), ("Parameters", _BLOB)]
+
+
+class _CERT_INFO(ctypes.Structure):
+    # Prefijo hasta Issuer; CertFindCertificateInStore(SUBJECT_CERT) sólo lee
+    # Issuer y SerialNumber.
+    _fields_ = [("dwVersion", wintypes.DWORD),
+                ("SerialNumber", _BLOB),
+                ("SignatureAlgorithm", _CRYPT_ALGORITHM_IDENTIFIER),
+                ("Issuer", _BLOB)]
+
+
 _WTD_CHOICE_CATALOG = 2
 _GENERIC_READ = 0x80000000
 _FILE_SHARE_READ = 0x00000001
@@ -145,6 +170,7 @@ def _api() -> SimpleNamespace:
     _proto(c32.CryptMsgGetParam, B, [V, D, D, V, V])
     _proto(c32.CertEnumCertificatesInStore, V, [V, V])
     _proto(c32.CertGetNameStringW, D, [V, D, D, V, V, D])
+    _proto(c32.CertFindCertificateInStore, V, [V, D, D, D, V, V])
     _proto(c32.CertFreeCertificateContext, B, [V])
     _proto(c32.CertCloseStore, B, [V, D])
     _proto(c32.CryptMsgClose, B, [V])
@@ -284,6 +310,7 @@ def _signer_name(path: str) -> str | None:
     X509_ASN_ENCODING = 0x00000001
     CMSG_SIGNER_INFO_PARAM = 6
     CERT_NAME_SIMPLE_DISPLAY_TYPE = 4
+    CERT_FIND_SUBJECT_CERT = 0x000B0000
     try:
         crypt32 = _api().c32
         h_store = ctypes.c_void_p()
@@ -303,8 +330,15 @@ def _signer_name(path: str) -> str | None:
             if not crypt32.CryptMsgGetParam(
                     h_msg, CMSG_SIGNER_INFO_PARAM, 0, buf, ctypes.byref(size)):
                 return None
-            # El primer cert del store suele ser el del firmante.
-            ctx = crypt32.CertEnumCertificatesInStore(h_store, None)
+            # El store PKCS7 trae también CA y timestamp: hay que ubicar el cert
+            # del firmante por Issuer+SerialNumber del SignerInfo.
+            signer = ctypes.cast(buf, ctypes.POINTER(_CMSG_SIGNER_INFO)).contents
+            cert_info = _CERT_INFO()
+            cert_info.Issuer = signer.Issuer
+            cert_info.SerialNumber = signer.SerialNumber
+            ctx = crypt32.CertFindCertificateInStore(
+                h_store, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0,
+                CERT_FIND_SUBJECT_CERT, ctypes.byref(cert_info), None)
             if not ctx:
                 return None
             try:

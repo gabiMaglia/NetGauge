@@ -112,3 +112,17 @@ def test_verify_catalog_en_loop_no_crashea():
     for _ in range(100):
         trust._verify_catalog(path, "SHA256")
         trust._verify_catalog(path, None)
+
+
+@win_only
+def test_signer_name_es_el_firmante_no_la_ca():
+    import os
+    import sys
+
+    explorer = os.path.join(os.environ["SystemRoot"], "explorer.exe")
+    name = trust._signer_name(explorer)
+    assert name and name.startswith("Microsoft Windows")
+    assert "PCA" not in name
+    py = trust._signer_name(sys.executable)
+    if py is not None:  # python.exe puede no estar firmado en todos los entornos
+        assert "PCA" not in py and "Timestamp" not in py
