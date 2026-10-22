@@ -7,7 +7,7 @@ openpyxl>=3.1,<4
 reportlab>=4.0,<5
 # (pystray/Pillow ya no se usan: la UI y el tray ahora son Qt)
 # API key de VirusTotal en el almacén de credenciales del SO (MIT).
-keyring>=25,<26
+keyring>=25.7.0,<26
 # ETW por proceso (opcional pero recomendado; requiere Administrador):
 # Nota: la última versión publicada en PyPI es 0.2.0.
 pywintrace>=0.2.0,<1; sys_platform == "win32"
