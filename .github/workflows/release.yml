@@ -149,19 +149,19 @@ jobs:
       contents: write
     steps:
       - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: NetGauge-windows-exe
           path: release-assets
 
       - name: Download macOS x86_64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: NetGauge-macos-x86_64
           path: release-assets
 
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: NetGauge-macos-arm64
           path: release-assets
