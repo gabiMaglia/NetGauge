@@ -135,15 +135,19 @@ class SqliteUsageRepository(UsageRepository):
         if not rows:
             return
         with self._lock:
-            self._conn.executemany(
-                "INSERT INTO usage (app_name, minute, recorded_at, bytes_sent, bytes_recv) "
-                "VALUES (?, ?, ?, ?, ?) "
-                "ON CONFLICT (app_name, minute) DO UPDATE SET "
-                "bytes_sent = bytes_sent + excluded.bytes_sent, "
-                "bytes_recv = bytes_recv + excluded.bytes_recv",
-                rows,
-            )
-            self._conn.commit()
+            try:
+                self._conn.executemany(
+                    "INSERT INTO usage (app_name, minute, recorded_at, bytes_sent, bytes_recv) "
+                    "VALUES (?, ?, ?, ?, ?) "
+                    "ON CONFLICT (app_name, minute) DO UPDATE SET "
+                    "bytes_sent = bytes_sent + excluded.bytes_sent, "
+                    "bytes_recv = bytes_recv + excluded.bytes_recv",
+                    rows,
+                )
+                self._conn.commit()
+            except BaseException:
+                self._conn.rollback()  # sin esto, el retry duplica las filas parciales
+                raise
 
     def usage_between(self, start: datetime, end: datetime) -> list[UsageRecord]:
         with self._lock:
@@ -174,12 +178,16 @@ class SqliteUsageRepository(UsageRepository):
         total = 0
         while True:
             with self._lock:  # lock por lote: save_batch puede intercalarse
-                cur = self._conn.execute(
-                    "DELETE FROM usage WHERE id IN "
-                    "(SELECT id FROM usage WHERE recorded_at < ? LIMIT ?)",
-                    (cutoff.isoformat(), _PURGE_CHUNK),
-                )
-                self._conn.commit()
+                try:
+                    cur = self._conn.execute(
+                        "DELETE FROM usage WHERE id IN "
+                        "(SELECT id FROM usage WHERE recorded_at < ? LIMIT ?)",
+                        (cutoff.isoformat(), _PURGE_CHUNK),
+                    )
+                    self._conn.commit()
+                except BaseException:
+                    self._conn.rollback()
+                    raise
             deleted = cur.rowcount or 0
             total += deleted
             if deleted < _PURGE_CHUNK:

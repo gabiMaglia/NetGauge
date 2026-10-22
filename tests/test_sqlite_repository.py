@@ -248,3 +248,20 @@ def test_purge_releases_free_pages(repo, tmp_path):
         assert conn.execute("PRAGMA freelist_count").fetchone()[0] == 0
     finally:
         conn.close()
+
+
+def test_save_batch_failure_rolls_back_so_retry_is_exact(repo, tmp_path):
+    batch = [UsageRecord("a", 100, 0, T0), UsageRecord("b", 50, 0, T0)]
+    repo._conn.execute(
+        "CREATE TEMP TRIGGER boom BEFORE INSERT ON usage WHEN NEW.app_name='b' "
+        "BEGIN SELECT RAISE(ABORT,'x'); END"
+    )
+    with pytest.raises(sqlite3.DatabaseError):
+        repo.save_batch(batch)
+    repo._conn.execute("DROP TRIGGER boom")
+
+    repo.save_batch(batch)  # reintento exitoso
+
+    totals = {r.app_name: r.bytes_sent for r in repo.totals_by_app(
+        T0 - timedelta(hours=1), T0 + timedelta(hours=1))}
+    assert totals == {"a": 100, "b": 50}
