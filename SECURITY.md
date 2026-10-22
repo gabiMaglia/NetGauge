@@ -33,5 +33,5 @@ Estos puntos **ya son conocidos y están documentados**; no hace falta reportarl
   (ver sección *Privacidad* del [README](README.md)).
 - GeoIP usa `http://ip-api.com` (plan gratuito, sin cifrado en tránsito).
 - Los binarios **no están firmados** (SmartScreen / Gatekeeper avisan al abrirlos).
-  Verificá la integridad con el archivo `SHA256SUMS` adjunto a cada release.
+  Verificá la integridad con el archivo `SHA256SUMS.txt` adjunto a cada release.
 - En Windows la app corre elevada (administrador) para usar ETW.

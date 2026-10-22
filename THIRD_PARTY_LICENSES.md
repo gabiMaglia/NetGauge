@@ -33,11 +33,16 @@ NetGauge **no modifica** PySide6 ni Qt; se usan tal cual se publican en PyPI.
 
 **Cómo usar una versión modificada de Qt/PySide6 con NetGauge:**
 
-Los ejecutables publicados son de tipo *one-file* de PyInstaller: las librerías
-Qt viajan comprimidas dentro del `.exe` / `.app` y se extraen a una carpeta
-temporal al ejecutar, por lo que **no se pueden reemplazar in situ** en el
-binario distribuido. Lo que sí garantizamos, como exige la LGPL, es que podés
-rearmar NetGauge con tu propia versión de PySide6/Qt:
+- **Windows (`.exe`, PyInstaller *one-file*):** las librerías Qt viajan
+  comprimidas dentro del `.exe` y se extraen a una carpeta temporal al ejecutar,
+  por lo que **no se pueden reemplazar in situ**. Para usar tu propia versión,
+  relinkeá construyendo NetGauge desde fuente (pasos abajo).
+- **macOS (`.app`, PyInstaller *onedir*):** los frameworks de Qt están sueltos en
+  `NetGauge.app/Contents/Frameworks` y **se pueden reemplazar in situ** por tu
+  propia build compatible. También podés rearmar desde fuente.
+
+Como exige la LGPL, en ambos casos podés rearmar NetGauge con tu propia versión
+de PySide6/Qt:
 
 1. Cloná el repositorio.
 2. Instalá en tu entorno la versión de PySide6 que quieras (o tu build modificado).

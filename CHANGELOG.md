@@ -32,13 +32,21 @@ versionado [SemVer](https://semver.org/lang/es/).
 - Informes: CSV con BOM (acentos correctos en Excel) y ya no se escribe en el Escritorio por defecto.
 - La ventana ya no reaparece fuera de pantalla si se desconectó el monitor donde estaba.
 - Comparación de versiones (`2.0` = `2.0.0`).
+- Persistencia: `save_batch` con rollback ya no duplica bytes y los cambios de ajustes no re-disparan alertas de cuota.
+- Arranque: los fallos de inicio se registran en `netgauge.log` y se muestran en un cuadro de mensaje (best-effort); el chequeo de instancia única ocurre antes de abrir la base.
+- Captura: si el consumer de ETW muere en runtime, un watchdog lo detecta y se degrada a psutil.
+- VirusTotal: repetir `set_api_key` con la misma key ya no anula el backoff.
+- Confianza: el nombre del firmante resuelve el certificado real (Issuer+Serial) en vez de la CA; los errores de IO de WinVerifyTrust dan *desconocido* (no sospechoso) y no se cachean; la caché de confianza se indexa por (ruta, mtime, tamaño).
+- GeoIP: apagarlo descarta la cola pendiente (a lo sumo se completa la única consulta ya en vuelo) y se descartan rangos no globales (CGNAT).
+- UI: cambiar de período espera al snapshot en vez de mostrar un frame vacío.
 ### Security
+- El tooltip de confianza escapa HTML del firmante/razones.
 - Comparaciones de rutas de confianza con separador (evita falsos positivos
   tipo `C:\Windows` vs `C:\WindowsEvil`).
 - Aviso explícito en Ajustes de que GeoIP envía IPs por **HTTP sin cifrar** a
   ip-api.com.
-- Pipeline de release con gate de tests, permisos mínimos, acciones pineadas y
-  `SHA256SUMS`; CI con `pip-audit` y Dependabot.
+- Pipeline de release con gate de tests, permisos mínimos, acciones de terceros
+  pineadas por SHA y `SHA256SUMS.txt`; CI con `pip-audit` y Dependabot.
 - "Probar key" de VirusTotal ya no manda la clave en la URL (solo en el header).
 - Informes: escape de fórmulas (`=`, `+`, `-`, `@`) y nombre de archivo sanitizado (sin path traversal).
 - Nombres de app y datos GeoIP se muestran como texto plano.

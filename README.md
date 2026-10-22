@@ -27,7 +27,7 @@ Bajá la última versión desde
 | macOS Apple Silicon (M1+) | `NetGauge-<versión>-arm64.dmg` |
 | macOS Intel | `NetGauge-<versión>-x86_64.dmg` |
 
-Cada release incluye un archivo `SHA256SUMS` para verificar la descarga.
+Cada release incluye un archivo `SHA256SUMS.txt` para verificar la descarga.
 
 ### Aviso de firma (importante)
 
@@ -63,7 +63,7 @@ el código fuente: ver [`docs/BUILD.md`](docs/BUILD.md).
 
 - Consumo **por aplicación** (ETW en Windows, `nettop` en macOS) o global (fallback).
 - Velocidad en vivo ↑/↓ en la cabecera, gráfico de ancho de banda de los últimos
-  ~2 minutos y mini-gráfico (sparkline) en el ícono de la bandeja.
+  ~1 minuto (60 puntos, uno por segundo) y mini-gráfico (sparkline) en el ícono de la bandeja.
 - **Cuotas** diaria y mensual con día de corte configurable y alertas al 80 % y
   100 % (umbrales configurables). Avisa, **no corta** el tráfico.
 - **Historial** por sesión, día, semana y mes, con retención configurable
@@ -100,7 +100,9 @@ Notas:
 - La **API key de VirusTotal se guarda en texto plano** en `settings.json`
   (ver rutas abajo). Cualquier proceso o usuario con acceso a tu carpeta de
   datos puede leerla; usá una key de cuenta gratuita y no la reutilices.
-- Desactivar GeoIP o VirusTotal en Ajustes detiene de inmediato esas consultas.
+- Desactivar GeoIP o VirusTotal en Ajustes detiene esas consultas. En GeoIP, las
+  IPs que estaban en cola se descartan y, a lo sumo, puede completarse la única
+  consulta que ya estaba en vuelo.
 - El índice de confianza se calcula **localmente**; no envía nada.
 
 ## Datos locales
