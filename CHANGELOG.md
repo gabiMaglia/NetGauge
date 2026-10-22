@@ -25,6 +25,13 @@ versionado [SemVer](https://semver.org/lang/es/).
   muchas apps).
 - Release: la versión sale de una única fuente (`src/version.py`) en el
   instalador, el `.exe`, los specs y los `.dmg`.
+- Instancia única **por usuario** (antes, con RDP/cambio de usuario, la 2ª sesión no podía abrir la app).
+- VirusTotal/GeoIP: un lookup encolado justo cuando el worker se apagaba por inactividad ya no queda trabado.
+- VirusTotal: los errores transitorios (429/5xx/401/403/red) se reintentan con espera; cambiar la API key limpia errores previos.
+- "Probar key" de VirusTotal nunca se cuelga ante errores de red.
+- Informes: CSV con BOM (acentos correctos en Excel) y ya no se escribe en el Escritorio por defecto.
+- La ventana ya no reaparece fuera de pantalla si se desconectó el monitor donde estaba.
+- Comparación de versiones (`2.0` = `2.0.0`).
 ### Security
 - Comparaciones de rutas de confianza con separador (evita falsos positivos
   tipo `C:\Windows` vs `C:\WindowsEvil`).
@@ -32,6 +39,9 @@ versionado [SemVer](https://semver.org/lang/es/).
   ip-api.com.
 - Pipeline de release con gate de tests, permisos mínimos, acciones pineadas y
   `SHA256SUMS`; CI con `pip-audit` y Dependabot.
+- "Probar key" de VirusTotal ya no manda la clave en la URL (solo en el header).
+- Informes: escape de fórmulas (`=`, `+`, `-`, `@`) y nombre de archivo sanitizado (sin path traversal).
+- Nombres de app y datos GeoIP se muestran como texto plano.
 ### Changed
 - README reescrito (descarga, requisitos, aviso de firma, privacidad y datos
   locales); nuevos `THIRD_PARTY_LICENSES.md` (incluido en el instalador y los
@@ -39,6 +49,9 @@ versionado [SemVer](https://semver.org/lang/es/).
 - El log ahora es `netgauge.log` con rotación.
 - `pyinstaller` pasa a dependencias de desarrollo y los majors de las
   dependencias quedan acotados.
+- Chequeo de actualizaciones cada 24 h; el aviso es clicable y abre la release.
+- Se conservan solo los últimos 20 informes en `reports/`.
+- "Acerca de" ya no dice "para Windows" (también macOS).
 
 ## [2.0.1] - 2026-06-24
 ### Fixed
