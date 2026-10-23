@@ -98,6 +98,14 @@ def main(out: Path) -> None:
     w._set_period("day")
     app.processEvents()
     w.grab().save(str(out / "ui_global_day.png"))
+    # Header con velocidades reales (bajada 12,4 MB/s, subida 1,8 MB/s).
+    m.live_rate = lambda: (1.8 * 1024 ** 2, 12.4 * 1024 ** 2)  # type: ignore[method-assign]
+    w._tick()
+    app.processEvents()
+    w.grab().save(str(out / "ui_global_speed.png"))
+    m.live_rate = lambda: (0.0, 0.0)  # type: ignore[method-assign]
+    w._tick()
+
     # Pasada en tema claro (Global, Por aplicación, Conexiones).
     w._set_period("session")
     w._toggle_theme()

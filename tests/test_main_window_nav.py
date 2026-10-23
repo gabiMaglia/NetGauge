@@ -113,18 +113,36 @@ def test_close_icon_turns_white_on_hover_and_back(win):
     assert center_rgb(win._close_btn) == muted
 
 
-def test_speed_labels_have_fixed_width_so_header_does_not_jump(win):
-    widths = {}
-    for text in ("0", "9,9", "10,2", "512", "1023,9"):
-        win._speed_down.setText(text)
-        widths[text] = win._speed_down.width() if win._speed_down.minimumWidth() == 0 \
-            else win._speed_down.minimumWidth()
-    assert win._speed_down.minimumWidth() == win._speed_down.maximumWidth() > 0
+def test_speed_groups_keep_geometry_and_arrow_touches_number(win):
+    win.show()
+    QApplication.processEvents()
+
+    def geom():
+        out = []
+        for lbl in (win._arrow_down, win._speed_down, win._unit_down,
+                    win._arrow_up, win._speed_up, win._unit_up):
+            out.append(lbl.mapTo(win, lbl.rect().topLeft()).x())
+        # el borde izquierdo de la caja y la columna de unidad no se mueven
+        out.append(win._speed_down.parentWidget().width())
+        return out
+
+    results = []
+    for num, unit in (("0", "B/s"), ("512,0", "KB/s"), ("1.023,4", "MB/s")):
+        for v, u in ((win._speed_down, win._unit_down), (win._speed_up, win._unit_up)):
+            v.setText(num)
+            u.setText(unit)
+        QApplication.processEvents()
+        results.append(geom())
+        for arrow, v in ((win._arrow_down, win._speed_down), (win._arrow_up, win._speed_up)):
+            gap = v.mapTo(win, v.rect().topLeft()).x() \
+                - (arrow.mapTo(win, arrow.rect().topLeft()).x() + arrow.width())
+            assert 0 <= gap <= 8
+    # unidades y cajas fijas: sólo el espacio a la izquierda de la flecha cambia
+    unit_cols = [(r[2], r[5], r[6]) for r in results]
+    assert unit_cols[0] == unit_cols[1] == unit_cols[2]
     assert win._unit_down.minimumWidth() == win._unit_down.maximumWidth() > 0
-    for unit in ("B/s", "KB/s", "MB/s", "GB/s"):
-        win._unit_down.setText(unit)
-        assert win._unit_down.fontMetrics().horizontalAdvance(unit) <= win._unit_down.width()
-    assert win._speed_up.minimumWidth() == win._speed_down.minimumWidth()
+    for u in ("B/s", "KB/s", "MB/s", "GB/s"):
+        assert win._unit_down.fontMetrics().horizontalAdvance(u) <= win._unit_down.width()
 
 
 def test_drag_zone_matches_titlebar_height():

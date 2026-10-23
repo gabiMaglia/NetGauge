@@ -47,7 +47,7 @@ from .widgets import (
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
-_SPEED_VALUE_W = 76   # 6 caracteres mono de 20px (+ holgura)
+_SPEED_BOX_W = 92     # flecha + 6 caracteres mono de 20px ("1023,9")
 _SPEED_UNIT_W = 40    # "MB/s" en 12px
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
@@ -259,23 +259,27 @@ class MainWindow(QWidget):
         return bar
 
     def _speed_group(self, lay: QHBoxLayout, name: str, arrow: str) -> tuple[QLabel, QLabel]:
-        """Flecha + valor grande mono + unidad chica; devuelve (valor, unidad)."""
+        """[flecha+valor] pegados y alineados a la derecha en una caja de ancho fijo,
+        luego la unidad; devuelve (valor, unidad)."""
+        box = QWidget()
+        box.setFixedWidth(_SPEED_BOX_W)
+        box_lay = QHBoxLayout(box)
+        box_lay.setContentsMargins(0, 0, 0, 0)
+        box_lay.setSpacing(2)
+        box_lay.addStretch()  # el espacio sobrante queda a la IZQUIERDA de la flecha
         arrow_lbl = QLabel(arrow)
         arrow_lbl.setObjectName(name)
         value = QLabel("0")
         value.setObjectName(name)
-        # Anchos fijos: JetBrains Mono 20px avanza ~12px/carácter ("1023,9" = 6) y la
-        # unidad más ancha es "KB/s"/"MB/s"/"GB/s"; así el header no salta al cambiar.
-        value.setFixedWidth(_SPEED_VALUE_W)
-        value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        box_lay.addWidget(arrow_lbl)
+        box_lay.addWidget(value)
         unit = QLabel("B/s")
         unit.setObjectName("SpeedUnit")
-        unit.setFixedWidth(_SPEED_UNIT_W)
-        lay.addWidget(arrow_lbl)
-        lay.addSpacing(-4)
-        lay.addWidget(value)
-        lay.addSpacing(-4)
+        unit.setFixedWidth(_SPEED_UNIT_W)  # la más ancha: "KB/s"/"MB/s"/"GB/s"
+        lay.addWidget(box)
+        lay.addSpacing(-2)
         lay.addWidget(unit)
+        setattr(self, f"_arrow_{'down' if arrow == '↓' else 'up'}", arrow_lbl)
         return value, unit
 
     def _icon_btn(self, icon: str, tip_key: str, slot) -> QPushButton:
