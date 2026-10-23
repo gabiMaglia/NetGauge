@@ -21,12 +21,25 @@ from conftest import FakeCapture, FakeNotifier, FakeRepo, FakeReporter, FakeStor
 from src.application.monitor_service import MonitorService  # noqa: E402
 from datetime import datetime  # noqa: E402
 
-from src.domain.models import Settings, TrafficSample, UsageRecord  # noqa: E402
+from src.domain.models import Connection, Settings, TrafficSample, UsageRecord  # noqa: E402
 from src.presentation.qt.main_window import MainWindow  # noqa: E402
 
 APPS = [("Google Chrome", 1, 900e6, 60e6), ("Dropbox", 2, 300e6, 250e6),
         ("Docker", 3, 400e6, 30e6), ("Spotify", 4, 120e6, 2e6),
         ("Slack", 5, 80e6, 40e6), ("Zoom", 6, 60e6, 55e6)]
+
+
+CONNS = [
+    Connection("Google Chrome", 1, "142.250.78.14", 443, "ESTABLISHED"),
+    Connection("Google Chrome", 1, "2800:3f0:4002:80c::200e", 443, "ESTABLISHED"),
+    Connection("Dropbox", 2, "162.125.2.14", 443, "ESTABLISHED"),
+    Connection("Docker", 3, "104.18.123.25", 443, "TIME_WAIT"),
+    Connection("Slack", 5, "3.209.62.201", 443, "CLOSE_WAIT"),
+    Connection("Spotify", 4, "0.0.0.0", 57621, "LISTEN"),
+    Connection("Zoom", 6, "170.114.52.2", 8801, "SYN_SENT"),
+]
+GEO = {"142.250.78.14": ("AR", "Google LLC"), "162.125.2.14": ("US", "Dropbox, Inc."),
+       "104.18.123.25": ("US", "Cloudflare"), "3.209.62.201": ("US", "Amazon")}
 
 
 def main(out: Path) -> None:
@@ -41,11 +54,25 @@ def main(out: Path) -> None:
     w = MainWindow(m, per_process=True)
     w.show()
     app.processEvents()
-    for idx, name in enumerate(("global", "apps", "conexiones")):
+    state = {"conns": []}
+    m.connections = lambda: list(state["conns"])  # type: ignore[method-assign]
+    m.geo_for = lambda ip: GEO.get(ip)  # type: ignore[method-assign]
+    for idx, name in enumerate(("global", "apps")):
         w._tabs.setCurrentIndex(idx)
         w._refresh()
         app.processEvents()
         w.grab().save(str(out / f"ui_{name}.png"))
+    w._monitor.settings.hide_localhost = False
+    w._hide_local_cb.setChecked(True)
+    w._tabs.setCurrentIndex(2)
+    app.processEvents()
+    w.grab().save(str(out / "ui_conexiones_empty.png"))
+    state["conns"] = list(CONNS)
+    w._refresh()
+    app.processEvents()
+    w.grab().save(str(out / "ui_conexiones.png"))
+    w._hide_local_cb.setChecked(False)
+    state["conns"] = []
     # Fila con badge de confianza (Chrome) y fila con VirusTotal (Dropbox): comprueba que no
     # desalinean las columnas derechas.
     from src.domain.models import TRUST_CAUTION, TRUST_TRUSTED, TrustInfo
