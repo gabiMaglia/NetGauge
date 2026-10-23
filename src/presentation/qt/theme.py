@@ -120,7 +120,7 @@ def app_qss(t: dict) -> str:
                 border-radius: {RADIUS['input']}px; }}
     QPushButton#SegChip {{
         background: transparent; border: none; color: {t['text_muted']};
-        font-size: 13px; font-weight: 600; padding: 0 12px; min-height: 30px;
+        font-size: 13px; font-weight: 600; padding: 0 10px; min-height: 30px;
         max-height: 30px; border-radius: 8px;
     }}
     QPushButton#SegChip:checked {{

@@ -114,7 +114,9 @@ def test_close_icon_turns_white_on_hover_and_back(win):
     assert center_rgb(win._close_btn) == muted
 
 
-def test_speed_groups_keep_geometry_and_arrow_touches_number(win):
+def test_speed_groups_keep_geometry_and_arrow_touches_number(win, bundled_fonts):
+    if not bundled_fonts:
+        pytest.skip("fuentes bundleadas no registradas en este entorno: las medidas no serían las de la app")
     win.show()
     QApplication.processEvents()
 
@@ -139,11 +141,8 @@ def test_speed_groups_keep_geometry_and_arrow_touches_number(win):
                 - (arrow.mapTo(win, arrow.rect().topLeft()).x() + arrow.width())
             assert 0 <= gap <= 8
     # el valor cabe en la caja aun con el número más ancho ("1.023,4" a 20px mono)
-    from PySide6.QtGui import QFont, QFontMetrics
-    f = QFont(win._speed_down.font())
-    f.setPixelSize(20)
-    f.setBold(True)
-    widest = QFontMetrics(f).horizontalAdvance("1.023,4")
+    # métricas del propio label (fuente ya resuelta por el QSS), no un QFont armado a mano
+    widest = win._speed_down.fontMetrics().horizontalAdvance("1.023,4")
     box = win._speed_down.parentWidget()
     assert win._arrow_down.sizeHint().width() + 2 + widest <= box.width()
     assert win._speed_down.x() >= win._arrow_down.x() + win._arrow_down.width()
@@ -186,7 +185,9 @@ def test_close_hover_survives_theme_toggle(win):
 
 
 @pytest.mark.parametrize("lang", ["es", "en", "pt"])
-def test_minimum_width_fits_content_in_every_language(lang):
+def test_minimum_width_fits_content_in_every_language(lang, bundled_fonts):
+    if not bundled_fonts:
+        pytest.skip("fuentes bundleadas no registradas: con la fuente genérica del SO el ancho necesario es otro")
     from src.presentation.qt.i18n import current_language, set_language
     prev = current_language()
     set_language(lang)

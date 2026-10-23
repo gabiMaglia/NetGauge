@@ -48,7 +48,7 @@ from .widgets import (
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
 _MAX_FIXED_UNIT_CHARS = 8   # más ancho que esto desborda las tarjetas
-_SPEED_BOX_W = 100    # flecha + "1.023,4" (7 caracteres mono de 20px)
+_SPEED_BOX_W = 104    # flecha + "1.023,4" (7 caracteres mono de 20px)
 _SPEED_UNIT_W = 40    # "MB/s" en 12px
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
@@ -228,7 +228,7 @@ class MainWindow(QWidget):
         bar.setFixedHeight(_TITLEBAR_H)
         lay = QHBoxLayout(bar)
         lay.setContentsMargins(20, 0, 14, 0)
-        lay.setSpacing(10)
+        lay.setSpacing(8)
 
         self._logo = BarsLogo(26, 8)
         lay.addWidget(self._logo)

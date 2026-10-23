@@ -71,3 +71,24 @@ def make_monitor(settings: Settings, notifier: FakeNotifier,
                        FakeStore(settings), notifier)
     m.set_translator(lambda k: k)  # mensajes determinísticos (devuelve la clave)
     return m
+
+
+BUNDLED_FONTS = ("Plus Jakarta Sans", "JetBrains Mono")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def bundled_fonts() -> bool:
+    """Registra las fuentes bundleadas igual que la app (app.run -> load_app_fonts).
+
+    Sin esto Qt cae a la fuente genérica del SO (mucho más ancha en el runner de
+    Windows) y los tests de layout miden otra cosa que la app real. Devuelve si
+    ambas familias quedaron registradas; los tests de medidas se saltan si no."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtGui import QFontDatabase
+    from PySide6.QtWidgets import QApplication
+    from src.presentation.qt import theme
+    QApplication.instance() or QApplication([])
+    theme.load_app_fonts()
+    families = set(QFontDatabase.families())
+    return all(f in families for f in BUNDLED_FONTS)
