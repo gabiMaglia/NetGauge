@@ -779,6 +779,8 @@ class ElidedLabel(QLabel):
         p = QPainter(self)
         elided = self.fontMetrics().elidedText(
             self.text(), Qt.TextElideMode.ElideRight, self.contentsRect().width())
+        # tooltip con el texto completo sólo si se truncó (escapado: Qt autodetecta HTML)
+        self.setToolTip(html.escape(self.text()) if elided != self.text() else "")
         p.setPen(self.palette().color(self.foregroundRole()))
         p.drawText(self.contentsRect(), int(self.alignment()), elided)
 
@@ -789,7 +791,7 @@ class ConnRow(QFrame):
     Se reutiliza in-place (ver MainWindow._refresh_connections). Todo texto que
     viene del SO o de la red va como PlainText."""
 
-    def __init__(self, app_name: str, remote: str, status: str, host: str = "",
+    def __init__(self, app_name: str, remote: str, status: str,
                  exe_path: str | None = None) -> None:
         super().__init__()
         self.setObjectName("ConnRow")
@@ -810,17 +812,9 @@ class ConnRow(QFrame):
         app_box.addWidget(self._app, 1)
         lay.addLayout(app_box, CONN_STRETCH_APP)
 
-        dest_box = QHBoxLayout()
-        dest_box.setSpacing(8)
-        self._host = ElidedLabel(host)
-        self._host.setObjectName("ConnHost")
-        self._host.setVisible(bool(host))
-        dest_box.addWidget(self._host)
         self._endpoint = ElidedLabel(remote)
         self._endpoint.setObjectName("ConnEndpoint")
-        self._endpoint.setProperty("primary", not host)  # sin host, la IP es el dato principal
-        dest_box.addWidget(self._endpoint, 1)
-        lay.addLayout(dest_box, CONN_STRETCH_DEST)
+        lay.addWidget(self._endpoint, CONN_STRETCH_DEST)
 
         self._geo = QLabel("—")
         self._geo.setTextFormat(Qt.TextFormat.PlainText)  # texto de ip-api: no confiable
@@ -853,9 +847,6 @@ class ConnRow(QFrame):
         self._traffic.setFixedWidth(CONN_COL_TRAFFIC)
         self._traffic.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         lay.addWidget(self._traffic)
-
-    def _dest_text(self) -> str:
-        return self._endpoint.text()
 
     def set_geo(self, text: str, org: str = "") -> None:
         self._geo.setText(text or "—")

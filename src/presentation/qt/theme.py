@@ -66,12 +66,15 @@ def check_icon_url(color: str) -> str:
 
     El QSS sólo acepta imágenes de archivo: se escribe un SVG por color en un
     directorio temporal del proceso (se reusa si ya existe)."""
+    import atexit
+    import shutil
     import tempfile
     from pathlib import Path
 
     global _check_dir
     if _check_dir is None or not Path(_check_dir).is_dir():
         _check_dir = tempfile.mkdtemp(prefix="netgauge_ui_")
+        atexit.register(shutil.rmtree, _check_dir, ignore_errors=True)
     path = Path(_check_dir) / f"check_{color.lstrip('#')}.svg"
     if not path.exists():
         path.write_text(_CHECK_SVG.format(c=color), encoding="utf-8")
@@ -273,12 +276,12 @@ def app_qss(t: dict) -> str:
     QCheckBox {{ font-size: 13px; font-weight: 600; color: {t['text_secondary']};
                  spacing: 8px; }}
     QCheckBox::indicator {{
-        width: 18px; height: 18px; border-radius: 6px;
+        width: 18px; height: 18px; border-radius: 6px;  /* + borde 1px = 20x20 */
         border: 1px solid {t['border']}; background: transparent;
     }}
     QCheckBox::indicator:checked {{
         background: {t['accent']}; border: 1px solid {t['accent']};
-        image: url({check_icon_url(t['on_accent'])});
+        image: url("{check_icon_url(t['on_accent'])}");
     }}
 
     /* Pestaña Conexiones */
@@ -296,13 +299,12 @@ def app_qss(t: dict) -> str:
                 border-bottom: 1px solid {t['row_line']}; }}
     #ConnRow QLabel {{ background: transparent; }}
     #ConnApp {{ font-size: 13px; font-weight: 700; color: {t['text_strong']}; }}
-    #ConnHost {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_secondary']}; }}
-    #ConnEndpoint {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_muted']}; }}
-    #ConnEndpoint[primary="true"] {{ color: {t['text_secondary']}; }}
+    #ConnEndpoint {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_secondary']}; }}
     #ConnCountry {{ font-size: 13px; font-weight: 600; color: {t['text']}; }}
     #ConnStatus {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
     #ConnStatus[kind="established"] {{ color: {t['upload']}; }}
     #ConnStatus[kind="closing"] {{ color: {t['warning']}; }}
+    /* '#ConnRow #ConnDot' gana por id sobre '#ConnRow QLabel' (que pone fondo transparente) */
     #ConnRow #ConnDot {{ background: {t['text_muted']}; border-radius: 3px; }}
     #ConnRow #ConnDot[kind="established"] {{ background: {t['upload']}; }}
     #ConnRow #ConnDot[kind="closing"] {{ background: {t['warning']}; }}

@@ -6,6 +6,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest  # noqa: E402
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
@@ -143,7 +144,7 @@ def test_row_columns_country_status_and_traffic(win):
     assert row._status.text() == t("conn.status.established")
     assert row._status.property("kind") == "established"
     assert row._traffic.text() == "—"       # el modelo no tiene bytes por conexión
-    assert row._dest_text() == "162.125.1.1:443"
+    assert row._endpoint.text() == "162.125.1.1:443"
     zoom = win._conn_rows["Zoom|3.3.3.3:8801|TIME_WAIT"]
     assert zoom._geo.text() == "—"
     assert zoom._status.property("kind") == "closing"
@@ -174,17 +175,56 @@ def _has_color(img, color: str, max_x: int) -> bool:
                for x in range(max_x) for y in range(img.height()))
 
 
-def test_checked_indicator_is_painted_with_accent(win):
+def _row_extent(img, color: str, max_x: int) -> int:
+    """Ancho (px) que ocupa `color` en la fila central del indicador."""
+    want = QColor(color).rgb()
+    y = img.height() // 2
+    xs = [x for x in range(max_x) if img.pixelColor(x, y).rgb() == want]
+    return (max(xs) - min(xs) + 1) if xs else 0
+
+
+def test_checked_indicator_is_painted_with_accent_and_20px(win):
     win.show()
     QApplication.processEvents()
     cb = win._hide_local_cb
     cb.setChecked(False)
     off = cb.grab().toImage()
     assert not _has_color(off, DARK["accent"], 24)
+    # sin marcar: sólo el borde de 1px del token (borde izquierdo + derecho = 20px de ancho)
+    assert _has_color(off, DARK["border"], 24)
+    assert _row_extent(off, DARK["border"], 30) == 20
     cb.setChecked(True)
     on = cb.grab().toImage()
     assert _has_color(on, DARK["accent"], 24)
     assert _has_color(on, DARK["on_accent"], 24)    # la tilde
+    assert _row_extent(on, DARK["accent"], 30) >= 18
+
+
+def test_check_icon_url_is_quoted_and_file_has_requested_color():
+    import re
+
+    from src.presentation.qt.theme import app_qss, check_icon_url
+    qss = app_qss(DARK)
+    m = re.search(r'image: url\("([^"]+)"\)', qss)
+    assert m, "el url() del tilde debe ir entre comillas"
+    assert "\\" not in m.group(1)
+    from pathlib import Path
+    path = Path(check_icon_url("#123abc"))
+    assert path.is_file() and 'stroke="#123abc"' in path.read_text(encoding="utf-8")
+    assert check_icon_url("#123abc") == path.as_posix()   # cacheado: no re-crea
+
+
+def test_elided_label_keeps_plaintext_and_tooltips_full_text_when_cut(qapp):
+    from src.presentation.qt.widgets import ElidedLabel
+    lbl = ElidedLabel("<b>" + "x" * 200 + "</b>")
+    lbl.resize(60, 20)
+    lbl.grab()
+    assert lbl.textFormat() == Qt.TextFormat.PlainText
+    assert lbl.toolTip().startswith("&lt;b&gt;")
+    short = ElidedLabel("ok")
+    short.resize(200, 20)
+    short.grab()
+    assert short.toolTip() == ""
 
 
 # ---- barra de estado ------------------------------------------------------
