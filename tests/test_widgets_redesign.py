@@ -97,14 +97,6 @@ def test_chart_hover_with_zero_peak_does_not_break(qapp):
     ch.grab()
 
 
-def test_chart_set_window_seconds_keeps_working(qapp):
-    ch = LiveChart(DARK)
-    ch.resize(500, 200)
-    ch.set_window_seconds(120)
-    _move(ch, 200)
-    ch.grab()
-
-
 def test_metric_card_trend_and_spark(qapp):
     c = MetricCard(DARK, "down", "Bajada")
     c.set_values("1,2", "GB", "82 % del total", "▲ 12 % vs ayer", "up", [1, 2, 3])

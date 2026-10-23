@@ -573,21 +573,6 @@ APP_ROW_PAD_X = 10
 APP_ROW_BORDER = 1
 
 
-class _ElidedLabel(QLabel):
-    """QLabel de una línea que recorta con "…" en vez de forzar el ancho de la fila."""
-
-    def minimumSizeHint(self) -> QSize:
-        return QSize(1, super().minimumSizeHint().height())
-
-    def paintEvent(self, _event) -> None:
-        p = QPainter(self)
-        text = self.fontMetrics().elidedText(
-            self.text(), Qt.TextElideMode.ElideRight, self.width())
-        self.style().drawItemText(p, self.rect(), int(self.alignment()), self.palette(),
-                                  self.isEnabled(), text, QPalette.ColorRole.WindowText)
-        p.end()
-
-
 class AppRow(QFrame):
     """Fila de la vista Por aplicación: ícono · nombre+barra · velocidad · total.
 
@@ -616,10 +601,8 @@ class AppRow(QFrame):
         center.setSpacing(6)
         top = QHBoxLayout()
         top.setSpacing(8)
-        self._nm = _ElidedLabel(name)
-        self._nm.setTextFormat(Qt.TextFormat.PlainText)  # el nombre viene del SO
+        self._nm = ElidedLabel(name, fill_width=False)  # el nombre viene del SO
         self._nm.setObjectName("AppRowName")
-        self._nm.setToolTip(name)
         top.addWidget(self._nm)
         self._conns = QLabel("")
         self._conns.setObjectName("AppConns")
@@ -725,7 +708,7 @@ class AppRow(QFrame):
             return
         color, sym = style
         self._trust.setText(sym)
-        self._trust.setToolTip(tooltip)
+        self._trust.setToolTip(plain_tooltip(tooltip))
         self._trust.setStyleSheet(
             f"color:{color}; background:rgba(0,0,0,0); border:1.5px solid {color};"
             f"border-radius:11px; font-size:12px; font-weight:800;")
@@ -742,7 +725,7 @@ class AppRow(QFrame):
         malicious = vt_malicious or 0
         color = "#ef4444" if malicious > 0 else "#10b981"
         self._vt_badge.setText("V")
-        self._vt_badge.setToolTip(tooltip)
+        self._vt_badge.setToolTip(plain_tooltip(tooltip))
         self._vt_badge.setStyleSheet(
             f"color:white; background:{color}; border-radius:8px;"
             f"font-size:8px; font-weight:800;")
@@ -764,13 +747,23 @@ CONN_COL_TRAFFIC = 80
 CONN_ICON_PX = 22
 
 
-class ElidedLabel(QLabel):
-    """Etiqueta de una línea que se trunca con "…" en vez de ensanchar la fila."""
+def plain_tooltip(text: str) -> str:
+    """Tooltip que muestra `text` literal. Qt autodetecta HTML en los tooltips, así
+    que se escapa y se envuelve en una etiqueta para que se trate como rich text
+    (si no, "&amp;" se vería tal cual). Para todo texto del SO o de la red."""
+    return f"<span>{html.escape(text)}</span>"
 
-    def __init__(self, text: str = "") -> None:
+
+class ElidedLabel(QLabel):
+    """Etiqueta de una línea que se trunca con "…" en vez de ensanchar la fila.
+
+    fill_width=False conserva el ancho natural del texto (sólo se recorta si falta sitio)."""
+
+    def __init__(self, text: str = "", fill_width: bool = True) -> None:
         super().__init__(text)
         self.setTextFormat(Qt.TextFormat.PlainText)
-        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        if fill_width:
+            self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
 
     def minimumSizeHint(self) -> QSize:
         return QSize(0, super().minimumSizeHint().height())
@@ -779,11 +772,8 @@ class ElidedLabel(QLabel):
         p = QPainter(self)
         elided = self.fontMetrics().elidedText(
             self.text(), Qt.TextElideMode.ElideRight, self.contentsRect().width())
-        # Tooltip con el texto completo sólo si se truncó. Se envuelve en una etiqueta
-        # para que Qt lo trate como rich text (si no, mostraría "&amp;" literal) y el
-        # contenido va escapado, así se ve el nombre exacto sin interpretar HTML.
-        self.setToolTip(
-            f"<span>{html.escape(self.text())}</span>" if elided != self.text() else "")
+        # tooltip con el texto completo sólo si se truncó
+        self.setToolTip(plain_tooltip(self.text()) if elided != self.text() else "")
         p.setPen(self.palette().color(self.foregroundRole()))
         p.drawText(self.contentsRect(), int(self.alignment()), elided)
 
@@ -837,7 +827,7 @@ class ConnRow(QFrame):
         self._status = QLabel(t("conn.status." + kind))
         self._status.setObjectName("ConnStatus")
         self._status.setProperty("kind", kind)
-        self._status.setToolTip(status)
+        self._status.setToolTip(plain_tooltip(status))
         st_box.addWidget(self._status, 1)
         st_wrap = QWidget()
         st_wrap.setFixedWidth(CONN_COL_STATUS)
@@ -853,8 +843,8 @@ class ConnRow(QFrame):
 
     def set_geo(self, text: str, org: str = "") -> None:
         self._geo.setText(text or "—")
-        # escapado: los tooltips de Qt autodetectan HTML y la organización viene de la red
-        self._geo.setToolTip(html.escape(org) if org else "")
+        # la organización viene de la red
+        self._geo.setToolTip(plain_tooltip(org) if org else "")
 
     def set_icon(self, exe_path: str | None) -> None:
         if exe_path != self._icon_path:
