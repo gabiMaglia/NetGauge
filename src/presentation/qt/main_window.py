@@ -47,7 +47,8 @@ from .widgets import (
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
-_SPEED_BOX_W = 92     # flecha + 6 caracteres mono de 20px ("1023,9")
+_MAX_FIXED_UNIT_CHARS = 8   # más ancho que esto desborda las tarjetas
+_SPEED_BOX_W = 100    # flecha + "1.023,4" (7 caracteres mono de 20px)
 _SPEED_UNIT_W = 40    # "MB/s" en 12px
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
@@ -80,10 +81,13 @@ def _is_loopback(ip: str) -> bool:
 def _fmt(num: float, unit: str) -> tuple[str, str]:
     """Devuelve (valor, unidad) según la unidad elegida, con formato por locale."""
     div = _UNITS.get(unit)
-    if div is None:
-        val, _, u = loc_bytes(num).partition(" ")
-        return val, u or "B"
-    return fmt_number(num / div, 1, group=True), unit
+    if div is not None:
+        text = fmt_number(num / div, 1, group=True)
+        if len(text) <= _MAX_FIXED_UNIT_CHARS:
+            return text, unit
+        # 60 GB en KB serían "62.914.560,0": no entra en la tarjeta, se pasa a auto.
+    val, _, u = loc_bytes(num).partition(" ")
+    return val, u or "B"
 
 
 class NavTabs:
@@ -161,9 +165,11 @@ class MainWindow(QWidget):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(786, 720)
-        # 680 = ancho que necesita la fila de navegación (pestañas + período +
-        # unidad) sin solaparse; Qt sube a este mínimo cualquier geometría guardada menor.
-        self.setMinimumSize(680, 360)
+        # 780: medido offscreen, la barra de título necesita ~748 px, la fila de
+        # navegación ~771 y la ventana entera 768-778 (es/en/pt); por debajo se
+        # solapan velocidades/unidades y se recortan pestañas y chips de período.
+        # Qt sube a este mínimo cualquier geometría guardada menor.
+        self.setMinimumSize(780, 360)
         self._restore_geometry()
 
         self._build_ui()
@@ -231,9 +237,11 @@ class MainWindow(QWidget):
         lay.addWidget(brand)
         lay.addStretch()
 
-        self._speed_down, self._unit_down = self._speed_group(lay, "SpeedDown", "↓")
+        self._arrow_down, self._speed_down, self._unit_down = self._speed_group(
+            lay, "SpeedDown", "↓")
         lay.addSpacing(10)
-        self._speed_up, self._unit_up = self._speed_group(lay, "SpeedUp", "↑")
+        self._arrow_up, self._speed_up, self._unit_up = self._speed_group(
+            lay, "SpeedUp", "↑")
         lay.addSpacing(8)
         sep = QFrame()
         sep.setObjectName("TitleSep")
@@ -258,9 +266,10 @@ class MainWindow(QWidget):
         self._titlebar = bar
         return bar
 
-    def _speed_group(self, lay: QHBoxLayout, name: str, arrow: str) -> tuple[QLabel, QLabel]:
+    def _speed_group(self, lay: QHBoxLayout, name: str,
+                     arrow: str) -> tuple[QLabel, QLabel, QLabel]:
         """[flecha+valor] pegados y alineados a la derecha en una caja de ancho fijo,
-        luego la unidad; devuelve (valor, unidad)."""
+        luego la unidad; devuelve (flecha, valor, unidad)."""
         box = QWidget()
         box.setFixedWidth(_SPEED_BOX_W)
         box_lay = QHBoxLayout(box)
@@ -269,7 +278,7 @@ class MainWindow(QWidget):
         box_lay.addStretch()  # el espacio sobrante queda a la IZQUIERDA de la flecha
         arrow_lbl = QLabel(arrow)
         arrow_lbl.setObjectName(name)
-        value = QLabel("0")
+        value = QLabel("0,0")  # mismo formato que _tick (sin salto en el primer tick)
         value.setObjectName(name)
         box_lay.addWidget(arrow_lbl)
         box_lay.addWidget(value)
@@ -279,8 +288,7 @@ class MainWindow(QWidget):
         lay.addWidget(box)
         lay.addSpacing(-2)
         lay.addWidget(unit)
-        setattr(self, f"_arrow_{'down' if arrow == '↓' else 'up'}", arrow_lbl)
-        return value, unit
+        return arrow_lbl, value, unit
 
     def _icon_btn(self, icon: str, tip_key: str, slot) -> QPushButton:
         b = QPushButton()
@@ -310,15 +318,17 @@ class MainWindow(QWidget):
         return super().eventFilter(obj, event)
 
     def _set_close_hover(self, hovered: bool) -> None:
-        color = "#ffffff" if hovered else self._theme["text_muted"]
+        self._close_hovered = hovered
+        color = self._theme["on_danger"] if hovered else self._theme["text_muted"]
         self._close_btn.setIcon(svg_icon("close", color, self._close_btn.iconSize().width()))
 
     def _recolor_icons(self) -> None:
         """Re-pinta los íconos de la barra con el color muted del tema activo."""
         color = self._theme["text_muted"]
         for b in (self._about_btn, self._settings_btn, self._theme_btn,
-                  self._min_btn, self._max_btn, self._close_btn):
+                  self._min_btn, self._max_btn):
             b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
+        self._set_close_hover(getattr(self, "_close_hovered", False))
         if hasattr(self, "_search_action"):
             self._search_action.setIcon(svg_icon("search", color, 16))
         if hasattr(self, "_conn_search_action"):
@@ -529,7 +539,7 @@ class MainWindow(QWidget):
         self._header_lay.addWidget(self._col_app, 1)
         for lbl, width in ((self._col_now, APP_COL_RATE), (self._col_total, APP_COL_TOTAL)):
             lbl.setFixedWidth(width)
-            lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self._header_lay.addWidget(lbl)
         outer.addWidget(self._apps_header)
 
@@ -643,7 +653,7 @@ class MainWindow(QWidget):
             if width:
                 lbl.setFixedWidth(width)
             if key == "traffic":
-                lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+                lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self._conn_cols[key] = lbl
             self._conn_head_lay.addWidget(lbl, stretch)
         card_lay.addWidget(head)
@@ -904,12 +914,14 @@ class MainWindow(QWidget):
         conns = self._monitor.connections()
         if self._monitor.settings.hide_localhost:
             conns = [c for c in conns if not _is_loopback(c.raddr)]
+        had_conns = bool(conns)
         # "Todas · N" cuenta antes del filtro de estado y de texto, después de localhost.
         self._set_conn_chip_texts(len(conns))
         if self._conn_filter != "all":
             conns = [c for c in conns if conn_status_kind(c.status) == self._conn_filter]
         conns = filter_connections(conns, self._conn_search.text(), self._monitor.geo_for)
         conns = sorted(conns, key=lambda c: c.app_name.lower())[:200]
+        self._set_conn_empty_text(had_conns)
         self._conn_empty.setVisible(not conns)
         self._conn_card.setVisible(bool(conns))
 
@@ -939,6 +951,19 @@ class MainWindow(QWidget):
             row.set_icon(self._monitor.exe_path_for(c.app_name))
             geo = self._monitor.geo_for(c.raddr)
             row.set_geo(geo[0] if geo else "", geo[1] if geo else "")
+
+    def _set_conn_empty_text(self, had_conns: bool) -> None:
+        """Sin conexiones reales -> estado vacío; si hay pero el filtro las oculta -> sin resultados."""
+        self._conn_had = had_conns
+        if not had_conns:
+            self._conn_empty_title.setText(t("conn.empty.title"))
+            self._conn_empty_body.setText(t("conn.empty.body"))
+            self._conn_empty_body.show()
+            return
+        query = self._conn_search.text().strip()
+        self._conn_empty_title.setText(
+            t("conn.no_results", q=query) if query else t("conn.no_results_filter"))
+        self._conn_empty_body.hide()
 
     def _tick(self) -> None:
         up, down = self._monitor.live_rate()
@@ -1036,8 +1061,7 @@ class MainWindow(QWidget):
         self._conn_search.setPlaceholderText(t("conn.search"))
         for key, lbl in self._conn_cols.items():
             lbl.setText(t("conn.col." + key))
-        self._conn_empty_title.setText(t("conn.empty.title"))
-        self._conn_empty_body.setText(t("conn.empty.body"))
+        self._set_conn_empty_text(getattr(self, "_conn_had", False))
         self._hide_local_cb.setText(t("conn.hide_localhost"))
         for key in list(self._conn_rows):  # los textos de estado ya están traducidos: reconstruir
             row = self._conn_rows.pop(key)

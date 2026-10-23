@@ -12,7 +12,7 @@ versionado [SemVer](https://semver.org/lang/es/).
   (reemplazan al botón *Cuota*); pestaña *Por aplicación* con íconos, búsqueda,
   orden, velocidad actual y porcentaje del total; pestaña *Conexiones* como tabla
   con filtros y estado vacío; barra de estado; tipografía JetBrains Mono para
-  cifras; tema claro con contraste AA; ancho mínimo de ventana 680 px.
+  cifras; tema claro con texto de contraste AA; ancho mínimo de ventana 780 px.
 
 ## [2.0.4] - 2026-10-22
 ### Fixed

@@ -12,12 +12,12 @@ LIGHT = {
     "segment_bg": "#f1f4f8", "row_hover_bg": "#f8fafc",
     "border": "#e7ebf0", "hairline": "#eef1f5", "input_border": "#e3e8ef",
     "grid_line": "#eef1f5", "track": "#eef1f5",
-    "text": "#0f172a", "text_strong": "#1e293b", "text_muted": "#64748b",
+    "text": "#0f172a", "text_strong": "#1e293b", "text_muted": "#5b6b82",
     "text_faint": "#94a3b8", "text_secondary": "#475569",
     "down": "#2563eb", "selected_bg": "#eff5ff", "selected_bd": "#dbe8ff",
     "accent": "#2563eb", "accent_strong": "#1d4ed8", "accent_soft_bg": "#eff5ff",
     "accent_soft_bd": "#dbe8ff", "upload": "#047857", "warning": "#b45309",
-    "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff",
+    "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff", "on_danger": "#ffffff",
     "total_grad_a": "#eff5ff", "total_grad_b": "#e7f0ff", "total_grad_bd": "#d7e6ff",
     "shadow_rgba": "rgba(15,23,42,0.32)",
     "dashed_bd": "#cbd5e1", "accent_text": "#2563eb",
@@ -37,7 +37,7 @@ DARK = {
     "accent": "#458bf8", "accent_strong": "#458bf8", "accent_soft_bg": "#13233f",
     "accent_soft_bd": "#2a4a85", "down": "#5aa9ff", "upload": "#34d5a3",
     "warning": "#f5b942", "warning_2": "#f5b942", "danger": "#ef4444",
-    "on_accent": "#06101f", "selected_bg": "#13233f", "selected_bd": "#2a4a85",
+    "on_accent": "#06101f", "on_danger": "#ffffff", "selected_bg": "#13233f", "selected_bd": "#2a4a85",
     "total_grad_a": "#13233f", "total_grad_b": "#13233f", "total_grad_bd": "#2a4a85",
     "shadow_rgba": "rgba(2,6,23,0.6)",
     "dashed_bd": "#2a3a58", "accent_text": "#8cbcff",
@@ -102,7 +102,6 @@ def app_qss(t: dict) -> str:
     #Body {{ background: {t['window_bg']};
              border-bottom-left-radius: {RADIUS['window']}px;
              border-bottom-right-radius: {RADIUS['window']}px; }}
-    #Logo {{ border-radius: 8px; }}
     #BrandName {{ font-size: 14px; font-weight: 700; color: {t['text_strong']}; }}
     #SpeedDown {{ font-family: {MONO_FAMILY}; font-size: 20px; font-weight: 700; color: {t['down']}; }}
     #SpeedUp   {{ font-family: {MONO_FAMILY}; font-size: 20px; font-weight: 700; color: {t['upload']}; }}
@@ -192,8 +191,6 @@ def app_qss(t: dict) -> str:
              border: 1px solid {t['border']}; border-radius: 7px; padding: 3px 8px;
              font-family: {MONO_FAMILY}; font-size: 12px; font-weight: 600; }}
     #LegendText {{ font-size: 12px; font-weight: 600; color: {t['text_secondary']}; }}
-    #QuotaLabel {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
-    #QuotaValue {{ font-size: 12px; font-weight: 700; color: {t['text']}; }}
 
     /* Tarjetas de límite */
     #LimitCard {{ background: {t['card_bg']}; border: 1px solid {t['border']};
@@ -237,8 +234,6 @@ def app_qss(t: dict) -> str:
     #AppRow:hover {{ background: {t['card_bg']}; border: 1px solid {t['hairline']}; }}
     #AppRowActive {{ border-radius: 12px; border: 1px solid {t['selected_bd']};
                      background: {t['selected_bg']}; }}
-    #AppName {{ font-size: 13.5px; font-weight: 700; color: {t['text_strong']}; }}
-    #AppSplit {{ font-size: 11px; font-weight: 600; color: {t['text_muted']}; }}
     #AppRowName {{ font-size: 15px; font-weight: 700; color: {t['text_strong']};
                    background: transparent; }}
     #AppConns {{ font-size: 12px; color: {t['text_muted']}; background: transparent; }}

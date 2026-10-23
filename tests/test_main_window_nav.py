@@ -27,6 +27,7 @@ def win():
 
 
 def test_quota_button_removed(win):
+    assert not hasattr(win, "_quota_btn")
     assert not [b for b in win.findChildren(QPushButton) if b.objectName() == "QuotaBtn"]
     assert hasattr(win, "_open_quota")
 
@@ -84,7 +85,7 @@ def test_narrow_saved_geometry_is_raised_to_minimum():
     w = MainWindow(m, per_process=True)
     w.show()
     app.processEvents()
-    assert w.width() >= 680
+    assert w.width() >= 780
     w.close()
 
 
@@ -137,6 +138,15 @@ def test_speed_groups_keep_geometry_and_arrow_touches_number(win):
             gap = v.mapTo(win, v.rect().topLeft()).x() \
                 - (arrow.mapTo(win, arrow.rect().topLeft()).x() + arrow.width())
             assert 0 <= gap <= 8
+    # el valor cabe en la caja aun con el número más ancho ("1.023,4" a 20px mono)
+    from PySide6.QtGui import QFont, QFontMetrics
+    f = QFont(win._speed_down.font())
+    f.setPixelSize(20)
+    f.setBold(True)
+    widest = QFontMetrics(f).horizontalAdvance("1.023,4")
+    box = win._speed_down.parentWidget()
+    assert win._arrow_down.sizeHint().width() + 2 + widest <= box.width()
+    assert win._speed_down.x() >= win._arrow_down.x() + win._arrow_down.width()
     # unidades y cajas fijas: sólo el espacio a la izquierda de la flecha cambia
     unit_cols = [(r[2], r[5], r[6]) for r in results]
     assert unit_cols[0] == unit_cols[1] == unit_cols[2]
@@ -145,7 +155,76 @@ def test_speed_groups_keep_geometry_and_arrow_touches_number(win):
         assert win._unit_down.fontMetrics().horizontalAdvance(u) <= win._unit_down.width()
 
 
-def test_drag_zone_matches_titlebar_height():
-    import inspect
-    from src.presentation.qt import main_window
-    assert "<= 70" not in inspect.getsource(main_window.MainWindow.mousePressEvent)
+def test_drag_zone_matches_titlebar_height(win):
+    from PySide6.QtCore import QEvent, QPoint, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from src.presentation.qt.main_window import _TITLEBAR_H
+
+    win._native = False   # sin chrome nativo el arrastre es manual
+
+    def press(y: int) -> bool:
+        win._drag_pos = None
+        ev = QMouseEvent(QEvent.Type.MouseButtonPress, QPointF(100, y), QPointF(100, y),
+                         QPointF(100, y), Qt.MouseButton.LeftButton,
+                         Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)
+        win.mousePressEvent(ev)
+        return win._drag_pos is not None
+
+    assert press(_TITLEBAR_H - 1)
+    assert not press(_TITLEBAR_H + 1)
+
+
+def test_close_hover_survives_theme_toggle(win):
+    win._set_close_hover(True)
+    win._toggle_theme()               # recolorea todos los íconos
+    img = win._close_btn.icon().pixmap(16, 16).toImage()
+    px = sorted((img.pixelColor(x, y) for x in range(img.width()) for y in range(img.height())
+                 if img.pixelColor(x, y).alpha() > 0), key=lambda c: -c.alpha())
+    assert px[0].name() == "#ffffff"
+    win._set_close_hover(False)
+    assert win._close_btn.icon().pixmap(16, 16).toImage() != img
+
+
+@pytest.mark.parametrize("lang", ["es", "en", "pt"])
+def test_minimum_width_fits_content_in_every_language(lang):
+    from src.presentation.qt.i18n import current_language, set_language
+    prev = current_language()
+    set_language(lang)
+    try:
+        app = QApplication.instance() or QApplication([])
+        m = MonitorService(FakeCapture(), FakeRepo(), FakeReporter(),
+                           FakeStore(Settings()), FakeNotifier())
+        w = MainWindow(m, per_process=True)
+        assert w.minimumSizeHint().width() <= w.minimumWidth() == 780
+        w.resize(w.minimumWidth(), 720)
+        w.show()
+        app.processEvents()
+        assert w.width() == 780
+        body = w.findChild(QFrame, "Body")
+        seg = w._seg_group.buttons()[0].parent()
+        unit_caps = [lb for lb in w.findChildren(QLabel) if lb.objectName() == "UnitCaption"]
+        rects = []
+        for wd in (w._tabs.bar, seg, unit_caps[0], w._unit_box if hasattr(w, "_unit_box")
+                   else unit_caps[0]):
+            pos = wd.mapTo(body, wd.rect().topLeft())
+            rects.append(QRect(pos, wd.size()))
+        bar_r, seg_r, cap_r = rects[0], rects[1], rects[2]
+        assert not bar_r.intersects(seg_r)
+        assert not seg_r.intersects(cap_r)
+        assert bar_r.right() < seg_r.left() < seg_r.right() < cap_r.left()
+        # velocidad y unidad de la barra de título no se pisan
+        for v, u in ((w._speed_down, w._unit_down), (w._speed_up, w._unit_up)):
+            assert v.mapTo(w, v.rect().topRight()).x() <= u.mapTo(w, u.rect().topLeft()).x()
+        w.close()
+    finally:
+        set_language(prev)
+
+
+def test_fixed_unit_falls_back_to_auto_when_number_too_wide():
+    from src.presentation.qt.main_window import _fmt
+    v, u = _fmt(60 * 1024 ** 3, "KB")
+    assert u in ("GB", "MB") and len(v) <= 8
+    v, u = _fmt(200 * 1024 ** 3, "MB")
+    assert u != "MB" and len(v) <= 8
+    assert _fmt(5 * 1024 ** 2, "KB")[1] == "KB"      # valores chicos respetan la unidad
+    assert _fmt(512, "MB") == ("0,0", "MB")

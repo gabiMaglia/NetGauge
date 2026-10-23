@@ -42,6 +42,11 @@ GEO = {"142.250.78.14": ("AR", "Google LLC"), "162.125.2.14": ("US", "Dropbox, I
        "104.18.123.25": ("US", "Cloudflare"), "3.209.62.201": ("US", "Amazon")}
 
 
+def _pick_period(w, code: str) -> None:
+    """Clic real en el chip del período (así queda marcado como en la app)."""
+    next(chip for chip, value in w._period_chips if value == code).click()
+
+
 def main(out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     m = MonitorService(FakeCapture(), FakeRepo(), FakeReporter(),
@@ -52,6 +57,7 @@ def main(out: Path) -> None:
             m._on_sample(TrafficSample(pid, name, bytes_sent=int(tx * random.random() / 3),
                                        bytes_recv=int(rx * random.random() / 3)))
     w = MainWindow(m, per_process=True)
+    w.resize(780, 720)   # ancho mínimo de la ventana
     w.show()
     app.processEvents()
     state = {"conns": []}
@@ -95,7 +101,7 @@ def main(out: Path) -> None:
         UsageRecord(u.app_name, u.bytes_sent, u.bytes_recv, datetime.now())
         for u in m.session_usage()]
     w._tabs.setCurrentIndex(0)
-    w._set_period("day")
+    _pick_period(w, "day")
     app.processEvents()
     w.grab().save(str(out / "ui_global_day.png"))
     # Header con velocidades reales (bajada 12,4 MB/s, subida 1,8 MB/s).
@@ -107,7 +113,7 @@ def main(out: Path) -> None:
     w._tick()
 
     # Pasada en tema claro (Global, Por aplicación, Conexiones).
-    w._set_period("session")
+    _pick_period(w, "session")
     w._toggle_theme()
     state["conns"] = list(CONNS)
     for idx, name in enumerate(("global", "apps", "conexiones")):

@@ -190,7 +190,8 @@ def test_checked_indicator_is_painted_with_accent_and_20px(win):
     cb.setChecked(False)
     off = cb.grab().toImage()
     assert not _has_color(off, DARK["accent"], 24)
-    # sin marcar: sólo el borde de 1px (token dashed_bd, visible también en claro) (borde izquierdo + derecho = 20px de ancho)
+    # sin marcar: sólo el borde de 1px (token dashed_bd, visible también en claro);
+    # borde izquierdo + derecho = 20px de ancho
     assert _has_color(off, DARK["dashed_bd"], 24)
     assert _row_extent(off, DARK["dashed_bd"], 30) == 20
     cb.setChecked(True)
@@ -270,3 +271,21 @@ def test_light_theme_keeps_working_and_recolors_statusbar(win):
     QApplication.processEvents()
     win._hide_local_cb.setChecked(True)
     assert _has_color(win._hide_local_cb.grab().toImage(), LIGHT["accent"], 24)
+
+
+# ---- sin resultados vs sin conexiones --------------------------------------
+def test_empty_state_vs_no_results(win):
+    win._conn_search.setText("zzz-nada")
+    win._refresh_connections()
+    assert win._conn_empty_title.text() == t("conn.no_results", q="zzz-nada")
+    assert win._conn_empty_body.isHidden()
+    assert not win._conn_empty.isHidden()
+    win._conn_search.setText("")
+    win._set_conn_filter("listening")
+    win._state["conns"] = [c for c in CONNS if c.status != "LISTEN"]
+    win._refresh_connections()
+    assert win._conn_empty_title.text() == t("conn.no_results_filter")
+    win._state["conns"] = []          # de verdad no hay conexiones
+    win._refresh_connections()
+    assert win._conn_empty_title.text() == t("conn.empty.title")
+    assert not win._conn_empty_body.isHidden()
