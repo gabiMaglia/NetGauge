@@ -98,6 +98,15 @@ def main(out: Path) -> None:
     w._set_period("day")
     app.processEvents()
     w.grab().save(str(out / "ui_global_day.png"))
+    # Pasada en tema claro (Global, Por aplicación, Conexiones).
+    w._set_period("session")
+    w._toggle_theme()
+    state["conns"] = list(CONNS)
+    for idx, name in enumerate(("global", "apps", "conexiones")):
+        w._tabs.setCurrentIndex(idx)
+        w._refresh()
+        app.processEvents()
+        w.grab().save(str(out / f"ui_{name}_light.png"))
     print("ok", out)
 
 

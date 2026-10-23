@@ -190,9 +190,9 @@ def test_checked_indicator_is_painted_with_accent_and_20px(win):
     cb.setChecked(False)
     off = cb.grab().toImage()
     assert not _has_color(off, DARK["accent"], 24)
-    # sin marcar: sólo el borde de 1px del token (borde izquierdo + derecho = 20px de ancho)
-    assert _has_color(off, DARK["border"], 24)
-    assert _row_extent(off, DARK["border"], 30) == 20
+    # sin marcar: sólo el borde de 1px (token dashed_bd, visible también en claro) (borde izquierdo + derecho = 20px de ancho)
+    assert _has_color(off, DARK["dashed_bd"], 24)
+    assert _row_extent(off, DARK["dashed_bd"], 30) == 20
     cb.setChecked(True)
     on = cb.grab().toImage()
     assert _has_color(on, DARK["accent"], 24)

@@ -15,13 +15,13 @@ LIGHT = {
     "text": "#0f172a", "text_strong": "#1e293b", "text_muted": "#64748b",
     "text_faint": "#94a3b8", "text_secondary": "#475569",
     "down": "#2563eb", "selected_bg": "#eff5ff", "selected_bd": "#dbe8ff",
-    "accent": "#3b82f6", "accent_strong": "#2563eb", "accent_soft_bg": "#eff5ff",
-    "accent_soft_bd": "#dbe8ff", "upload": "#10b981", "warning": "#f59e0b",
+    "accent": "#2563eb", "accent_strong": "#1d4ed8", "accent_soft_bg": "#eff5ff",
+    "accent_soft_bd": "#dbe8ff", "upload": "#047857", "warning": "#b45309",
     "warning_2": "#fbbf24", "danger": "#ef4444", "on_accent": "#ffffff",
     "total_grad_a": "#eff5ff", "total_grad_b": "#e7f0ff", "total_grad_bd": "#d7e6ff",
     "shadow_rgba": "rgba(15,23,42,0.32)",
     "dashed_bd": "#cbd5e1", "accent_text": "#2563eb",
-    "total_fg": "#2563eb", "total_fg2": "#3b82f6",
+    "total_fg": "#1d4ed8", "total_fg2": "#2563eb",
     "table_head_bg": "#f1f4f8", "row_line": "#eef1f5",
 }
 
@@ -155,7 +155,6 @@ def app_qss(t: dict) -> str:
     QComboBox QAbstractItemView::item {{ min-height: 26px; padding: 2px 8px; }}
 
     /* Pestañas */
-    QTabWidget::pane {{ border: none; }}
     QTabBar {{ background: transparent; }}
     QTabBar::tab {{
         background: transparent; color: {t['text_muted']};
@@ -277,7 +276,7 @@ def app_qss(t: dict) -> str:
                  spacing: 8px; }}
     QCheckBox::indicator {{
         width: 18px; height: 18px; border-radius: 6px;  /* + borde 1px = 20x20 */
-        border: 1px solid {t['border']}; background: transparent;
+        border: 1px solid {t['dashed_bd']}; background: transparent;
     }}
     QCheckBox::indicator:checked {{
         background: {t['accent']}; border: 1px solid {t['accent']};
@@ -353,8 +352,10 @@ def app_qss(t: dict) -> str:
 
 
 def load_app_fonts() -> None:
-    """Registra las fuentes bundleadas (Plus Jakarta Sans, JetBrains Mono) en runtime para no
-    depender de que el SO las tenga instaladas (en macOS no vienen de fábrica).
+    """Registra las fuentes bundleadas (Plus Jakarta Sans, JetBrains Mono).
+
+    Se hace en runtime para no depender de que el SO las tenga instaladas
+    (en macOS no vienen de fábrica).
 
     Best-effort: si el directorio de fuentes no está, no rompe el arranque.
     Llamar UNA vez después de crear la QApplication y antes de aplicar el QSS.
