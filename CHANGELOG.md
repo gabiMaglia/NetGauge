@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+
+## [2.0.5] - 2026-10-23
 ### Changed
 - **Rediseño de la UI.** Header con velocidad de bajada/subida en vivo (anchos
   fijos, sin saltos) y botón de cerrar con ícono blanco en hover; una sola fila
