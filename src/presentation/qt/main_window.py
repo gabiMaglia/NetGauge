@@ -144,8 +144,9 @@ class MainWindow(QWidget):
         # Dos trackers (bajada/subida) sobre los acumulados de la sesión; se
         # alimentan sólo desde _tick (1 Hz) para que dt no dependa de cuántos
         # _refresh haya (búsqueda, orden, snapshots).
-        self._recv_tracker = AppRateTracker()
-        self._sent_tracker = AppRateTracker()
+        # 4 s = 2 intervalos de captura (nettop entrega snapshots cada 2 s)
+        self._recv_tracker = AppRateTracker(window=4.0)
+        self._sent_tracker = AppRateTracker(window=4.0)
         self._rates_down: dict[str, float] = {}
         self._rates_up: dict[str, float] = {}
         self._clock = time.monotonic
@@ -975,6 +976,8 @@ class MainWindow(QWidget):
             unit.setText(f"{u or 'B'}/s")
         self._peak_chip.setText(t("chart.peak", v=loc_bytes(self._chart.peak())))
         self._update_app_rates()
+        if self._tabs.currentIndex() == 1:   # sólo si Apps está a la vista (1 Hz)
+            self._redraw_apps()
 
     def _update_app_rates(self) -> None:
         """Velocidad por app: delta de los acumulados de sesión entre ticks (1 Hz)."""

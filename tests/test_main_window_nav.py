@@ -229,3 +229,31 @@ def test_fixed_unit_falls_back_to_auto_when_number_too_wide():
     assert u != "MB" and len(v) <= 8
     assert _fmt(5 * 1024 ** 2, "KB")[1] == "KB"      # valores chicos respetan la unidad
     assert _fmt(512, "MB") == ("0,0", "MB")
+
+
+def test_tick_repaints_visible_app_rates_without_refresh(win):
+    from src.domain.models import TrafficSample
+    clock = {"t": 100.0}
+    win._clock = lambda: clock["t"]
+    win._monitor._on_sample(TrafficSample(1, "Chrome", bytes_sent=0, bytes_recv=1000))
+    win._refresh()
+    win._tabs.setCurrentIndex(1)
+    QApplication.processEvents()
+    win._tick()
+    row = win._app_rows["Chrome"]
+    before = row._rate.text()
+    refreshes = []
+    win._refresh = lambda: refreshes.append(1)   # _tick no debe pasar por acá
+    clock["t"] += 1.0
+    win._monitor._on_sample(TrafficSample(1, "Chrome", bytes_sent=0, bytes_recv=500_000))
+    win._tick()
+    assert refreshes == []
+    assert row._rate.text() != before and "↓" in row._rate.text()
+
+
+def test_tick_does_not_redraw_apps_when_tab_not_visible(win):
+    calls = []
+    win._redraw_apps = lambda: calls.append(1)
+    win._tabs.setCurrentIndex(0)
+    win._tick()
+    assert calls == []

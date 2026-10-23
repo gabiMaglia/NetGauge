@@ -25,13 +25,52 @@ def share_pct(part: float, total: float) -> float:
 
 
 class AppRateTracker:
-    """Bytes/s por app, calculados entre dos lecturas consecutivas del acumulado."""
+    """Bytes/s por app a partir del acumulado.
 
-    def __init__(self) -> None:
+    window=0: entre dos lecturas consecutivas.
+
+    window>0: sobre los *puntos de cambio* del acumulado de los últimos `window`
+    segundos. nettop entrega snapshots cada 2 s, así que el acumulado sólo cambia
+    cada 2ª lectura: medir entre lecturas alterna 0 / 2x, y una ventana fija
+    oscila según la fase. Tomando las marcas de tiempo de los cambios la tasa queda
+    estable; si no hay cambios durante `window`, vuelve a 0."""
+
+    def __init__(self, window: float = 0.0) -> None:
+        self._window = window
         self._prev: dict[str, int] = {}
         self._t: float | None = None
+        self._points: dict[str, list[tuple[float, int]]] = {}
 
     def update(self, totals: dict[str, int], now: float) -> dict[str, float]:
+        if self._window <= 0:
+            return self._update_pairwise(totals, now)
+        rates: dict[str, float] = {}
+        points: dict[str, list[tuple[float, int]]] = {}
+        for name, value in totals.items():
+            pts = self._points.get(name)
+            if pts is None or value < pts[-1][1]:
+                pts = [(now, value)]          # app nueva o contador reiniciado
+            elif value > pts[-1][1]:
+                pts = pts + [(now, value)]
+            points[name] = pts = self._trim(pts, now)
+            rates[name] = self._rate(pts, now)
+        self._points = points                 # las apps que desaparecen se descartan
+        return rates
+
+    def _trim(self, pts: list[tuple[float, int]], now: float) -> list[tuple[float, int]]:
+        # se conserva un punto previo a la ventana como ancla
+        old = [i for i, (t, _v) in enumerate(pts) if t < now - self._window]
+        return pts[max(old[-1], 0):] if old else pts
+
+    def _rate(self, pts: list[tuple[float, int]], now: float) -> float:
+        if len(pts) < 2 or now - pts[-1][0] > self._window:
+            return 0.0
+        inside = [p for p in pts if p[0] >= now - self._window]
+        first = inside[0] if len(inside) >= 2 else pts[-2]
+        t_last, v_last = pts[-1]
+        return (v_last - first[1]) / (t_last - first[0]) if t_last > first[0] else 0.0
+
+    def _update_pairwise(self, totals: dict[str, int], now: float) -> dict[str, float]:
         dt = (now - self._t) if self._t is not None else 0.0
         rates: dict[str, float] = {}
         for name, value in totals.items():
