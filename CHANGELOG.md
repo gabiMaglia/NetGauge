@@ -4,6 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+### Changed
+- **Rediseño de la UI.** Header con velocidad de bajada/subida en vivo (anchos
+  fijos, sin saltos) y botón de cerrar con ícono blanco en hover; una sola fila
+  de navegación (pestañas + período + unidad); pestaña *Global* con tarjetas con
+  tendencia, gráfico con ejes y tooltip, y tarjetas de límite diario/mensual
+  (reemplazan al botón *Cuota*); pestaña *Por aplicación* con íconos, búsqueda,
+  orden, velocidad actual y porcentaje del total; pestaña *Conexiones* como tabla
+  con filtros y estado vacío; barra de estado; tipografía JetBrains Mono para
+  cifras; tema claro con contraste AA; ancho mínimo de ventana 680 px.
 
 ## [2.0.4] - 2026-10-22
 ### Fixed
