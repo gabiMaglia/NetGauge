@@ -68,3 +68,11 @@ def icon_for(app_name: str, exe_path: str | None, size: int = 44) -> QPixmap:
         pm = real if real is not None else _chip(app_name, size)
         _cache[key] = pm
     return pm
+
+
+def clear_cache() -> None:
+    """Libera pixmaps y proveedor. Debe correr ANTES de que muera la QApplication:
+    destruir un QPixmap en el cierre del intérprete (sin app) puede abortar el proceso."""
+    global _provider
+    _cache.clear()
+    _provider = None

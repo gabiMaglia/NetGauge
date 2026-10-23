@@ -31,6 +31,7 @@ from ...version import APP_VERSION, GITHUB_OWNER, GITHUB_REPO
 from .i18n import t
 from .main_window import MainWindow
 from .single_instance import SingleInstance
+from .app_icons import clear_cache as clear_icon_cache
 from .theme import load_app_fonts
 from .widgets import make_app_qicon, make_sparkline_icon
 
@@ -126,6 +127,7 @@ def should_exit_after_listen_failure(guard) -> bool:
 def run(app: QApplication, guard: SingleInstance, monitor: MonitorService,
         per_process: bool, notifier: QtNotifier) -> int:
     load_app_fonts()  # registrar Plus Jakarta Sans bundleada (no depende del SO)
+    app.aboutToQuit.connect(clear_icon_cache)  # los pixmaps no pueden sobrevivir a la app
     app.setQuitOnLastWindowClosed(False)  # cerrar la ventana NO cierra la app
     app_icon = make_app_qicon()
     app.setWindowIcon(app_icon)  # ícono de marca en diálogos (About, Cuota)

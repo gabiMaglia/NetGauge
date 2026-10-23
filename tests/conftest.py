@@ -77,18 +77,34 @@ BUNDLED_FONTS = ("Plus Jakarta Sans", "JetBrains Mono")
 
 
 @pytest.fixture(scope="session", autouse=True)
-def bundled_fonts() -> bool:
-    """Registra las fuentes bundleadas igual que la app (app.run -> load_app_fonts).
+def bundled_fonts():
+    """Una única QApplication para toda la sesión, con las fuentes bundleadas
+    registradas igual que la app (app.run -> load_app_fonts).
 
-    Sin esto Qt cae a la fuente genérica del SO (mucho más ancha en el runner de
-    Windows) y los tests de layout miden otra cosa que la app real. Devuelve si
-    ambas familias quedaron registradas; los tests de medidas se saltan si no."""
+    Sin fuentes Qt cae a la genérica del SO (mucho más ancha en Windows) y los tests
+    de layout miden otra cosa. Devuelve si ambas familias quedaron registradas.
+
+    Al terminar hace el cierre en orden: ventanas, ciclos de GC y pixmaps cacheados
+    mueren ANTES que la QApplication; si no, en el cierre del intérprete se destruyen
+    objetos Qt sin app y el proceso aborta (Linux 134, macOS 139, Windows 1)."""
+    import gc
     import os
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtCore import QEvent
     from PySide6.QtGui import QFontDatabase
     from PySide6.QtWidgets import QApplication
-    from src.presentation.qt import theme
-    QApplication.instance() or QApplication([])
+    from src.presentation.qt import app_icons, theme
+    app = QApplication.instance() or QApplication([])   # referencia viva hasta el final
     theme.load_app_fonts()
     families = set(QFontDatabase.families())
-    return all(f in families for f in BUNDLED_FONTS)
+    yield all(f in families for f in BUNDLED_FONTS)
+
+    for w in QApplication.topLevelWidgets():
+        w.close()
+        w.deleteLater()
+    for _ in range(3):
+        app.processEvents()
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        gc.collect()   # ventanas en ciclo con su MonitorService (listener -> señal)
+    app_icons.clear_cache()
+    gc.collect()

@@ -51,3 +51,12 @@ def test_missing_path_falls_back_to_chip_without_raising(qapp):
 def test_icon_for_is_cached_by_name_and_path(qapp):
     assert icon_for("Cache", None) is icon_for("Cache", None)
     assert icon_for("Cache", None) is not icon_for("Cache2", None)
+
+
+def test_clear_cache_empties_pixmaps_and_provider(qapp):
+    from src.presentation.qt import app_icons
+    app_icons.icon_for("Chrome", None, 20)
+    assert app_icons._cache
+    app_icons.clear_cache()
+    assert not app_icons._cache and app_icons._provider is None
+    assert not app_icons.icon_for("Chrome", None, 20).isNull()   # se repuebla
