@@ -37,6 +37,7 @@ from ...domain.models import (
 )
 from .app_icons import icon_for
 from .i18n import fmt_number, loc_bytes, t
+from .viewmodel import conn_status_kind
 from .theme import MONO_FAMILY
 
 _GRAPH_POINTS = 60
@@ -752,33 +753,119 @@ class AppRow(QFrame):
         self._set_rate(self._rate_plain)
 
 
+# Columnas de la tabla de conexiones; la cabecera y las filas comparten estos valores.
+CONN_PAD_X = 16
+CONN_GAP = 12
+CONN_STRETCH_APP = 12
+CONN_STRETCH_DEST = 16
+CONN_COL_COUNTRY = 70
+CONN_COL_STATUS = 110
+CONN_COL_TRAFFIC = 80
+CONN_ICON_PX = 22
+
+
+class ElidedLabel(QLabel):
+    """Etiqueta de una línea que se trunca con "…" en vez de ensanchar la fila."""
+
+    def __init__(self, text: str = "") -> None:
+        super().__init__(text)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(0, super().minimumSizeHint().height())
+
+    def paintEvent(self, _event) -> None:
+        p = QPainter(self)
+        elided = self.fontMetrics().elidedText(
+            self.text(), Qt.TextElideMode.ElideRight, self.contentsRect().width())
+        p.setPen(self.palette().color(self.foregroundRole()))
+        p.drawText(self.contentsRect(), int(self.alignment()), elided)
+
+
 class ConnRow(QFrame):
-    """Fila de conexión reutilizable: app · (geo) · ip:puerto · estado."""
+    """Fila de la tabla de conexiones: app · destino · país · estado · tráfico.
 
-    def __init__(self, app_name: str, remote: str, status: str) -> None:
+    Se reutiliza in-place (ver MainWindow._refresh_connections). Todo texto que
+    viene del SO o de la red va como PlainText."""
+
+    def __init__(self, app_name: str, remote: str, status: str, host: str = "",
+                 exe_path: str | None = None) -> None:
         super().__init__()
-        self.setObjectName("AppRow")
+        self.setObjectName("ConnRow")
+        self._app_name = app_name
+        self._icon_path = exe_path
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(10, 6, 12, 6)
-        lay.setSpacing(10)
-        self._app = QLabel(app_name)
-        self._app.setTextFormat(Qt.TextFormat.PlainText)  # el nombre viene del SO
-        self._app.setObjectName("AppName")
-        lay.addWidget(self._app)
-        self._geo = QLabel("")
-        self._geo.setTextFormat(Qt.TextFormat.PlainText)  # texto de ip-api: no confiable
-        self._geo.setObjectName("AppSplit")
-        lay.addWidget(self._geo)
-        lay.addStretch()
-        rem = QLabel(remote)
-        rem.setObjectName("AppTotal")
-        lay.addWidget(rem)
-        st = QLabel(status)
-        st.setObjectName("Chip")
-        lay.addWidget(st)
+        lay.setContentsMargins(CONN_PAD_X, 11, CONN_PAD_X, 11)
+        lay.setSpacing(CONN_GAP)
 
-    def set_geo(self, text: str) -> None:
-        self._geo.setText(text)
+        app_box = QHBoxLayout()
+        app_box.setSpacing(10)
+        self._icon = QLabel()
+        self._icon.setFixedSize(CONN_ICON_PX, CONN_ICON_PX)
+        self._icon.setPixmap(icon_for(app_name, exe_path, CONN_ICON_PX))
+        app_box.addWidget(self._icon)
+        self._app = ElidedLabel(app_name)  # el nombre viene del SO
+        self._app.setObjectName("ConnApp")
+        app_box.addWidget(self._app, 1)
+        lay.addLayout(app_box, CONN_STRETCH_APP)
+
+        dest_box = QHBoxLayout()
+        dest_box.setSpacing(8)
+        self._host = ElidedLabel(host)
+        self._host.setObjectName("ConnHost")
+        self._host.setVisible(bool(host))
+        dest_box.addWidget(self._host)
+        self._endpoint = ElidedLabel(remote)
+        self._endpoint.setObjectName("ConnEndpoint")
+        self._endpoint.setProperty("primary", not host)  # sin host, la IP es el dato principal
+        dest_box.addWidget(self._endpoint, 1)
+        lay.addLayout(dest_box, CONN_STRETCH_DEST)
+
+        self._geo = QLabel("—")
+        self._geo.setTextFormat(Qt.TextFormat.PlainText)  # texto de ip-api: no confiable
+        self._geo.setObjectName("ConnCountry")
+        self._geo.setFixedWidth(CONN_COL_COUNTRY)
+        lay.addWidget(self._geo)
+
+        kind = conn_status_kind(status)
+        st_box = QHBoxLayout()
+        st_box.setSpacing(7)
+        st_box.setContentsMargins(0, 0, 0, 0)
+        dot = QLabel()
+        dot.setObjectName("ConnDot")
+        dot.setProperty("kind", kind)
+        dot.setFixedSize(7, 7)
+        st_box.addWidget(dot, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._status = QLabel(t("conn.status." + kind))
+        self._status.setObjectName("ConnStatus")
+        self._status.setProperty("kind", kind)
+        self._status.setToolTip(status)
+        st_box.addWidget(self._status, 1)
+        st_wrap = QWidget()
+        st_wrap.setFixedWidth(CONN_COL_STATUS)
+        st_wrap.setLayout(st_box)
+        lay.addWidget(st_wrap)
+
+        # El modelo Connection no trae bytes por conexión: no se inventa el dato.
+        self._traffic = QLabel("—")
+        self._traffic.setObjectName("ConnTraffic")
+        self._traffic.setFixedWidth(CONN_COL_TRAFFIC)
+        self._traffic.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        lay.addWidget(self._traffic)
+
+    def _dest_text(self) -> str:
+        return self._endpoint.text()
+
+    def set_geo(self, text: str, org: str = "") -> None:
+        self._geo.setText(text or "—")
+        # escapado: los tooltips de Qt autodetectan HTML y la organización viene de la red
+        self._geo.setToolTip(html.escape(org) if org else "")
+
+    def set_icon(self, exe_path: str | None) -> None:
+        if exe_path != self._icon_path:
+            self._icon_path = exe_path
+            self._icon.setPixmap(icon_for(self._app_name, exe_path, CONN_ICON_PX))
 
 
 def _paint_bars(p: QPainter, w: float, h: float, radius: float) -> None:

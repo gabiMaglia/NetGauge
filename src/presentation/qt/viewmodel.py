@@ -70,3 +70,30 @@ def filter_sort_apps(rows: list[AppRowData], query: str, sort: str) -> list[AppR
     items = [r for r in rows if not q or q in r.name.lower()]
     key = _SORT_KEYS.get(sort, _SORT_KEYS["total"])
     return sorted(items, key=lambda r: (-key(r), r.name.lower()))
+
+
+def conn_status_kind(status: str) -> str:
+    """Agrupa el estado TCP crudo en las cuatro categorías que muestra la tabla."""
+    s = status.upper()
+    if s == "ESTABLISHED":
+        return "established"
+    if s == "LISTEN":
+        return "listening"
+    if s in ("CLOSE_WAIT", "TIME_WAIT", "CLOSING", "LAST_ACK") or s.startswith("FIN_WAIT"):
+        return "closing"
+    return "other"
+
+
+def filter_connections(conns, query: str, geo_lookup) -> list:
+    """Filtra por app, IP remota, código de país u organización (sin I/O: geo_lookup
+    sólo consulta la caché del servicio)."""
+    q = query.strip().lower()
+    if not q:
+        return list(conns)
+    out = []
+    for c in conns:
+        geo = geo_lookup(c.raddr)
+        hay = [c.app_name, c.raddr, *(geo or ())]
+        if any(q in str(h).lower() for h in hay):
+            out.append(c)
+    return out

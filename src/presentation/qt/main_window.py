@@ -35,10 +35,14 @@ from .native_window import apply_native_chrome, handle_native_event
 from .quota_dialog import QuotaDialog
 from .settings_dialog import SettingsDialog
 from .theme import DARK, LIGHT, app_qss
+from ...version import APP_VERSION
 from .viewmodel import (
-    AppRateTracker, AppRowData, filter_sort_apps, share_pct, trend_label, trend_pct)
+    AppRateTracker, AppRowData, conn_status_kind, filter_connections, filter_sort_apps,
+    share_pct, trend_label, trend_pct)
 from .widgets import (
     APP_COL_GAP, APP_COL_RATE, APP_COL_TOTAL, APP_ICON_PX, APP_ROW_BORDER, APP_ROW_PAD_X,
+    CONN_COL_COUNTRY, CONN_COL_STATUS, CONN_COL_TRAFFIC, CONN_GAP, CONN_PAD_X,
+    CONN_STRETCH_APP, CONN_STRETCH_DEST,
     AppRow, BarsLogo, ConnRow, LimitCard, LiveChart, MetricCard)
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
@@ -46,6 +50,8 @@ _TITLEBAR_H = 56
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
 _SORT_CODES = ["total", "down", "up", "now"]
+_CONN_FILTERS = ["all", "established", "listening"]
+_STATUSBAR_H = 30
 
 
 def trust_tooltip_text(info, translate) -> str:
@@ -127,6 +133,7 @@ class MainWindow(QWidget):
         self._app_rows: dict[str, AppRow] = {}   # filas reutilizadas por nombre
         self._conn_rows: dict[str, ConnRow] = {}  # filas de conexión reutilizadas
         self._apps_sort = "total"
+        self._conn_filter = "all"
         self._last_rows: tuple | None = None  # (rows, total) del último _refresh
         # Dos trackers (bajada/subida) sobre los acumulados de la sesión; se
         # alimentan sólo desde _tick (1 Hz) para que dt no dependa de cuántos
@@ -204,6 +211,8 @@ class MainWindow(QWidget):
         pages_lay.addWidget(self._tabs.stack)
         body_lay.addLayout(pages_lay, 1)
         root_lay.addWidget(body, 1)
+        root_lay.addWidget(self._build_statusbar())
+        self._update_statusbar()
 
     def _build_titlebar(self) -> QWidget:
         bar = QFrame()
@@ -218,7 +227,6 @@ class MainWindow(QWidget):
         brand = QLabel('Net<span style="color:#3b82f6;">Gauge</span>')
         brand.setObjectName("BrandName")
         lay.addWidget(brand)
-        self._style_mode_badge()
         lay.addStretch()
 
         self._speed_down, self._unit_down = self._speed_group(lay, "SpeedDown", "↓")
@@ -289,6 +297,10 @@ class MainWindow(QWidget):
             b.setIcon(svg_icon(b.property("icon_name"), color, b.iconSize().width()))
         if hasattr(self, "_search_action"):
             self._search_action.setIcon(svg_icon("search", color, 16))
+        if hasattr(self, "_conn_search_action"):
+            self._conn_search_action.setIcon(svg_icon("search", color, 16))
+        if hasattr(self, "_conn_empty_icon"):
+            self._conn_empty_icon.setPixmap(svg_icon("wifi-off", color, 22).pixmap(22, 22))
         if hasattr(self, "_unit_chevron"):
             self._unit_chevron.setPixmap(
                 svg_icon("chevron-down", color, 16).pixmap(16, 16))
@@ -359,7 +371,7 @@ class MainWindow(QWidget):
         self._tabs.addTab(self._build_global_tab(), t("tab.global"))
         self._tabs.addTab(self._build_apps_tab(), t("tab.apps"))
         self._tabs.addTab(self._build_connections_tab(), t("tab.connections"))
-        self._tabs.bar.currentChanged.connect(lambda _i: self._redraw_apps())
+        self._tabs.bar.currentChanged.connect(lambda _i: self._redraw_tab())
         return self._tabs
 
     def _build_global_tab(self) -> QWidget:
@@ -537,38 +549,179 @@ class MainWindow(QWidget):
         if self._last_rows is not None:
             self._rebuild_apps(*self._last_rows)
 
+    def _redraw_tab(self) -> None:
+        """Cambio de pestaña: redibuja Apps y Conexiones con el snapshot actual
+        (camino liviano, sin pasar por _refresh ni sus sparklines)."""
+        self._redraw_apps()
+        self._refresh_connections()
+
     def _build_connections_tab(self) -> QWidget:
         page = QWidget()
         lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 12, 0, 0)
-        lay.setSpacing(8)
-        head = QHBoxLayout()
-        self._conn_subtitle = QLabel(t("conn.subtitle"))
-        self._conn_subtitle.setObjectName("AppSplit")
-        head.addWidget(self._conn_subtitle)
-        head.addStretch()
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        tools = QHBoxLayout()
+        tools.setContentsMargins(0, 14, 0, 10)
+        tools.setSpacing(8)
+        self._conn_search = QLineEdit()
+        self._conn_search.setObjectName("ConnSearch")
+        self._conn_search.setPlaceholderText(t("conn.search"))
+        self._conn_search.setFixedHeight(38)
+        self._conn_search_action = self._conn_search.addAction(
+            svg_icon("search", self._theme["text_muted"], 16),
+            QLineEdit.ActionPosition.LeadingPosition)
+        self._conn_search.textChanged.connect(lambda _t: self._refresh_connections())
+        tools.addWidget(self._conn_search, 1)
+        tools.addSpacing(6)
+        self._conn_group = QButtonGroup(self)
+        self._conn_group.setExclusive(True)
+        self._conn_chips: dict[str, QPushButton] = {}
+        for code in _CONN_FILTERS:
+            chip = QPushButton()
+            chip.setObjectName("StatusChip")
+            chip.setCheckable(True)
+            chip.setFixedHeight(32)
+            chip.setCursor(Qt.CursorShape.PointingHandCursor)
+            chip.setChecked(code == self._conn_filter)
+            chip.clicked.connect(lambda _c, c=code: self._set_conn_filter(c))
+            self._conn_group.addButton(chip)
+            self._conn_chips[code] = chip
+            tools.addWidget(chip)
+        self._set_conn_chip_texts(0)
+        tools.addSpacing(6)
         self._hide_local_cb = QCheckBox(t("conn.hide_localhost"))
+        self._hide_local_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self._hide_local_cb.setChecked(self._monitor.settings.hide_localhost)
         self._hide_local_cb.toggled.connect(self._toggle_hide_localhost)
-        head.addWidget(self._hide_local_cb)
-        lay.addLayout(head)
+        tools.addWidget(self._hide_local_cb)
+        lay.addLayout(tools)
+
+        self._conn_card = QFrame()
+        self._conn_card.setObjectName("ConnCard")
+        card_lay = QVBoxLayout(self._conn_card)
+        card_lay.setContentsMargins(1, 1, 1, 1)
+        card_lay.setSpacing(0)
+
+        # Cabecera fija: mismos márgenes y anchos que ConnRow para alinear columnas.
+        head = QWidget()
+        head.setObjectName("ConnHead")
+        self._conn_head_lay = QHBoxLayout(head)
+        self._conn_head_lay.setContentsMargins(CONN_PAD_X, 10, CONN_PAD_X, 10)
+        self._conn_head_lay.setSpacing(CONN_GAP)
+        self._conn_cols: dict[str, QLabel] = {}
+        for key, stretch, width in (("app", CONN_STRETCH_APP, 0),
+                                    ("dest", CONN_STRETCH_DEST, 0),
+                                    ("country", 0, CONN_COL_COUNTRY),
+                                    ("status", 0, CONN_COL_STATUS),
+                                    ("traffic", 0, CONN_COL_TRAFFIC)):
+            lbl = QLabel(t("conn.col." + key))
+            if width:
+                lbl.setFixedWidth(width)
+            if key == "traffic":
+                lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+            self._conn_cols[key] = lbl
+            self._conn_head_lay.addWidget(lbl, stretch)
+        card_lay.addWidget(head)
 
         scroll = QScrollArea()
+        scroll.setObjectName("ConnScroll")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.viewport().setAutoFillBackground(False)
+        self._conn_scroll = scroll
         self._conn_container = QWidget()
-        self._conn_container.setObjectName("AppsContainer")
+        self._conn_container.setObjectName("ConnContainer")
         self._conn_lay = QVBoxLayout(self._conn_container)
         self._conn_lay.setContentsMargins(0, 0, 0, 0)
-        self._conn_lay.setSpacing(2)
-        self._conn_empty = QLabel(t("conn.empty"))
-        self._conn_empty.setObjectName("AppSplit")
-        self._conn_lay.addWidget(self._conn_empty)
+        self._conn_lay.setSpacing(0)
         self._conn_lay.addStretch()
         scroll.setWidget(self._conn_container)
-        lay.addWidget(scroll, 1)
+        scroll.verticalScrollBar().rangeChanged.connect(lambda *_: self._sync_conn_head_pad())
+        card_lay.addWidget(scroll, 1)
+        lay.addWidget(self._conn_card, 1)
+
+        lay.addWidget(self._build_conn_empty(), 1)
         return page
+
+    def _build_conn_empty(self) -> QWidget:
+        box = QFrame()
+        box.setObjectName("ConnEmpty")
+        v = QVBoxLayout(box)
+        v.setContentsMargins(24, 24, 24, 24)
+        v.setSpacing(8)
+        v.addStretch()
+        self._conn_empty_icon = QLabel()
+        self._conn_empty_icon.setObjectName("ConnEmptyTile")
+        self._conn_empty_icon.setFixedSize(44, 44)
+        self._conn_empty_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(self._conn_empty_icon, 0, Qt.AlignmentFlag.AlignHCenter)
+        v.addSpacing(4)
+        self._conn_empty_title = QLabel(t("conn.empty.title"))
+        self._conn_empty_title.setObjectName("ConnEmptyTitle")
+        self._conn_empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(self._conn_empty_title)
+        self._conn_empty_body = QLabel(t("conn.empty.body"))
+        self._conn_empty_body.setObjectName("ConnEmptyBody")
+        self._conn_empty_body.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._conn_empty_body.setWordWrap(True)
+        v.addWidget(self._conn_empty_body)
+        v.addStretch()
+        box.hide()
+        self._conn_empty = box
+        return box
+
+    def _build_statusbar(self) -> QWidget:
+        bar = QFrame()
+        bar.setObjectName("StatusBar")
+        bar.setFixedHeight(_STATUSBAR_H)
+        lay = QHBoxLayout(bar)
+        lay.setContentsMargins(20, 0, 20, 0)
+        lay.setSpacing(8)
+        self._status_dot = QLabel()
+        self._status_dot.setFixedSize(7, 7)
+        lay.addWidget(self._status_dot)
+        self._status_text = QLabel()
+        self._status_text.setObjectName("StatusText")
+        lay.addWidget(self._status_text)
+        lay.addStretch()
+        self._status_right = QLabel()
+        self._status_right.setObjectName("StatusRight")
+        lay.addWidget(self._status_right)
+        self._status_bar = bar
+        return bar
+
+    def _update_statusbar(self) -> None:
+        """Modo de captura (punto + texto + tooltip) y 'período · versión'."""
+        per_app = self._per_process
+        if per_app and sys.platform == "darwin":
+            tip_key = "mode.nettop_tip"
+        elif per_app:
+            tip_key = "mode.etw_tip"
+        else:
+            tip_key = "mode.global_tip"
+        color = self._theme["upload" if per_app else "warning"]
+        self._status_dot.setProperty("state", "on" if per_app else "off")
+        self._status_dot.setStyleSheet(f"background:{color}; border-radius:3px;")
+        self._status_text.setText(t("status.capture_on" if per_app else "status.capture_off"))
+        for w in (self._status_dot, self._status_text):
+            w.setToolTip(t(tip_key))
+        self._status_right.setText(f"{t('period.' + self._period)} · v{APP_VERSION}")
+
+    def _sync_conn_head_pad(self) -> None:
+        sb = self._conn_scroll.verticalScrollBar()
+        extra = sb.sizeHint().width() if sb.maximum() > 0 else 0
+        self._conn_head_lay.setContentsMargins(CONN_PAD_X, 10, CONN_PAD_X + extra, 10)
+
+    def _set_conn_chip_texts(self, total: int) -> None:
+        self._conn_chips["all"].setText(t("conn.filter.all", n=total))
+        self._conn_chips["established"].setText(t("conn.filter.established"))
+        self._conn_chips["listening"].setText(t("conn.filter.listening"))
+
+    def _set_conn_filter(self, code: str) -> None:
+        self._conn_filter = code
+        self._refresh_connections()
 
     # ---- datos / refresco ---------------------------------------------
     def _rows(self):
@@ -727,8 +880,14 @@ class MainWindow(QWidget):
         conns = self._monitor.connections()
         if self._monitor.settings.hide_localhost:
             conns = [c for c in conns if not _is_loopback(c.raddr)]
+        # "Todas · N" cuenta antes del filtro de estado y de texto, después de localhost.
+        self._set_conn_chip_texts(len(conns))
+        if self._conn_filter != "all":
+            conns = [c for c in conns if conn_status_kind(c.status) == self._conn_filter]
+        conns = filter_connections(conns, self._conn_search.text(), self._monitor.geo_for)
         conns = sorted(conns, key=lambda c: c.app_name.lower())[:200]
         self._conn_empty.setVisible(not conns)
+        self._conn_card.setVisible(bool(conns))
 
         wanted = {}
         for c in conns:
@@ -746,13 +905,16 @@ class MainWindow(QWidget):
         for i, (key, c) in enumerate(wanted.items()):
             row = self._conn_rows.get(key)
             if row is None:
-                row = ConnRow(c.app_name, f"{c.raddr}:{c.rport}", c.status)
+                remote = f"{c.raddr}:{c.rport}" if c.raddr else "—"
+                row = ConnRow(c.app_name, remote, c.status,
+                              exe_path=self._monitor.exe_path_for(c.app_name))
                 self._conn_rows[key] = row
             if self._conn_lay.indexOf(row) != i:
                 self._conn_lay.removeWidget(row)
                 self._conn_lay.insertWidget(i, row)
+            row.set_icon(self._monitor.exe_path_for(c.app_name))
             geo = self._monitor.geo_for(c.raddr)
-            row.set_geo(f"{geo[0]} · {geo[1]}"[:40] if geo else "")
+            row.set_geo(geo[0] if geo else "", geo[1] if geo else "")
 
     def _tick(self) -> None:
         up, down = self._monitor.live_rate()
@@ -777,6 +939,7 @@ class MainWindow(QWidget):
     # ---- acciones ------------------------------------------------------
     def _set_period(self, value: str) -> None:
         self._period = value
+        self._update_statusbar()
         for spark in (self._spark_down, self._spark_up, self._spark_total):
             spark.clear()  # escalas distintas por período: no mezclar curvas
         self._refresh()
@@ -821,7 +984,7 @@ class MainWindow(QWidget):
 
     def _retranslate(self) -> None:
         """Re-aplica todos los textos tras un cambio de idioma."""
-        self._style_mode_badge()
+        self._update_statusbar()
         self._about_btn.setToolTip(t("btn.about"))
         self._settings_btn.setToolTip(t("btn.settings"))
         self._theme_btn.setToolTip(t("btn.theme"))
@@ -846,8 +1009,17 @@ class MainWindow(QWidget):
         self._col_app.setText(t("apps.col.app"))
         self._col_now.setText(t("apps.col.now"))
         self._col_total.setText(t("apps.col.total"))
-        self._conn_subtitle.setText(t("conn.subtitle"))
+        self._conn_search.setPlaceholderText(t("conn.search"))
+        for key, lbl in self._conn_cols.items():
+            lbl.setText(t("conn.col." + key))
+        self._conn_empty_title.setText(t("conn.empty.title"))
+        self._conn_empty_body.setText(t("conn.empty.body"))
         self._hide_local_cb.setText(t("conn.hide_localhost"))
+        for key in list(self._conn_rows):  # los textos de estado ya están traducidos: reconstruir
+            row = self._conn_rows.pop(key)
+            self._conn_lay.removeWidget(row)
+            row.deleteLater()
+        self._refresh_connections()
 
     def _toggle_theme(self) -> None:
         self._dark = not self._dark
@@ -868,19 +1040,9 @@ class MainWindow(QWidget):
         self.setStyleSheet(app_qss(self._theme))
         self._recolor_icons()
         self._sync_max_icon()
+        self._update_statusbar()
 
     # ---- gestión de ventana (maximizar / persistir geometría) ---------
-    def _style_mode_badge(self) -> None:
-        # El modo de captura vive por ahora en el tooltip del logo (Task 8: barra de estado).
-        per_app = self._per_process
-        if per_app and sys.platform == "darwin":
-            tip_key = "mode.nettop_tip"
-        elif per_app:
-            tip_key = "mode.etw_tip"
-        else:
-            tip_key = "mode.global_tip"
-        self._logo.setToolTip(t(tip_key))
-
     def _sync_max_icon(self) -> None:
         maximized = self.isMaximized() if self._native else self._maximized
         self._max_btn.setProperty("icon_name", "restore" if maximized else "maximize")

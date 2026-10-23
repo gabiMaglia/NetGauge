@@ -22,6 +22,7 @@ LIGHT = {
     "shadow_rgba": "rgba(15,23,42,0.32)",
     "dashed_bd": "#cbd5e1", "accent_text": "#2563eb",
     "total_fg": "#2563eb", "total_fg2": "#3b82f6",
+    "table_head_bg": "#f1f4f8", "row_line": "#eef1f5",
 }
 
 DARK = {
@@ -41,6 +42,7 @@ DARK = {
     "shadow_rgba": "rgba(2,6,23,0.6)",
     "dashed_bd": "#2a3a58", "accent_text": "#8cbcff",
     "total_fg": "#9cc4ff", "total_fg2": "#c7dcff",
+    "table_head_bg": "#0e1420", "row_line": "#172036",
 }
 
 # Sin "Segoe UI": en macOS Qt avisa del alias; en Windows sans-serif lo resuelve.
@@ -51,6 +53,29 @@ RADIUS = {"window": 18, "card": 14, "input": 10, "button": 10,
           "segment": 11, "chip": 8, "app_icon": 9, "bar": 6}
 
 SPACE = {"window_pad": 20, "card_pad": 16, "gap_cards": 14, "gap_section": 18}
+
+
+_CHECK_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" '
+              'viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="3.2" '
+              'stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>')
+_check_dir: str | None = None
+
+
+def check_icon_url(color: str) -> str:
+    """Ruta (para url() del QSS) de la tilde del checkbox en `color`.
+
+    El QSS sólo acepta imágenes de archivo: se escribe un SVG por color en un
+    directorio temporal del proceso (se reusa si ya existe)."""
+    import tempfile
+    from pathlib import Path
+
+    global _check_dir
+    if _check_dir is None or not Path(_check_dir).is_dir():
+        _check_dir = tempfile.mkdtemp(prefix="netgauge_ui_")
+    path = Path(_check_dir) / f"check_{color.lstrip('#')}.svg"
+    if not path.exists():
+        path.write_text(_CHECK_SVG.format(c=color), encoding="utf-8")
+    return path.as_posix()
 
 
 def app_qss(t: dict) -> str:
@@ -223,26 +248,80 @@ def app_qss(t: dict) -> str:
                     background: transparent; }}
 
     /* Barra de herramientas de Por aplicación */
-    QLineEdit#AppsSearch {{
+    QLineEdit#AppsSearch, QLineEdit#ConnSearch {{
         background: {t['input_bg']}; border: 1px solid {t['input_border']};
         border-radius: {RADIUS['input']}px; padding: 0 12px 0 4px;
         font-size: 13px; font-weight: 500; color: {t['text']};
         placeholder-text-color: {t['text_muted']};
     }}
-    QLineEdit#AppsSearch:focus {{ border: 1px solid {t['accent']}; }}
+    QLineEdit#AppsSearch:focus, QLineEdit#ConnSearch:focus {{ border: 1px solid {t['accent']}; }}
     #SortCaption {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
-    QPushButton#SortChip {{
+    QPushButton#SortChip, QPushButton#StatusChip {{
         background: transparent; border: 1px solid {t['border']}; border-radius: 16px;
         color: {t['text_muted']}; font-size: 12px; font-weight: 600; padding: 0 12px;
     }}
-    QPushButton#SortChip:hover {{ border: 1px solid {t['accent_soft_bd']}; }}
-    QPushButton#SortChip:focus {{ border: 1px solid {t['accent']}; }}
-    QPushButton#SortChip:checked {{
+    QPushButton#SortChip:hover, QPushButton#StatusChip:hover {{ border: 1px solid {t['accent_soft_bd']}; }}
+    QPushButton#SortChip:focus, QPushButton#StatusChip:focus {{ border: 1px solid {t['accent']}; }}
+    QPushButton#SortChip:checked, QPushButton#StatusChip:checked {{
         background: {t['selected_bg']}; border: 1px solid {t['accent']};
         color: {t['accent_text']}; font-weight: 700;
     }}
     #AppsHeader QLabel {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
     #AppsEmpty {{ font-size: 13px; color: {t['text_muted']}; }}
+
+    /* Checkbox con indicador propio (el nativo se ve blanco en oscuro) */
+    QCheckBox {{ font-size: 13px; font-weight: 600; color: {t['text_secondary']};
+                 spacing: 8px; }}
+    QCheckBox::indicator {{
+        width: 18px; height: 18px; border-radius: 6px;
+        border: 1px solid {t['border']}; background: transparent;
+    }}
+    QCheckBox::indicator:checked {{
+        background: {t['accent']}; border: 1px solid {t['accent']};
+        image: url({check_icon_url(t['on_accent'])});
+    }}
+
+    /* Pestaña Conexiones */
+    #ConnCard {{ background: {t['card_bg']}; border: 1px solid {t['border']};
+                 border-radius: {RADIUS['card']}px; }}
+    #ConnHead {{ background: {t['table_head_bg']};
+                 border: none; border-bottom: 1px solid {t['border']};
+                 border-top-left-radius: {RADIUS['card'] - 1}px;
+                 border-top-right-radius: {RADIUS['card'] - 1}px; }}
+    #ConnHead QLabel {{ font-size: 12px; font-weight: 700; color: {t['text_muted']};
+                        background: transparent; }}
+    #ConnScroll, #ConnScroll > QWidget > QWidget, #ConnContainer {{
+        background: transparent; }}
+    #ConnRow {{ background: transparent; border: none;
+                border-bottom: 1px solid {t['row_line']}; }}
+    #ConnRow QLabel {{ background: transparent; }}
+    #ConnApp {{ font-size: 13px; font-weight: 700; color: {t['text_strong']}; }}
+    #ConnHost {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_secondary']}; }}
+    #ConnEndpoint {{ font-family: {MONO_FAMILY}; font-size: 12px; color: {t['text_muted']}; }}
+    #ConnEndpoint[primary="true"] {{ color: {t['text_secondary']}; }}
+    #ConnCountry {{ font-size: 13px; font-weight: 600; color: {t['text']}; }}
+    #ConnStatus {{ font-size: 12px; font-weight: 600; color: {t['text_muted']}; }}
+    #ConnStatus[kind="established"] {{ color: {t['upload']}; }}
+    #ConnStatus[kind="closing"] {{ color: {t['warning']}; }}
+    #ConnRow #ConnDot {{ background: {t['text_muted']}; border-radius: 3px; }}
+    #ConnRow #ConnDot[kind="established"] {{ background: {t['upload']}; }}
+    #ConnRow #ConnDot[kind="closing"] {{ background: {t['warning']}; }}
+    #ConnTraffic {{ font-family: {MONO_FAMILY}; font-size: 12px; font-weight: 700;
+                    color: {t['text_muted']}; }}
+    #ConnEmpty {{ background: transparent; border: 1px dashed {t['dashed_bd']};
+                  border-radius: {RADIUS['card']}px; }}
+    #ConnEmpty QLabel {{ background: transparent; }}
+    #ConnEmptyTile {{ background: {t['card_bg']}; border: 1px solid {t['border']};
+                      border-radius: 12px; }}
+    #ConnEmptyTitle {{ font-size: 14px; font-weight: 700; color: {t['text_strong']}; }}
+    #ConnEmptyBody {{ font-size: 12px; color: {t['text_muted']}; }}
+
+    /* Barra de estado */
+    #StatusBar {{ background: {t['window_bg']}; border-top: 1px solid {t['border']};
+                  border-bottom-left-radius: {RADIUS['window'] - 1}px;
+                  border-bottom-right-radius: {RADIUS['window'] - 1}px; }}
+    #StatusText, #StatusRight {{ font-size: 12px; color: {t['text_muted']};
+                                 background: transparent; }}
 
     /* Diálogo */
     QDialog {{ background: {t['window_bg']}; }}
