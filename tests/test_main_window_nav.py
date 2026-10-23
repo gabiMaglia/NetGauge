@@ -7,7 +7,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest  # noqa: E402
 from PySide6.QtCore import QRect
-from PySide6.QtWidgets import QApplication, QFrame, QLabel  # noqa: E402
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QPushButton  # noqa: E402
 
 from conftest import FakeCapture, FakeNotifier, FakeRepo, FakeReporter, FakeStore  # noqa: E402
 from src.application.monitor_service import MonitorService  # noqa: E402
@@ -27,7 +27,7 @@ def win():
 
 
 def test_quota_button_removed(win):
-    assert not hasattr(win, "_quota_btn")
+    assert not [b for b in win.findChildren(QPushButton) if b.objectName() == "QuotaBtn"]
     assert hasattr(win, "_open_quota")
 
 
@@ -93,3 +93,41 @@ def test_unit_caption_and_tabs_still_switch(win):
     assert len(caps) == 1 and caps[0].text() == "Unidad"
     win._tabs.setCurrentIndex(2)
     assert win._tabs.currentIndex() == 2
+
+
+def test_close_icon_turns_white_on_hover_and_back(win):
+    from PySide6.QtCore import QEvent
+
+    def center_rgb(btn):
+        img = btn.icon().pixmap(16, 16).toImage()
+        px = [img.pixelColor(x, y) for x in range(img.width()) for y in range(img.height())
+              if img.pixelColor(x, y).alpha() > 0]
+        px.sort(key=lambda c: -c.alpha())
+        return px[0].name()
+
+    muted = center_rgb(win._close_btn)
+    assert muted != "#ffffff"
+    QApplication.sendEvent(win._close_btn, QEvent(QEvent.Type.Enter))
+    assert center_rgb(win._close_btn) == "#ffffff"
+    QApplication.sendEvent(win._close_btn, QEvent(QEvent.Type.Leave))
+    assert center_rgb(win._close_btn) == muted
+
+
+def test_speed_labels_have_fixed_width_so_header_does_not_jump(win):
+    widths = {}
+    for text in ("0", "9,9", "10,2", "512", "1023,9"):
+        win._speed_down.setText(text)
+        widths[text] = win._speed_down.width() if win._speed_down.minimumWidth() == 0 \
+            else win._speed_down.minimumWidth()
+    assert win._speed_down.minimumWidth() == win._speed_down.maximumWidth() > 0
+    assert win._unit_down.minimumWidth() == win._unit_down.maximumWidth() > 0
+    for unit in ("B/s", "KB/s", "MB/s", "GB/s"):
+        win._unit_down.setText(unit)
+        assert win._unit_down.fontMetrics().horizontalAdvance(unit) <= win._unit_down.width()
+    assert win._speed_up.minimumWidth() == win._speed_down.minimumWidth()
+
+
+def test_drag_zone_matches_titlebar_height():
+    import inspect
+    from src.presentation.qt import main_window
+    assert "<= 70" not in inspect.getsource(main_window.MainWindow.mousePressEvent)

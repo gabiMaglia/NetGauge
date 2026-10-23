@@ -7,7 +7,7 @@ import sys
 import time
 from collections import deque
 
-from PySide6.QtCore import QPoint, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -47,6 +47,8 @@ from .widgets import (
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
+_SPEED_VALUE_W = 76   # 6 caracteres mono de 20px (+ holgura)
+_SPEED_UNIT_W = 40    # "MB/s" en 12px
 _PERIOD_CODES = ["session", "day", "week", "month"]
 _SPARK_POINTS = 24
 _SORT_CODES = ["total", "down", "up", "now"]
@@ -250,6 +252,7 @@ class MainWindow(QWidget):
         self._max_btn = self._win_btn("maximize", self._toggle_maximize)
         self._close_btn = self._win_btn("close", self.hide)  # cerrar -> al tray
         self._close_btn.setProperty("class", "CloseBtn")
+        self._close_btn.installEventFilter(self)  # ícono blanco sobre el rojo del hover
         for b in (self._min_btn, self._max_btn, self._close_btn):
             lay.addWidget(b)
         self._titlebar = bar
@@ -261,8 +264,13 @@ class MainWindow(QWidget):
         arrow_lbl.setObjectName(name)
         value = QLabel("0")
         value.setObjectName(name)
+        # Anchos fijos: JetBrains Mono 20px avanza ~12px/carácter ("1023,9" = 6) y la
+        # unidad más ancha es "KB/s"/"MB/s"/"GB/s"; así el header no salta al cambiar.
+        value.setFixedWidth(_SPEED_VALUE_W)
+        value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         unit = QLabel("B/s")
         unit.setObjectName("SpeedUnit")
+        unit.setFixedWidth(_SPEED_UNIT_W)
         lay.addWidget(arrow_lbl)
         lay.addSpacing(-4)
         lay.addWidget(value)
@@ -288,6 +296,18 @@ class MainWindow(QWidget):
         b.setProperty("icon_name", icon)
         b.clicked.connect(slot)
         return b
+
+    def eventFilter(self, obj, event) -> bool:
+        if obj is getattr(self, "_close_btn", None):
+            if event.type() == QEvent.Type.Enter:
+                self._set_close_hover(True)
+            elif event.type() == QEvent.Type.Leave:
+                self._set_close_hover(False)
+        return super().eventFilter(obj, event)
+
+    def _set_close_hover(self, hovered: bool) -> None:
+        color = "#ffffff" if hovered else self._theme["text_muted"]
+        self._close_btn.setIcon(svg_icon("close", color, self._close_btn.iconSize().width()))
 
     def _recolor_icons(self) -> None:
         """Re-pinta los íconos de la barra con el color muted del tema activo."""
@@ -1128,7 +1148,7 @@ class MainWindow(QWidget):
 
     def mousePressEvent(self, event) -> None:
         if not self._native and event.button() == Qt.MouseButton.LeftButton \
-                and event.position().y() <= 70:
+                and event.position().y() <= _TITLEBAR_H:
             self._drag_pos = event.globalPosition().toPoint() \
                 - self.frameGeometry().topLeft()
             event.accept()
