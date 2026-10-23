@@ -5,6 +5,19 @@ versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [2.0.6] - 2026-10-23
+### Fixed
+- **Por aplicación:** la columna *Ahora* mostraba 0 en todas las apps aunque hubiera
+  tráfico. Con la captura por snapshots cada 2 s de v2.0.4, el acumulado por app
+  cambia solo una de cada dos mediciones; ahora la velocidad se calcula sobre los
+  instantes en que el acumulado cambia (ventana de 4 s) y la columna se repinta
+  cada segundo mientras la pestaña está visible.
+- Tests de la ventana principal: las fuentes incluidas se registran como en la app
+  antes de medir, y se recortó un poco el relleno (chips del período y barra de
+  título) para dar margen al ancho mínimo de 780 px en otras plataformas.
+- Versión 2.0.5 no llegó a publicarse (los tests de Windows fallaron); su contenido
+  (rediseño de la UI) sale en 2.0.6.
+
 ## [2.0.5] - 2026-10-23
 ### Changed
 - **Rediseño de la UI.** Header con velocidad de bajada/subida en vivo (anchos
