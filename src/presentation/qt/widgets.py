@@ -15,7 +15,6 @@ from PySide6.QtGui import (
     QLinearGradient,
     QPainter,
     QPainterPath,
-    QPalette,
     QPen,
     QPixmap,
 )
