@@ -779,8 +779,11 @@ class ElidedLabel(QLabel):
         p = QPainter(self)
         elided = self.fontMetrics().elidedText(
             self.text(), Qt.TextElideMode.ElideRight, self.contentsRect().width())
-        # tooltip con el texto completo sólo si se truncó (escapado: Qt autodetecta HTML)
-        self.setToolTip(html.escape(self.text()) if elided != self.text() else "")
+        # Tooltip con el texto completo sólo si se truncó. Se envuelve en una etiqueta
+        # para que Qt lo trate como rich text (si no, mostraría "&amp;" literal) y el
+        # contenido va escapado, así se ve el nombre exacto sin interpretar HTML.
+        self.setToolTip(
+            f"<span>{html.escape(self.text())}</span>" if elided != self.text() else "")
         p.setPen(self.palette().color(self.foregroundRole()))
         p.drawText(self.contentsRect(), int(self.alignment()), elided)
 

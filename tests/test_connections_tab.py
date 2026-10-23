@@ -220,7 +220,12 @@ def test_elided_label_keeps_plaintext_and_tooltips_full_text_when_cut(qapp):
     lbl.resize(60, 20)
     lbl.grab()
     assert lbl.textFormat() == Qt.TextFormat.PlainText
-    assert lbl.toolTip().startswith("&lt;b&gt;")
+    # rich text escapado: el nombre se ve literal, sin interpretar <b>
+    assert "&lt;b&gt;" in lbl.toolTip() and "<b>" not in lbl.toolTip()
+    amp = ElidedLabel("A&B <i>" + "y" * 200)
+    amp.resize(60, 20)
+    amp.grab()
+    assert "A&amp;B &lt;i&gt;" in amp.toolTip()
     short = ElidedLabel("ok")
     short.resize(200, 20)
     short.grab()
