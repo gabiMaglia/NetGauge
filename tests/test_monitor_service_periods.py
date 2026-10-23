@@ -98,3 +98,38 @@ def test_exe_path_for(notifier):
     m._refresh_exe_paths()
     assert m.exe_path_for("x") == "/a/x"
     assert m.exe_path_for("y") is None
+
+
+def _prev_windows(repo):
+    midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    return [w for w in repo.windows if w[1] <= midnight]
+
+
+def test_previous_window_is_cached_between_worker_cycles(notifier):
+    repo = DateRepo([_rec(100, 50)])
+    m = _service(notifier, repo)
+    m.usage_for_period("day")
+    m.refresh_snapshot()
+    m.refresh_snapshot()
+    m.refresh_snapshot()
+    assert len(_prev_windows(repo)) == 1          # una sola agregación
+    assert m.previous_period_total("day") == 150
+    m._prev_cache["day"] = (datetime(2000, 1, 1), (0, 0))   # cambió el inicio del período
+    m.refresh_snapshot()
+    assert len(_prev_windows(repo)) == 2
+
+
+def test_previous_failure_does_not_block_current_rows(notifier):
+    class Repo(DateRepo):
+        def totals_by_app(self, start, end):
+            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            if end <= midnight:
+                raise RuntimeError("db")
+            return [UsageRecord("a", 7, 3, datetime.now())]
+
+    m = _service(notifier, Repo([]))
+    m.usage_for_period("day")
+    m.refresh_snapshot()
+    rows = m.usage_for_period("day")
+    assert rows and rows[0].bytes_sent == 7
+    assert m.previous_period_breakdown("day") is None

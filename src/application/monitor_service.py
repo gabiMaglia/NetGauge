@@ -141,6 +141,8 @@ class MonitorService:
         self._snap_monthly: QuotaStatus | None = None
         self._snap_periods: dict[str, list[UsageRecord]] = {}
         self._snap_prev: dict[str, tuple[int, int]] = {}  # (sent, recv)
+        # sólo lo toca el worker: (inicio del período, resultado) por período
+        self._prev_cache: dict[str, tuple[datetime, tuple[int, int]]] = {}
         self._wanted_period: str | None = None
         self._snap_trust: dict[str, TrustInfo] = {}
         self._trust_requested: set[str] = set()
@@ -479,7 +481,12 @@ class MonitorService:
         if period is None:
             return
         rows = self._compute_usage_for_period(period)
-        prev = self._compute_previous_breakdown(period)
+        try:
+            prev = self._compute_previous_breakdown(period)
+        except Exception:  # noqa: BLE001
+            # La tendencia es accesoria: no debe impedir publicar el período actual.
+            log.exception("Fallo calculando el período previo (%s)", period)
+            prev = None
         with self._snap_lock:
             self._snap_periods[period] = rows
             if prev is None:
@@ -514,12 +521,18 @@ class MonitorService:
         if period not in ("day", "week", "month"):
             return None
         end = self._period_start(period)
+        # La ventana previa ya cerró: se cachea hasta que cambie el inicio del período.
+        cached = self._prev_cache.get(period)
+        if cached is not None and cached[0] == end:
+            return cached[1]
         if period == "month":
             start = (end - timedelta(days=1)).replace(day=1)
         else:
             start = end - timedelta(days=1 if period == "day" else 7)
         rows = self._repo.totals_by_app(start, end)
-        return (sum(r.bytes_sent for r in rows), sum(r.bytes_recv for r in rows))
+        result = (sum(r.bytes_sent for r in rows), sum(r.bytes_recv for r in rows))
+        self._prev_cache[period] = (end, result)
+        return result
 
     def previous_period_breakdown(self, period: str) -> tuple[int, int] | None:
         """Para la UI (sin IO): (enviados, recibidos) del período previo, del
