@@ -172,8 +172,16 @@ if [[ "$NOTARY_STATUS" != "Accepted" ]]; then
 fi
 
 echo "[make_dmg] Engrapando el ticket de notarización ..."
-xcrun stapler staple "$DMG_PATH"
-xcrun stapler validate "$DMG_PATH"
-spctl -a -t open --context context:primary-signature -v "$DMG_PATH"
+# stapler/spctl consultan api.apple-cloudkit.com; en macos-15-intel esa red
+# falla de forma intermitente (-1005). Se reintenta el PAR staple+validate (es
+# idempotente) solo ante errores de red; un ticket inválido sigue fallando
+# de inmediato. La compuerta no se debilita: validate y spctl deben pasar.
+# shellcheck source=build/retry_net.sh
+source "$ROOT_DIR/build/retry_net.sh"
+staple_and_validate() {
+    xcrun stapler staple "$1" && xcrun stapler validate "$1"
+}
+retry_net "stapler staple+validate" staple_and_validate "$DMG_PATH"
+retry_net "spctl" spctl -a -t open --context context:primary-signature -v "$DMG_PATH"
 
 echo "[make_dmg] OK -> $DMG_PATH (firmado y notarizado)"

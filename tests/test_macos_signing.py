@@ -90,3 +90,10 @@ def test_make_dmg_never_echoes_secrets():
 def test_shell_scripts_forced_to_lf():
     attrs = (ROOT / ".gitattributes").read_text(encoding="utf-8")
     assert "*.sh text eol=lf" in attrs
+
+
+def test_make_dmg_retries_staple_validate_and_spctl_on_network_errors():
+    text = _dmg()
+    assert "retry_net.sh" in text
+    assert 'retry_net "stapler staple+validate"' in text
+    assert 'retry_net "spctl"' in text
