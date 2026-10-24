@@ -40,6 +40,10 @@ from .snapshot_refresher import SnapshotRefresher
 
 log =logging.getLogger(__name__)
 
+_RATE_WINDOW_S = 3.0        # sin bytes nuevos más de esto -> 0
+_RATE_GRACE_S = 2.5         # tolerancia a un snapshot tardío antes de decaer
+_CAPTURE_INTERVAL_S = 2.0   # cadencia de nettop (supuesto para un solo bloque)
+_ARRIVAL_MERGE_S = 0.3
 _SPIKE_FLOOR =3 * 1024 * 1024     # 3 MB/s: piso para no avisar por ruido
 _SPIKE_FACTOR = 3.0                # x veces el promedio reciente
 _NEW_APP_BYTES = 5 * 1024 * 1024   # 5 MB enviados para considerar app "nueva en red"
@@ -115,14 +119,16 @@ class MonitorService:
         self._rate_recv = 0
         self._live_up = 0.0      # bytes/seg (suavizado, lo que se muestra)
         self._live_down = 0.0
-        # Suavizado de la tasa mostrada (T-012): nettop entrega un snapshot
-        # cada 2 s (polling) y _rate_tick corre cada 1s -> deltas tipo
-        # [0, 2x, 0, 2x]. Un promedio móvil de las últimas 4 lecturas crudas
-        # (2 periodos completos de snapshot) da exactamente x y es estable
-        # (con 3 oscilaba entre 0.67x y 1.33x). Responde a un cambio real en ~4s.
-        self._RATE_WINDOW = 4
-        self._raw_up_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
-        self._raw_down_history: deque[float] = deque(maxlen=self._RATE_WINDOW)
+        # Tasa mostrada (T-012): nettop entrega un snapshot cada ~2 s con jitter, así
+        # que promediar bins de 1 s oscila (0.5x-2.5x). Se calcula con las marcas de
+        # tiempo en que llegaron bytes: (bytes del último intervalo) / (su duración).
+        self._clock: Callable[[], float] = time.monotonic
+        self._last_sample_t: float | None = None
+        self._cum_up = 0.0
+        self._cum_down = 0.0
+        # por dirección: (t de llegada, acumulado de bytes)
+        self._arr_up: deque[tuple[float, float]] = deque(maxlen=16)
+        self._arr_down: deque[tuple[float, float]] = deque(maxlen=16)
 
         self.settings: Settings = settings_store.load()
         self._alerts_fired: set[int] = set()
@@ -204,6 +210,7 @@ class MonitorService:
                 usage.add(sample.bytes_sent, sample.bytes_recv)
             self._rate_sent += sample.bytes_sent
             self._rate_recv += sample.bytes_recv
+            self._last_sample_t = self._clock()
 
     # ---- velocidad en vivo (cada 1s) ----------------------------------
     def _schedule_rate(self) -> None:
@@ -221,14 +228,12 @@ class MonitorService:
                 raw_down = float(self._rate_recv)
                 self._rate_sent = 0
                 self._rate_recv = 0
-                # Suavizado (T-012): promedio móvil sobre las últimas
-                # _RATE_WINDOW lecturas crudas de 1s. Solo afecta lo MOSTRADO
-                # (_live_up/_live_down); los totales/persistencia ya quedaron
-                # actualizados en _on_sample y no se tocan aquí.
-                self._raw_up_history.append(raw_up)
-                self._raw_down_history.append(raw_down)
-                self._live_up = sum(self._raw_up_history) / len(self._raw_up_history)
-                self._live_down = sum(self._raw_down_history) / len(self._raw_down_history)
+                # Sólo afecta lo MOSTRADO (_live_up/_live_down); los totales y la
+                # persistencia ya quedaron actualizados en _on_sample.
+                now = self._clock()
+                if raw_up or raw_down:
+                    self._record_arrival(now, raw_up, raw_down)
+                self._live_up, self._live_down = self._rates_from_arrivals(now)
                 smoothed_total = self._live_up + self._live_down
             self._check_spike(smoothed_total)
         except Exception:  # noqa: BLE001
@@ -245,6 +250,47 @@ class MonitorService:
         return base.format(**kw) if kw else base
 
     # ---- anomalías -----------------------------------------------------
+    def _record_arrival(self, now: float, raw_up: float, raw_down: float) -> None:
+        """Llamar con _lock. Un snapshot partido por el borde de un tick (llegadas a
+        <0.3 s) se funde en un solo punto."""
+        t = self._last_sample_t if self._last_sample_t is not None else now
+        self._last_sample_t = None
+        if raw_up:
+            self._cum_up += raw_up
+            self._push_arrival(self._arr_up, t, self._cum_up)
+        if raw_down:
+            self._cum_down += raw_down
+            self._push_arrival(self._arr_down, t, self._cum_down)
+
+    @staticmethod
+    def _push_arrival(pts: deque[tuple[float, float]], t: float, cum: float) -> None:
+        if pts and t - pts[-1][0] < _ARRIVAL_MERGE_S:
+            pts[-1] = (pts[-1][0], cum)
+        else:
+            pts.append((t, cum))
+
+    def _rates_from_arrivals(self, now: float) -> tuple[float, float]:
+        """Llamar con _lock. (subida, bajada) en bytes/s."""
+        return self._rate_of(self._arr_up, now), self._rate_of(self._arr_down, now)
+
+    @staticmethod
+    def _rate_of(pts: deque[tuple[float, float]], now: float) -> float:
+        """Con dos llegadas dentro de la ventana: bytes de la última / intervalo real.
+        Con una sola: se asume un intervalo de captura de _CAPTURE_INTERVAL_S (no se
+        sobreestima el primer bloque). Si pasa de la gracia sin bytes nuevos, el
+        intervalo crece hasta `now` y la tasa decae; fuera de la ventana vale 0."""
+        if not pts or now - pts[-1][0] > _RATE_WINDOW_S:
+            return 0.0
+        last = pts[-1]
+        before = pts[-2] if len(pts) >= 2 else (0.0, 0.0)
+        if len(pts) >= 2 and before[0] >= now - _RATE_WINDOW_S:
+            prev = before
+        else:   # bloque aislado: se asume el intervalo de captura
+            prev = (last[0] - _CAPTURE_INTERVAL_S, before[1])
+        end = last[0] if now - last[0] <= _RATE_GRACE_S else now
+        span = end - prev[0]
+        return (last[1] - prev[1]) / span if span > 0 else 0.0
+
     def _check_spike(self, total_rate: float) -> None:
         history = list(self._rate_history)
         self._rate_history.append(total_rate)

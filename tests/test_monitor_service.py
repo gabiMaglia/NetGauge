@@ -78,7 +78,11 @@ def test_spike_suppressed_when_disabled(settings, notifier):
 # ---- suavizado de la velocidad en vivo (T-012) ------------------------------
 def _tick_with(m, sent=0, recv=0):
     """Simula una ventana de 1s de nettop: acumula bytes y dispara _rate_tick
-    directamente, sin pasar por threading.Timer (make_monitor no llama start())."""
+    directamente, sin pasar por threading.Timer (make_monitor no llama start()).
+    Usa un reloj falso que avanza 1 s por llamada (la tasa se calcula con tiempos)."""
+    t = getattr(m, "_fake_t", 1000.0) + 1.0
+    m._fake_t = t
+    m._clock = lambda: t
     m._rate_sent += sent
     m._rate_recv += recv
     m._rate_tick()
@@ -106,12 +110,12 @@ def test_live_rate_smooths_0_2x_aliasing():
     # Las primeras lecturas (ventana de promedio aún llenándose) pueden
     # variar más, pero una vez con historial completo (>= RATE_WINDOW
     # lecturas) la tasa mostrada no debe volver a tocar los extremos 0 o 2x.
-    stable = shown[m._RATE_WINDOW - 1:]
+    stable = shown[3:]
     for v in stable:
         assert v != 0
         assert v != 2 * x
         # debe quedar razonablemente cerca del throughput sostenido real
-        assert 0.5 * x <= v <= 1.5 * x
+        assert 0.85 * x <= v <= 1.15 * x   # con marcas de tiempo es casi exacta
 
 
 def test_internal_helper_excluded_from_apps(settings, notifier):
@@ -141,7 +145,7 @@ def test_live_rate_smoothing_does_not_affect_totals(settings, notifier):
     assert total_recv == 2_000_000  # exacto, no promediado
 
     _, down = m.live_rate()
-    assert down != 0  # el promedio móvil sigue mostrando algo > 0 (suavizado)
+    assert down != 0  # el suavizado sigue mostrando algo > 0 un tick después
 
 
 def test_live_rate_responds_to_sustained_change():
@@ -156,11 +160,11 @@ def test_live_rate_responds_to_sustained_change():
 
     for _ in range(5):
         _tick_with(m, sent=1_000_000, recv=0)
-    for _ in range(m._RATE_WINDOW):
+    for _ in range(3):
         _tick_with(m, sent=5_000_000, recv=0)
 
     up, _ = m.live_rate()
-    assert up == 5_000_000  # tras RATE_WINDOW ticks al nuevo nivel, converge
+    assert up == 5_000_000  # a los ~3 s del nuevo nivel, converge
 
 
 def test_check_spike_receives_smoothed_rate(settings, notifier):
@@ -374,7 +378,6 @@ def test_rate_tick_survives_notifier_error_and_reschedules(running_monitor):
         m._check_spike(100_000)           # historial estable, sin pico
     m._rate_sent = 50_000_000             # pico -> notify revienta
     m._rate_tick()
-    assert m.live_rate()[0] == 50_000_000
     assert m._rate_timer is not None      # la velocidad en vivo no se congela
 
 
@@ -497,3 +500,79 @@ def test_update_settings_geoip_off_cancels_pending(settings, notifier):
     settings.geoip_enabled = False
     m.update_settings(settings)
     assert geo.cancelled == 1
+
+
+
+# ---- velocidad en vivo con snapshots cada 2 s (marcas de tiempo) ------------
+def _stairs(m, seconds, per_snapshot=1_400_000):
+    """Un tick por segundo; nettop entrega bytes sólo cada 2º segundo."""
+    shown = []
+    for sec in range(seconds):
+        _tick_with(m, recv=per_snapshot if sec % 2 == 1 else 0)
+        shown.append(m.live_rate()[1])
+    return shown
+
+
+def test_live_rate_is_steady_with_two_second_snapshots(settings, notifier):
+    m = make_monitor(settings, notifier)
+    shown = _stairs(m, 20)[4:]            # ya calentó
+    for v in shown:
+        assert 0.9 * 700_000 <= v <= 1.1 * 700_000
+
+
+def test_live_rate_decays_to_zero_after_traffic_stops(settings, notifier):
+    m = make_monitor(settings, notifier)
+    _stairs(m, 10)
+    tail = []
+    for _ in range(6):
+        _tick_with(m)
+        tail.append(m.live_rate()[1])
+    assert tail[-1] == 0.0 and tail[-2] == 0.0   # 0 a los ~4 s
+    assert tail[0] > 0                           # no se corta de golpe
+
+
+def test_live_rate_first_snapshot_does_not_overshoot(settings, notifier):
+    """El primer bloque (2 s de tráfico) no debe mostrarse como el doble ni
+    disparar el detector de picos."""
+    m = make_monitor(settings, notifier)
+    _tick_with(m)
+    _tick_with(m, recv=1_400_000)
+    assert m.live_rate()[1] <= 700_000 * 1.01
+
+
+def test_live_rate_tracks_up_and_down_independently(settings, notifier):
+    m = make_monitor(settings, notifier)
+    for sec in range(10):
+        _tick_with(m, sent=200_000 if sec % 2 else 0, recv=0 if sec % 2 else 600_000)
+    up, down = m.live_rate()
+    assert 80_000 <= up <= 120_000 and 270_000 <= down <= 330_000
+
+
+def _simulate(m, arrivals, seconds, rate=700_000):
+    """Reloj falso: un _rate_tick por segundo y snapshots de nettop en `arrivals`
+    (con jitter); cada snapshot trae los bytes del intervalo desde el anterior."""
+    from src.domain.models import TrafficSample
+    events = sorted([(t, "snap") for t in arrivals] +
+                    [(float(s), "tick") for s in range(1, seconds + 1)], key=lambda e: (e[0], e[1] == "tick"))
+    now = {"t": 0.0}
+    m._clock = lambda: now["t"]
+    prev, shown = 0.0, []
+    for t, kind in events:
+        now["t"] = t
+        if kind == "snap":
+            m._on_sample(TrafficSample(1, "curl", bytes_sent=0,
+                                       bytes_recv=int(rate * (t - prev))))
+            prev = t
+        else:
+            m._rate_tick()
+            shown.append(m.live_rate()[1])
+    return shown
+
+
+def test_live_rate_is_steady_with_jittered_snapshots(settings, notifier):
+    """Caso real medido: los snapshots llegan cada ~2 s con jitter y caen en
+    distinto tick; el promedio de 4 bins crudos oscilaba 0.5x-2.5x."""
+    m = make_monitor(settings, notifier)
+    arrivals = [1.2, 3.0, 5.4, 7.1, 8.9, 11.3, 13.0, 15.2, 17.4, 19.0, 21.3, 23.1]
+    shown = _simulate(m, arrivals, 24)[7:22]
+    assert max(shown) <= 1.25 * 700_000 and min(shown) >= 0.75 * 700_000
