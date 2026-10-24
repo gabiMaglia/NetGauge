@@ -150,13 +150,14 @@ def test_row_columns_country_status_and_traffic(win):
     assert zoom._status.property("kind") == "closing"
 
 
-def test_switching_to_connections_tab_draws_table_without_spark_side_effects(win):
+def test_switching_to_connections_tab_draws_table_without_full_refresh(win):
     win._tabs.setCurrentIndex(0)
     win._state["conns"] = [CONNS[0]]
     win._refresh()
-    sparks = len(win._spark_total)
+    refreshes = []
+    win._refresh = lambda: refreshes.append(1)   # type: ignore[method-assign]
     win._tabs.setCurrentIndex(2)
-    assert len(win._spark_total) == sparks
+    assert refreshes == []
     assert _visible_apps(win) == {"Dropbox"}
 
 

@@ -4,6 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
+### Changed
+- **Velocidad en vivo (header y gráfico):** se calcula con las marcas de tiempo en que
+  llegan los snapshots de nettop (bytes del último intervalo / su duración) en vez de
+  promediar bins de 1 s; con tráfico constante ya no oscila y decae a 0 en ~4 s al
+  cortarse.
+- **Global:** se quitaron las mini curvas de las tarjetas Bajada/Subida/Total (graficaban
+  totales acumulados); las tarjetas quedan más compactas y el gráfico gana altura.
 
 ## [2.0.6] - 2026-10-23
 ### Fixed

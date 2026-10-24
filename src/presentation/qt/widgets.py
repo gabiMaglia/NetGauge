@@ -326,49 +326,8 @@ class QuotaBar(QWidget):
         p.end()
 
 
-class _Spark(QWidget):
-    """Mini curva (polilínea de 2 px) a todo el ancho de la tarjeta."""
-
-    def __init__(self, color: str) -> None:
-        super().__init__()
-        self._color = color
-        self._vals: list[float] = []
-        self.setFixedHeight(28)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-
-    def set_color(self, color: str) -> None:
-        self._color = color
-        self.update()
-
-    def set_values(self, vals: list[float] | None) -> None:
-        self._vals = list(vals or [])[-24:]
-        self.update()
-
-    def paintEvent(self, _event) -> None:
-        if len(self._vals) < 2:
-            return
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = float(self.width()), float(self.height())
-        lo, hi = min(self._vals), max(self._vals)
-        span = hi - lo
-        step = w / (len(self._vals) - 1)
-        path = QPainterPath()
-        for i, v in enumerate(self._vals):
-            frac = (v - lo) / span if span > 0 else 0.5  # serie plana: línea al medio
-            pt = QPointF(i * step, h - 2 - frac * (h - 4))
-            path.moveTo(pt) if i == 0 else path.lineTo(pt)
-        pen = QPen(QColor(self._color), 2)
-        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-        p.setPen(pen)
-        p.drawPath(path)
-        p.end()
-
-
 class MetricCard(QFrame):
-    """Tarjeta de métrica: punto + nombre + tendencia, número hero + unidad,
-    mini curva y subtexto."""
+    """Tarjeta de métrica: punto + nombre + tendencia, número hero + unidad y subtexto."""
 
     def __init__(self, theme: dict, color_key: str, name: str,
                  is_total: bool = False) -> None:
@@ -379,8 +338,8 @@ class MetricCard(QFrame):
         self._is_total = is_total
         self._trend_level = "none"
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(16, 14, 16, 14)
-        lay.setSpacing(6)
+        lay.setContentsMargins(16, 16, 16, 16)
+        lay.setSpacing(8)
 
         top = QHBoxLayout()
         top.setSpacing(7)
@@ -411,9 +370,6 @@ class MetricCard(QFrame):
         hero.addStretch()
         lay.addLayout(hero)
 
-        self._spark = _Spark(theme[color_key])
-        lay.addWidget(self._spark)
-
         self._sub = QLabel("")
         self._sub.setObjectName("TotalSub" if is_total else "MetricSub")
         lay.addWidget(self._sub)
@@ -424,11 +380,9 @@ class MetricCard(QFrame):
         color = theme[self._color_key]
         if self._dot is not None:
             self._dot.setStyleSheet(f"background:{color}; border-radius:4px;")
-        self._spark.set_color(color)
 
     def set_values(self, value_text: str, unit_text: str, sub: str,
-                   trend_text: str = "", trend_level: str = "none",
-                   spark: list[float] | None = None) -> None:
+                   trend_text: str = "", trend_level: str = "none") -> None:
         self._value.setText(value_text)
         self._unit.setText(unit_text)
         self._sub.setText(sub)
@@ -438,7 +392,6 @@ class MetricCard(QFrame):
             self._trend.setProperty("level", trend_level)
             self._trend.style().unpolish(self._trend)
             self._trend.style().polish(self._trend)
-        self._spark.set_values(spark)
 
     def trend_text(self) -> str:
         return self._trend.text()

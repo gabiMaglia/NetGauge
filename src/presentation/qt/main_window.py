@@ -5,7 +5,6 @@ import html
 import ipaddress
 import sys
 import time
-from collections import deque
 
 from PySide6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
@@ -51,7 +50,6 @@ _MAX_FIXED_UNIT_CHARS = 8   # más ancho que esto desborda las tarjetas
 _SPEED_BOX_W = 104    # flecha + "1.023,4" (7 caracteres mono de 20px)
 _SPEED_UNIT_W = 40    # "MB/s" en 12px
 _PERIOD_CODES = ["session", "day", "week", "month"]
-_SPARK_POINTS = 24
 _SORT_CODES = ["total", "down", "up", "now"]
 _CONN_FILTERS = ["all", "established", "listening"]
 _STATUSBAR_H = 30
@@ -154,9 +152,6 @@ class MainWindow(QWidget):
         self._legends: list[tuple[QLabel, str]] = []
         self._legend_dashes: list[QLabel] = []
         # Un punto por refresco para las mini curvas de las tarjetas.
-        self._spark_down: deque[float] = deque(maxlen=_SPARK_POINTS)
-        self._spark_up: deque[float] = deque(maxlen=_SPARK_POINTS)
-        self._spark_total: deque[float] = deque(maxlen=_SPARK_POINTS)
         self._maximized = False
         self._restore_geom = None
         self._native = False
@@ -580,13 +575,13 @@ class MainWindow(QWidget):
 
     def _redraw_apps(self) -> None:
         """Búsqueda/orden/cambio de pestaña: sólo re-concilia las filas con los
-        últimos datos; _refresh (y sus puntos de sparkline) corre a ~1 Hz."""
+        últimos datos; _refresh (cálculo de tarjetas y límites) corre a ~1 Hz."""
         if self._last_rows is not None:
             self._rebuild_apps(*self._last_rows)
 
     def _redraw_tab(self) -> None:
         """Cambio de pestaña: redibuja Apps y Conexiones con el snapshot actual
-        (camino liviano, sin pasar por _refresh ni sus sparklines)."""
+        (camino liviano, sin pasar por _refresh)."""
         self._redraw_apps()
         self._refresh_connections()
 
@@ -776,10 +771,6 @@ class MainWindow(QWidget):
         tot_recv = sum(r for _, _, r in rows)
         total = tot_sent + tot_recv
 
-        self._spark_down.append(tot_recv)
-        self._spark_up.append(tot_sent)
-        self._spark_total.append(total)
-
         prev = (None if self._period == "session"
                 else self._monitor.previous_period_breakdown(self._period))
         prev_sent, prev_recv = prev if prev else (None, None)
@@ -787,16 +778,16 @@ class MainWindow(QWidget):
         v, u = _fmt(tot_recv, self._unit)
         self._card_down.set_values(
             v, u, t("card.pct_of_total", p=f"{share_pct(tot_recv, total):.0f}"),
-            *self._trend_text(tot_recv, prev_recv), spark=list(self._spark_down))
+            *self._trend_text(tot_recv, prev_recv))
         v, u = _fmt(tot_sent, self._unit)
         self._card_up.set_values(
             v, u, t("card.pct_of_total", p=f"{share_pct(tot_sent, total):.0f}"),
-            *self._trend_text(tot_sent, prev_sent), spark=list(self._spark_up))
+            *self._trend_text(tot_sent, prev_sent))
         v, u = _fmt(total, self._unit)
         label, level = self._period_trend(total)
         self._card_total.set_values(
             v, u, t("card.peak", v=loc_bytes(self._chart.peak())),
-            label, level, list(self._spark_total))
+            label, level)
 
         self._set_limit(self._daily_card, self._monitor.daily_status(),
                         "quota.daily", "limit.daily")
@@ -992,8 +983,6 @@ class MainWindow(QWidget):
     def _set_period(self, value: str) -> None:
         self._period = value
         self._update_statusbar()
-        for spark in (self._spark_down, self._spark_up, self._spark_total):
-            spark.clear()  # escalas distintas por período: no mezclar curvas
         self._refresh()
 
     def _set_unit(self, unit: str) -> None:

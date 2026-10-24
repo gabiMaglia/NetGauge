@@ -97,9 +97,9 @@ def test_chart_hover_with_zero_peak_does_not_break(qapp):
     ch.grab()
 
 
-def test_metric_card_trend_and_spark(qapp):
+def test_metric_card_trend(qapp):
     c = MetricCard(DARK, "down", "Bajada")
-    c.set_values("1,2", "GB", "82 % del total", "▲ 12 % vs ayer", "up", [1, 2, 3])
+    c.set_values("1,2", "GB", "82 % del total", "▲ 12 % vs ayer", "up")
     assert c.trend_text() == "▲ 12 % vs ayer"
     c.set_values("1,2", "GB", "x")
     assert c.trend_text() == ""
@@ -301,17 +301,25 @@ def test_apps_connections_count_text(qapp):
     w.close()
 
 
-def test_search_and_sort_do_not_advance_sparklines(qapp):
+def test_search_and_sort_do_not_run_full_refresh(qapp):
     w = _apps_window()
-    n = len(w._spark_total)
+    calls = []
+    real = w._refresh
+    w._refresh = lambda: calls.append(1)   # type: ignore[method-assign]
     for text in ("c", "ch", "chr", ""):
         w._apps_search.setText(text)
     for code in ("up", "down", "now", "total"):
         w._sort_chips[code].click()
-    assert len(w._spark_total) == len(w._spark_down) == len(w._spark_up) == n
-    w._refresh()
-    assert len(w._spark_total) == n + 1
+    assert calls == []
+    w._refresh = real
     w.close()
+
+
+def test_metric_card_has_no_sparkline(qapp):
+    c = MetricCard(DARK, "down", "Bajada")
+    assert not hasattr(c, "_spark")
+    import inspect
+    assert "spark" not in inspect.signature(c.set_values).parameters
 
 
 def test_trust_for_called_for_every_visible_row(qapp):
