@@ -1,12 +1,14 @@
 """Ícono de cada app: el real del SO si hay ruta, o un chip de color estable con la inicial."""
 from __future__ import annotations
 
+import plistlib
 import sys
 import zlib
+from pathlib import Path
 from pathlib import PurePosixPath
 
 from PySide6.QtCore import QFileInfo, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QFileIconProvider
 
 # 8 tonos fijos del diseño; el tema no los cambia (son identidad de la app, no UI).
@@ -58,11 +60,36 @@ def _icon_source(exe_path: str) -> str | None:
     return None
 
 
+def _bundle_icns(bundle: str) -> str | None:
+    """Ruta del .icns de un .app según su Info.plist. QFileIconProvider devuelve una
+    carpeta genérica para los bundles, así que el ícono real se lee del archivo."""
+    try:
+        with open(Path(bundle, "Contents", "Info.plist"), "rb") as fh:
+            name = plistlib.load(fh).get("CFBundleIconFile")
+    except (OSError, plistlib.InvalidFileException, ValueError):
+        return None
+    if not name:
+        return None
+    if not name.lower().endswith(".icns"):
+        name += ".icns"
+    path = Path(bundle, "Contents", "Resources", name)
+    return str(path) if path.is_file() else None
+
+
 def _system_icon(exe_path: str, size: int) -> QPixmap | None:
     global _provider
     source = _icon_source(exe_path)
     if source is None:
         return None
+    if source.endswith(".app"):
+        icns = _bundle_icns(source)
+        if icns is None:
+            return None
+        pm = QIcon(icns).pixmap(size * _DPR, size * _DPR)
+        if pm.isNull():
+            return None
+        pm.setDevicePixelRatio(_DPR)
+        return pm
     info = QFileInfo(source)
     if not info.exists():
         return None

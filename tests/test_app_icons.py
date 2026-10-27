@@ -77,3 +77,18 @@ def test_icon_source_sin_bundle_cae_al_chip_en_macos(monkeypatch):
 def test_icon_source_no_cambia_en_otras_plataformas(monkeypatch):
     monkeypatch.setattr(app_icons.sys, "platform", "win32")
     assert app_icons._icon_source("C:/x/a.exe") == "C:/x/a.exe"
+
+
+def test_bundle_icns_lee_el_icono_del_info_plist(tmp_path):
+    import plistlib
+    res = tmp_path / "X.app" / "Contents" / "Resources"
+    res.mkdir(parents=True)
+    (res / "app.icns").write_bytes(b"icns")
+    with open(tmp_path / "X.app" / "Contents" / "Info.plist", "wb") as fh:
+        plistlib.dump({"CFBundleIconFile": "app"}, fh)   # sin extensión, como suele venir
+    assert app_icons._bundle_icns(str(tmp_path / "X.app")) == str(res / "app.icns")
+
+
+def test_bundle_icns_sin_plist_o_sin_archivo_devuelve_none(tmp_path):
+    (tmp_path / "Y.app" / "Contents").mkdir(parents=True)
+    assert app_icons._bundle_icns(str(tmp_path / "Y.app")) is None
