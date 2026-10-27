@@ -3,6 +3,12 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.0.8] - 2026-10-27
+### Fixed
+- **Íconos en macOS:** v2.0.7 mostraba una carpeta genérica en lugar del ícono de cada app
+  (Qt devuelve eso para los bundles `.app`); ahora se lee el `.icns` real desde el
+  `Info.plist` del bundle. Sin bundle (por ejemplo `node`) sigue el chip con la inicial.
+
 ## [2.0.7] - 2026-10-27
 ### Fixed
 - **Íconos en macOS:** las apps mostraban el ícono genérico de ejecutable ("exec"); ahora

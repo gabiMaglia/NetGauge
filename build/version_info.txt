@@ -4,8 +4,8 @@
 # indice de confianza de la app.
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(2, 0, 7, 0),
-    prodvers=(2, 0, 7, 0),
+    filevers=(2, 0, 8, 0),
+    prodvers=(2, 0, 8, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -18,12 +18,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'Gabriel Maglia'),
         StringStruct('FileDescription', 'NetGauge - Monitor de consumo de red'),
-        StringStruct('FileVersion', '2.0.7.0'),
+        StringStruct('FileVersion', '2.0.8.0'),
         StringStruct('InternalName', 'NetGauge'),
         StringStruct('LegalCopyright', '(c) 2026 Gabriel Maglia. Licencia MIT.'),
         StringStruct('OriginalFilename', 'NetGauge.exe'),
         StringStruct('ProductName', 'NetGauge'),
-        StringStruct('ProductVersion', '2.0.7.0')
+        StringStruct('ProductVersion', '2.0.8.0')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
