@@ -136,6 +136,7 @@ def test_live_rate_smoothing_does_not_affect_totals(settings, notifier):
     en _on_sample, sin pasar por el promedio móvil."""
     from src.domain.models import TrafficSample
     m = make_monitor(settings, notifier)
+    m._clock = lambda: 1000.5   # el reloj real depende del uptime del runner y lo vuelve flaky
     m._on_sample(TrafficSample(1, "App", bytes_sent=0, bytes_recv=2_000_000))
     _tick_with(m, sent=0, recv=2_000_000)
     m._on_sample(TrafficSample(1, "App", bytes_sent=0, bytes_recv=0))
