@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 import zlib
-from pathlib import PurePath
+from pathlib import PurePosixPath
 
 from PySide6.QtCore import QFileInfo, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
@@ -51,10 +51,10 @@ def _icon_source(exe_path: str) -> str | None:
     si no hay bundle, nada (cae al chip con la inicial)."""
     if sys.platform != "darwin":
         return exe_path
-    parts = PurePath(exe_path).parts
+    parts = PurePosixPath(exe_path).parts
     for i, part in enumerate(parts):
         if part.endswith(".app"):
-            return str(PurePath(*parts[: i + 1]))
+            return str(PurePosixPath(*parts[: i + 1]))
     return None
 
 
