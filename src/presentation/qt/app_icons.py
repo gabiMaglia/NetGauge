@@ -1,7 +1,9 @@
 """Ícono de cada app: el real del SO si hay ruta, o un chip de color estable con la inicial."""
 from __future__ import annotations
 
+import sys
 import zlib
+from pathlib import PurePath
 
 from PySide6.QtCore import QFileInfo, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
@@ -42,9 +44,26 @@ def _chip(app_name: str, size: int) -> QPixmap:
     return pm
 
 
+def _icon_source(exe_path: str) -> str | None:
+    """Ruta de la que sale el ícono. En macOS el proceso es el binario suelto dentro del
+    bundle (o un ejecutable sin bundle): para el binario Qt devuelve el ícono genérico
+    "exec", así que se usa el .app más externo (el de la app, no el de sus helpers) y,
+    si no hay bundle, nada (cae al chip con la inicial)."""
+    if sys.platform != "darwin":
+        return exe_path
+    parts = PurePath(exe_path).parts
+    for i, part in enumerate(parts):
+        if part.endswith(".app"):
+            return str(PurePath(*parts[: i + 1]))
+    return None
+
+
 def _system_icon(exe_path: str, size: int) -> QPixmap | None:
     global _provider
-    info = QFileInfo(exe_path)
+    source = _icon_source(exe_path)
+    if source is None:
+        return None
+    info = QFileInfo(source)
     if not info.exists():
         return None
     if _provider is None:

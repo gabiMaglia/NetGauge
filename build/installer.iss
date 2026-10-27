@@ -8,7 +8,7 @@
 ; Sin ese define (build local), se usa el default de abajo.
 ; Default = src/version.py APP_VERSION (verificado por tests/test_version_consistency.py).
 #ifndef AppVersion
-#define AppVersion "2.0.6"
+#define AppVersion "2.0.7"
 #endif
 #define AppExe "NetGauge.exe"
 

@@ -46,6 +46,8 @@ from .widgets import (
 
 _UNITS = {"Auto": None, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
 _TITLEBAR_H = 56
+PAGE_BOTTOM_PAD = 20       # aire bajo el contenido de cada pestaña, también al llegar al fondo del scroll
+SCROLLBAR_GAP = 10         # separación entre el contenido y la barra de scroll cuando aparece
 _MAX_FIXED_UNIT_CHARS = 8   # más ancho que esto desborda las tarjetas
 _SPEED_BOX_W = 104    # flecha + "1.023,4" (7 caracteres mono de 20px)
 _SPEED_UNIT_W = 40    # "MB/s" en 12px
@@ -211,7 +213,7 @@ class MainWindow(QWidget):
         rule_lay.addWidget(rule)
         body_lay.addLayout(rule_lay)
         pages_lay = QVBoxLayout()
-        pages_lay.setContentsMargins(20, 0, 20, 20)
+        pages_lay.setContentsMargins(20, 0, 20, 0)
         pages_lay.addWidget(self._tabs.stack)
         body_lay.addLayout(pages_lay, 1)
         root_lay.addWidget(body, 1)
@@ -407,7 +409,8 @@ class MainWindow(QWidget):
     def _build_global_tab(self) -> QWidget:
         page = QWidget()
         lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 16, 0, 0)
+        self._global_lay = lay
+        lay.setContentsMargins(0, 16, 0, PAGE_BOTTOM_PAD)  # dentro del scroll: queda al llegar al fondo
         lay.setSpacing(14)
 
         cards = QHBoxLayout()
@@ -460,7 +463,14 @@ class MainWindow(QWidget):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(page)
+        scroll.verticalScrollBar().rangeChanged.connect(lambda *_: self._sync_global_pad(scroll))
         return scroll
+
+    def _sync_global_pad(self, scroll: QScrollArea) -> None:
+        """Con la barra visible, separa el contenido de ella para que no queden pegados."""
+        sb = scroll.verticalScrollBar()
+        gap = SCROLLBAR_GAP if sb.maximum() > 0 else 0
+        self._global_lay.setContentsMargins(0, 16, gap, PAGE_BOTTOM_PAD)
 
     def _legend(self, text: str, color_key: str) -> QWidget:
         w = QWidget()
@@ -484,7 +494,7 @@ class MainWindow(QWidget):
     def _build_apps_tab(self) -> QWidget:
         page = QWidget()
         outer = QVBoxLayout(page)
-        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setContentsMargins(0, 0, 0, PAGE_BOTTOM_PAD)
         outer.setSpacing(0)
 
         tools = QHBoxLayout()
@@ -588,7 +598,7 @@ class MainWindow(QWidget):
     def _build_connections_tab(self) -> QWidget:
         page = QWidget()
         lay = QVBoxLayout(page)
-        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setContentsMargins(0, 0, 0, PAGE_BOTTOM_PAD)
         lay.setSpacing(0)
 
         tools = QHBoxLayout()

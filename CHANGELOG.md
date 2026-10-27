@@ -3,7 +3,15 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [2.0.7] - 2026-10-27
+### Fixed
+- **Íconos en macOS:** las apps mostraban el ícono genérico de ejecutable ("exec"); ahora
+  se usa el `.app` contenedor (el de la app, no el de sus helpers) y, si el proceso no
+  vive en un bundle (por ejemplo `node`), el chip con la inicial.
+- **Padding inferior:** con la ventana baja, el contenido de Global quedaba pegado al borde
+  inferior y a la barra de scroll; ahora conserva 20 px de aire abajo y se separa de la
+  barra. Por aplicación y Conexiones mantienen el mismo margen.
+
 ### Changed
 - **Velocidad en vivo (header y gráfico):** se calcula con las marcas de tiempo en que
   llegan los snapshots de nettop (bytes del último intervalo / su duración) en vez de

@@ -60,3 +60,20 @@ def test_clear_cache_empties_pixmaps_and_provider(qapp):
     app_icons.clear_cache()
     assert not app_icons._cache and app_icons._provider is None
     assert not app_icons.icon_for("Chrome", None, 20).isNull()   # se repuebla
+
+
+def test_icon_source_sube_al_bundle_app_mas_externo(monkeypatch):
+    monkeypatch.setattr(app_icons.sys, "platform", "darwin")
+    helper = ("/Applications/Google Chrome.app/Contents/Frameworks/X.framework/"
+              "Helpers/Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper")
+    assert app_icons._icon_source(helper) == "/Applications/Google Chrome.app"
+
+
+def test_icon_source_sin_bundle_cae_al_chip_en_macos(monkeypatch):
+    monkeypatch.setattr(app_icons.sys, "platform", "darwin")
+    assert app_icons._icon_source("/usr/local/bin/node") is None
+
+
+def test_icon_source_no_cambia_en_otras_plataformas(monkeypatch):
+    monkeypatch.setattr(app_icons.sys, "platform", "win32")
+    assert app_icons._icon_source("C:/x/a.exe") == "C:/x/a.exe"
