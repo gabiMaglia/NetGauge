@@ -85,7 +85,7 @@ jobs:
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\installer.iss /DAppVersion=${{ steps.ver.outputs.version }}
 
       - name: Upload .exe artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NetGauge-windows-exe
           path: build/Output/NetGauge-Setup-*-x64.exe
@@ -179,7 +179,7 @@ jobs:
         run: build/make_dmg.sh ${{ matrix.arch }}
 
       - name: Upload .dmg artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NetGauge-macos-${{ matrix.arch }}
           path: dist/*.dmg
